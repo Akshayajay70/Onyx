@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="tailwindcss/output.css" />
+    <title>Home Page</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+
+  <body class="bg-gray-300">
+    <!------------ Navbar ---------->
+    <%- include("../partials/nav") %>
+    <div class="mt-28 flex items-center justify-center my-16">
+      <div
+        class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
+      >
+        <h1 class="text-center mb-10 font-bold">Verify Your OTP</h1>
+        <div id="otp-section" class="space-y-4">
+          <form action="/validate-otp" method="post">
+            <input
+              type="text"
+              id="otp"
+              name="userOtp"
+              placeholder="Enter OTP"
+              class="w-full p-3 rounded-lg bg-gray-300 text-slate-800"
+            />
+            <div id="otp-error" class="error-text text-red-500"></div>
+            <button
+              id="verify-otp"
+              type="submit"
+              class="w-full py-2 bg-black text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
+            >
+              Verify OTP
+            </button>
+          </form>
+          <button
+            id="resend-otp"
+            type="button"
+            class="w-full py-2 bg-gray-600 text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
+          >
+            Resend OTP
+          </button>
+          <div id="timer" class="text-gray-500 mt-2 text-center"></div>
+        </div>
+      </div>
+    </div>
+    <!------------ Footer ---------->
+    <%- include("../partials/footer") %>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const verifyBtn = document.getElementById("verify-otp");
+        const resendBtn = document.getElementById("resend-otp");
+        const otpInput = document.getElementById("otp");
+        const errorDiv = document.getElementById("otp-error");
+        const timerDiv = document.getElementById("timer");
+
+        let timeLeft = 120; // 2 minutes
+        let timerId;
+
+        function startTimer() {
+          resendBtn.disabled = true;
+          timerId = setInterval(() => {
+            timeLeft--;
+            timerDiv.textContent = `Time remaining: ${Math.floor(
+              timeLeft / 60
+            )}:${(timeLeft % 60).toString().padStart(2, "0")}`;
+
+            if (timeLeft <= 0) {
+              clearInterval(timerId);
+              resendBtn.disabled = false;
+              timerDiv.textContent = "";
+            }
+          }, 1000);
+        }
+
+        startTimer();
+
+        verifyBtn.addEventListener("click", async () => {
+          try {
+            const response = await fetch("/validate-otp", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ otp: otpInput.value }),
+            });
+
+            if (response.ok) {
+              window.location.href = "/home";
+            } else {
+              errorDiv.textContent = "Invalid OTP";
+            }
+          } catch (err) {
+            errorDiv.textContent = "Error validating OTP";
+          }
+        });
+
+        resendBtn.addEventListener("click", async () => {
+          try {
+            const response = await fetch("/resend-otp", {
+              method: "POST",
+            });
+
+            if (response.ok) {
+              timeLeft = 120;
+              startTimer();
+              errorDiv.textContent = "";
+            }
+          } catch (err) {
+            errorDiv.textContent = "Error resending OTP";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     mobileNumber: {
-        type: Number,
+        type: Number
     },
     createdAt: {
         type : Date,
@@ -27,6 +27,18 @@ const userSchema = new mongoose.Schema({
     updatedAt: {
         type : Date,
         default: Date.now()
+    },
+    isActive: {
+        type : Boolean,
+        default: false
+    },
+    otp: {
+        type: String
+    },
+    otpCreatedAt: { 
+        type: Date,
+        default: Date.now, 
+        expires: 120 
     }
 })
 
