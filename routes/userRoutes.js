@@ -12,115 +12,98 @@ route.get('/signup', (req, res) => {
     res.render('user/signup')
 })
 
+route.get('/validate-otp', (req, res) => {
+    res.render('user/otp')
+})
+
 route.post('/signup', async (req, res) => {
-
-
     try {
-        const { fullName, email, password } = req.body
-        const otp = generateOTP()
-        console.log(typeof otp)
+        const { fullName, email, password } = req.body;
 
-        // handle if the user is already exists
-        const user = await userSchema.findOne({ email })
-        if (user) return res.render('user/signup')
+        // Check if user exists and not verified
+        const existingUser = await userSchema.findOne({ email });
+        if (existingUser) {
+            if (!existingUser.isVerified) {
+                await userSchema.deleteOne({ _id: existingUser._id });
+            } else {
+                return res.status(400).json({ error: 'User already exists' });
+            }
+        }
 
-        // hash the user password
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
+        const otp = generateOTP();
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // set the user schema
         const newUser = new userSchema({
             fullName,
             email,
             password: hashedPassword,
             otp,
-            otpExpiresAt: Date.now() + 120000, // 2 minutes from now
-            isVerified: false,
+            otpExpiresAt: Date.now() + 120000, // 2 minutes
+            otpAttempts: 0
         });
 
+        await newUser.save();
 
-        // save user details in db
-        await newUser.save()
+        // Schedule deletion after OTP expiry
+        setTimeout(async () => {
+            const user = await userSchema.findOne({ email });
+            if (user && !user.isVerified) {
+                await userSchema.deleteOne({ _id: user._id });
+            }
+        }, 120000);
 
-        // Store OTP and its expiry in session
-        req.session.userOTP = {
-            otp,
-            email,
-            expiryTime: Date.now() + 120000, // 1 minute from now
-            userId: newUser._id
-        }
-
-        // send otp to the user mail
-        await sendOTPEmail(email, otp)
-
-        res.render('user/otp')
+        await sendOTPEmail(email, otp);
+        res.render('user/otp');
     } catch (error) {
-        console.log('ERROR', error)
-        res.render('user/signup')
+        res.status(500).json({ error: 'Signup failed' });
     }
-
-})
+});
 
 route.post('/validate-otp', async (req, res) => {
     try {
         const { userOtp } = req.body;
+        const user = await userSchema.findOne({ otp: userOtp });
 
-        const { otp } = req.session.userOTP
-
-        if (userOtp == otp) {
-            const username = req.session.userOTP.username
-            req.session.user = {
-                username
+        if (!user || Date.now() > user.otpExpiresAt) {
+            if (user) {
+                user.otpAttempts += 1;
+                if (user.otpAttempts >= 3) {
+                    await userSchema.deleteOne({ _id: user._id });
+                    return res.status(400).json({ error: 'Too many attempts' });
+                }
+                await user.save();
             }
-            req.session.userOtp = undefined
-            res.send('success')
-
+            return res.status(400).json({ error: 'Invalid OTP' });
         }
 
+        await userSchema.findByIdAndUpdate(user._id, {
+            $set: { isVerified: true },
+            $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
+        });
+
+        res.redirect('/home');
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Validation failed');
+        res.status(500).json({ error: 'Validation failed' });
     }
 });
 
-route.get('/validate-otp', (req, res) => {
-    res.render('user/otp')
-})
-
 route.post('/resend-otp', async (req, res) => {
     try {
-        const { email } = req.session.userOTP
-        if (!email) {
-            return res.status(400).send('Session expired')
-        }
+        const user = await userSchema.findOne({ isVerified: false });
+        if (!user) return res.status(400).json({ error: 'User not found' });
 
-        const otp = generateOTP()
-        const user = await userSchema.findOneAndUpdate(
-            { email },
-            {
-                otp,
-                otpExpiresAt: Date.now() + 120000 // 2 minutes
-            }
-        )
+        const otp = generateOTP();
+        user.otp = otp;
+        user.otpExpiresAt = Date.now() + 120 * 1000;
+        user.otpAttempts = 0;
+        await user.save();
 
-        if (!user) {
-            return res.status(404).send('User not found')
-        }
-
-        // Update session
-        req.session.userOTP = {
-            ...req.session.userOTP,
-            otp,
-            expiryTime: Date.now() + 120000
-        }
-
-        await sendOTPEmail(email, otp)
-        res.status(200).send('OTP resent successfully')
-
+        await sendOTPEmail(user.email, otp);
+        res.status(200).json({ message: 'OTP resent' });
     } catch (error) {
-        console.error('Resend OTP Error:', error)
-        res.status(500).send('Failed to resend OTP')
+        res.status(500).json({ error: 'Resend failed' });
     }
-})
+});
 
 route.get('/login', (req, res) => {
     res.render('user/login')
@@ -128,19 +111,32 @@ route.get('/login', (req, res) => {
 
 route.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body
-        const user = await userSchema.findOne({ email })
-        const isMatch = await bcrypt.compare(password, user.password)
-        if (!email || !isMatch) return res.render('user/login')
+        const { email, password } = req.body;
+        const user = await userSchema.findOne({ email });
 
-        req.session.user = true
-        res.render('user/home')
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        if (!user.isVerified) {
+            return res.status(400).json({ error: 'Please verify your email first' });
+        }
+
+        req.session.user = {
+            id: user._id,
+            email: user.email
+        };
+
+        res.redirect('/home');
+    } catch (error) {
+        res.status(500).json({ error: 'Login failed' });
     }
-    catch (error) {
-        console.log("ERROR", error)
-        res.render('user/login')
-    }
-})
+});
 
 route.get('/home', (req, res) => {
     res.render('user/home')
