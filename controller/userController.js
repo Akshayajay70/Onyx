@@ -139,4 +139,5 @@ const getHome = (req, res) => {
 }
 
 
+
 export default { getSignUp, postSignUp, getOtp, postOtp, postResendOtp, getLogin, postLogin, getHome }

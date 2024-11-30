@@ -1,21 +1,41 @@
-import express from "express"
-import connnectDb from "./connections/connection.js"
-import userRoute from "./routes/userRoutes.js"
-import nocache from "nocache"
-import session from "express-session"
+import express from "express";
+import passport from "passport";
+import session from "express-session";
+import connnectDb from "./connections/connection.js";
+import userRoute from "./routes/userRoutes.js";
+import nocache from "nocache";
+import { config } from "dotenv";
+import './utils/googleAuth.js';
 
-const app = express()
+config();  // Load environment variables
 
-app.set('view engine', 'ejs')
+const app = express();
+const PORT = 8000;
 
-app.use(express.static('public'))
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
-app.use(nocache())
-app.use(session({ secret: "mySecret", resave: false, saveUninitialized: true, cookie: { secure: false } }))
 
-app.use('/', userRoute)
+app.set('view engine', 'ejs');
 
-connnectDb()
+app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(nocache());
 
-app.listen(8000)
+// Express session
+app.use(session({
+  secret: 'mySecret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use('/', userRoute); 
+
+connnectDb();
+
+app.listen(PORT, () => {
+  console.log(`Server is running on ${PORT}`);
+});
