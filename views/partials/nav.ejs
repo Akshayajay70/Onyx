@@ -1,9 +1,19 @@
 <!------------ Navbar ---------->
 <div
-  class="fixed z-50 top-0 w-full h-22 flex items-center justify-between px-8 bg-gray-50 border-b-2 border-gray-700"
+  class="fixed z-50 top-0 w-full h-16 flex items-center justify-between px-6 bg-gray-50 border-b-2 border-gray-700"
 >
+  <!-- Mobile Menu Button -->
+  <div class="md:hidden">
+    <button id="menu-toggle" class="text-2xl text-slate-800 focus:outline-none">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+
   <!-- Left Side (Nav Links) -->
-  <div class="flex space-x-6 text-slate-800 font-medium">
+  <div
+    id="menu"
+    class="hidden md:flex md:space-x-6 text-slate-800 font-medium md:items-center"
+  >
     <a href="/home" class="hover:text-slate-500">Home</a>
     <a href="#" class="hover:text-slate-500">Shop</a>
     <a href="#" class="hover:text-slate-500">Contact Us</a>
@@ -11,12 +21,12 @@
   </div>
 
   <!-- Center (Logo) -->
-  <div class="flex-shrink-0 -ml-24">
-    <img src="/images/blacklogo.png" alt="logo" class="h-14 mx-auto " />
+  <div class="flex-shrink-0">
+    <img src="/images/blacklogo.png" alt="logo" class="h-12 mx-auto" />
   </div>
 
   <!-- Right Side (Icons) -->
-  <div class="flex space-x-8 text-slate-800 text-xl">
+  <div class="flex space-x-6 text-slate-800 text-xl">
     <a href="#" class="hover:text-slate-500"
       ><i class="fa-regular fa-heart"></i
     ></a>
@@ -28,3 +38,25 @@
     ></a>
   </div>
 </div>
+
+<!-- Mobile Menu -->
+<div
+  id="mobile-menu"
+  class="fixed top-20 left-0 w-full bg-gray-50 border-t border-gray-700 hidden md:hidden"
+>
+  <div class="flex flex-col space-y-4 p-4 text-slate-800 font-medium">
+    <a href="/home" class="hover:text-slate-500">Home</a>
+    <a href="#" class="hover:text-slate-500">Shop</a>
+    <a href="#" class="hover:text-slate-500">Contact Us</a>
+    <a href="#" class="hover:text-slate-500">About Us</a>
+  </div>
+</div>
+
+<script>
+  const menuToggle = document.getElementById("menu-toggle");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  menuToggle.addEventListener("click", () => {
+    mobileMenu.classList.toggle("hidden");
+  });
+</script>

@@ -27,7 +27,7 @@
     <div class="mt-16"></div>
 
     <!-- Centered Login Card -->
-    <div class="mt-28 flex items-center justify-center my-16">
+    <div class="mt-28 flex items-center justify-center my-16 px-4 sm:px-8">
       <div
         class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
       >
@@ -37,7 +37,7 @@
         <form action="/login" method="post" class="space-y-4">
           <!-- Show error message if it exists -->
           <% if (typeof error !== 'undefined') { %>
-          <div class="error-message" style="color: red"><%= error %></div>
+          <div class="error-message text-red-500 text-sm"><%= error %></div>
           <% } %>
 
           <!-- Email Input -->

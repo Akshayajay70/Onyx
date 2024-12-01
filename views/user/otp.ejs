@@ -1,155 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="tailwindcss/output.css" />
-    <title>Home Page</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-  </head>
 
-  <body class="bg-gray-300">
-    <%- include("../partials/nav") %>
-    <div class="mt-28 flex items-center justify-center my-16">
-      <div
-        class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
-      >
-        <h1 class="text-center mb-10 font-bold">Verify Your OTP</h1>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="tailwindcss/output.css" />
+  <title>Home Page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body class="bg-gray-300">
+  <%- include("../partials/nav") %>
+
+    <!-- OTP Section (Centered and Responsive) -->
+    <div class="mt-28 flex items-center justify-center my-16 px-4 sm:px-6 lg:px-8">
+      <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20">
+        <h1 class="text-center mb-10 font-bold text-2xl">Verify Your OTP</h1>
+
         <div id="otp-section" class="space-y-4">
-          <input
-            type="text"
-            id="otp"
-            name="userOtp"
-            placeholder="Enter OTP"
-            class="w-full p-3 rounded-lg bg-gray-300 text-slate-800"
-          />
+          <!-- OTP Input -->
+          <input type="text" id="otp" name="userOtp" placeholder="Enter OTP"
+            class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <div id="otp-error" class="error-text text-red-500"></div>
-          <button
-            id="verify-otp"
-            type="submit"
-            name="otp"
-            class="w-full py-2 bg-black text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
-          >
+
+          <!-- Verify OTP Button -->
+          <button id="verify-otp" type="submit" name="otp"
+            class="w-full py-2 bg-black text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700">
             Verify OTP
           </button>
-          <button
-            id="resend-otp"
-            type="submit"
-            class="w-full py-2 bg-gray-600 text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
-          >
+
+          <!-- Resend OTP Button -->
+          <button id="resend-otp" type="submit"
+            class="w-full py-2 bg-gray-600 text-white font-semibold rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700">
             Resend OTP <span id="timer">00:59</span>
           </button>
         </div>
       </div>
     </div>
+
     <%- include("../partials/footer") %>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const verifyBtn = document.getElementById("verify-otp");
-        const resendBtn = document.getElementById("resend-otp");
-        const otpInput = document.getElementById("otp");
-        const errorDiv = document.getElementById("otp-error");
-        const timerSpan = document.getElementById("timer");
+</body>
 
-        let timeLeft = parseInt(localStorage.getItem("otpTimer")) || 0;
-        let timerId;
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const verifyBtn = document.getElementById("verify-otp");
+    const resendBtn = document.getElementById("resend-otp");
+    const otpInput = document.getElementById("otp");
+    const errorDiv = document.getElementById("otp-error");
+    const timerSpan = document.getElementById("timer");
 
-        function updateTimerDisplay() {
-          if (timeLeft > 0) {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerSpan.textContent = `${minutes
-              .toString()
-              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-          } else {
-            timerSpan.textContent = ""; // Clear timer text when timer ends
-          }
+    let timeLeft = parseInt(localStorage.getItem("otpTimer")) || 0;
+    let timerId;
+
+    function updateTimerDisplay() {
+      if (timeLeft > 0) {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerSpan.textContent = `${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      } else {
+        timerSpan.textContent = ""; // Clear timer text when timer ends
+      }
+    }
+
+    function disableResendButton(disable = true) {
+      resendBtn.disabled = disable;
+      if (disable) {
+        resendBtn.classList.add("opacity-50", "cursor-not-allowed");
+      } else {
+        resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        timerSpan.textContent = ""; // Clear the timer text
+      }
+    }
+
+    function startTimer() {
+      disableResendButton();
+      clearInterval(timerId); // Clear any existing interval
+      timerId = setInterval(() => {
+        timeLeft--;
+        localStorage.setItem("otpTimer", timeLeft);
+        updateTimerDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          disableResendButton(false); // Enable resend button
+          localStorage.removeItem("otpTimer"); // Remove stored timer
         }
+      }, 1000);
+    }
 
-        function disableResendButton(disable = true) {
-          resendBtn.disabled = disable;
-          if (disable) {
-            resendBtn.classList.add("opacity-50", "cursor-not-allowed");
-          } else {
-            resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
-            timerSpan.textContent = ""; // Clear the timer text
-          }
-        }
+    // Initialize the timer if timeLeft > 0
+    if (timeLeft > 0) {
+      startTimer();
+    } else {
+      disableResendButton(false);
+      updateTimerDisplay();
+    }
 
-        function startTimer() {
-          disableResendButton();
-          clearInterval(timerId); // Clear any existing interval
-          timerId = setInterval(() => {
-            timeLeft--;
-            localStorage.setItem("otpTimer", timeLeft);
-            updateTimerDisplay();
+    // Verify OTP
+    verifyBtn.addEventListener("click", async () => {
+      try {
+        const formData = new FormData();
+        formData.append("userOtp", otpInput.value);
 
-            if (timeLeft <= 0) {
-              clearInterval(timerId);
-              disableResendButton(false); // Enable resend button
-              localStorage.removeItem("otpTimer"); // Remove stored timer
-            }
-          }, 1000);
-        }
+        const response = await fetch("/validate-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(formData),
+        });
 
-        // Initialize the timer if timeLeft > 0
-        if (timeLeft > 0) {
-          startTimer();
+        if (response.ok) {
+          localStorage.removeItem("otpTimer"); // Clear timer on success
+          window.location.href = "/home";
         } else {
-          disableResendButton(false);
-          updateTimerDisplay();
+          const data = await response.json();
+          errorDiv.textContent = data.error;
         }
+      } catch (err) {
+        errorDiv.textContent = "Validation failed";
+      }
+    });
 
-        // Verify OTP
-        verifyBtn.addEventListener("click", async () => {
-          try {
-            const formData = new FormData();
-            formData.append("userOtp", otpInput.value);
-
-            const response = await fetch("/validate-otp", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: new URLSearchParams(formData),
-            });
-
-            if (response.ok) {
-              localStorage.removeItem("otpTimer"); // Clear timer on success
-              window.location.href = "/home";
-            } else {
-              const data = await response.json();
-              errorDiv.textContent = data.error;
-            }
-          } catch (err) {
-            errorDiv.textContent = "Validation failed";
-          }
+    // Resend OTP
+    resendBtn.addEventListener("click", async () => {
+      try {
+        const response = await fetch("/resend-otp", {
+          method: "POST",
         });
 
-        // Resend OTP
-        resendBtn.addEventListener("click", async () => {
-          try {
-            const response = await fetch("/resend-otp", {
-              method: "POST",
-            });
+        if (response.ok) {
+          timeLeft = 60; // Reset timer
+          localStorage.setItem("otpTimer", timeLeft);
+          startTimer();
+          errorDiv.textContent = "OTP resent successfully";
+        } else {
+          errorDiv.textContent = "Failed to resend OTP";
+        }
+      } catch (err) {
+        errorDiv.textContent = "Failed to resend OTP";
+      }
+    });
+  });
+</script>
+</body>
 
-            if (response.ok) {
-              timeLeft = 60; // Reset timer
-              localStorage.setItem("otpTimer", timeLeft);
-              startTimer();
-              errorDiv.textContent = "OTP resent successfully";
-            } else {
-              errorDiv.textContent = "Failed to resend OTP";
-            }
-          } catch (err) {
-            errorDiv.textContent = "Failed to resend OTP";
-          }
-        });
-      });
-    </script>
-  </body>
 </html>
