@@ -1,0 +1,131 @@
+<!-- sidebar.ejs -->
+<aside
+  class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg md:block hidden"
+>
+  <!-- Logo -->
+  <div class="flex items-center justify-center mb-8">
+    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-12" />
+  </div>
+
+  <!-- Navigation Links -->
+  <nav class="space-y-6 text-sm" aria-label="Main Navigation">
+    <a
+      href="/admin/dashboard"
+      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+    >
+      <i class="material-icons">dashboard</i>
+      <span>Dashboard</span>
+    </a>
+    <a
+      href="#"
+      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+    >
+      <i class="material-icons">inventory_2</i>
+      <span>Products</span>
+    </a>
+    <a
+      href="#"
+      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+    >
+      <i class="material-icons">people</i>
+      <span>Customers</span>
+    </a>
+    <a
+      href="#"
+      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+    >
+      <i class="material-icons">shopping_cart</i>
+      <span>Orders</span>
+    </a>
+    <a
+      href="#"
+      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+    >
+      <i class="material-icons">category</i>
+      <span>Categories</span>
+    </a>
+    <form action="/admin/logout" method="get">
+      <button
+        type="submit"
+        class="flex items-center space-x-2 px-4 py-2 bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
+      >
+        <i class="material-icons">logout</i>
+        <span>Logout</span>
+      </button>
+    </form>
+  </nav>
+</aside>
+
+<!-- Mobile Header and Sidebar -->
+<div class="md:hidden">
+  <!-- Mobile Header -->
+  <header
+    class="fixed top-0 left-0 w-full bg-zinc-900 text-white p-4 flex justify-between items-center z-50"
+  >
+    <button
+      id="sidebar-toggle"
+      class="text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-zinc-900 rounded-lg p-1"
+      aria-label="Toggle Menu"
+      aria-expanded="false"
+    >
+      <i class="material-icons">menu</i>
+    </button>
+    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-8" />
+  </header>
+
+  <!-- Mobile Sidebar -->
+  <div
+    id="mobile-sidebar"
+    class="fixed top-0 left-0 w-full h-full bg-zinc-900 p-5 shadow-lg transform -translate-x-full transition-transform duration-300 z-40"
+    aria-hidden="true"
+  >
+    <nav class="mt-16 space-y-6 text-sm" aria-label="Mobile Navigation">
+      <!-- Same navigation items as desktop, but with proper mobile styling -->
+      <a
+        href="/admin/dashboard"
+        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+      >
+        <i class="material-icons">dashboard</i>
+        <span>Dashboard</span>
+      </a>
+      <a
+        href="#"
+        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+      >
+        <i class="material-icons">inventory_2</i>
+        <span>Products</span>
+      </a>
+      <a
+        href="#"
+        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+      >
+        <i class="material-icons">people</i>
+        <span>Customers</span>
+      </a>
+      <a
+        href="#"
+        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+      >
+        <i class="material-icons">shopping_cart</i>
+        <span>Orders</span>
+      </a>
+      <a
+        href="#"
+        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
+      >
+        <i class="material-icons">category</i>
+        <span>Categories</span>
+      </a>
+      <form action="/admin/logout" method="get">
+        <button
+          type="submit"
+          class="flex items-center space-x-2 px-4 py-2 bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
+        >
+          <i class="material-icons">logout</i>
+          <span>Logout</span>
+        </button>
+      </form>
+      <!-- ... (repeat for other nav items) ... -->
+    </nav>
+  </div>
+</div>

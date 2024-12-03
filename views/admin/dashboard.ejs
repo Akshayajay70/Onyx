@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Admin Dashboard for UrbanTick" />
+    <title>Admin Dashboard - UrbanTick</title>
+
+    <!-- Use only Material Icons to maintain consistency -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-500 text-white min-h-screen flex flex-col">
+    <%- include("../partials/sidebar") %>
+
+    <main class="flex-1 p-4 md:p-8 lg:ml-64" role="main">
+      <header
+        class="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+      >
+        <h1 class="text-2xl font-semibold text-gray-200">Sales Summary</h1>
+        <div class="flex items-center space-x-4 mt-4 md:mt-0">
+          <select
+            class="px-4 py-2 text-gray-800 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+          <button
+            class="px-4 py-2 text-black bg-white rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Download
+          </button>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Cards with improved accessibility and consistent styling -->
+        <div
+          class="p-6 bg-zinc-800 rounded-lg shadow-md flex flex-col items-center"
+        >
+          <h2 class="text-gray-400 text-lg">Revenue</h2>
+          <div class="flex items-center justify-between mt-2 w-full">
+            <p class="text-xl font-bold">₹ 7,825</p>
+            <p class="text-orange-500 font-semibold">+22%</p>
+          </div>
+          <div
+            class="w-full h-16 bg-gray-600 mt-4 rounded-md"
+            role="img"
+            aria-label="Revenue chart"
+          ></div>
+        </div>
+        <!-- Repeat for other cards -->
+      </section>
+    </main>
+
+    <footer class="text-sm py-4 mt-auto bg-gray-500 text-center text-black">
+      © 2024 Onyx. All Rights Reserved.
+    </footer>
+
+    <script>
+      // Improved mobile sidebar toggle functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const sidebarToggle = document.getElementById("sidebar-toggle");
+        const mobileSidebar = document.getElementById("mobile-sidebar");
+
+        if (sidebarToggle && mobileSidebar) {
+          sidebarToggle.addEventListener("click", function () {
+            const isHidden =
+              mobileSidebar.classList.contains("-translate-x-full");
+
+            mobileSidebar.classList.toggle("-translate-x-full");
+            sidebarToggle.setAttribute(
+              "aria-expanded",
+              isHidden ? "true" : "false"
+            );
+            mobileSidebar.setAttribute("aria-hidden", !isHidden);
+          });
+
+          // Close sidebar when clicking outside
+          document.addEventListener("click", function (event) {
+            if (
+              !mobileSidebar.contains(event.target) &&
+              !sidebarToggle.contains(event.target) &&
+              !mobileSidebar.classList.contains("-translate-x-full")
+            ) {
+              mobileSidebar.classList.add("-translate-x-full");
+              sidebarToggle.setAttribute("aria-expanded", "false");
+              mobileSidebar.setAttribute("aria-hidden", "true");
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
