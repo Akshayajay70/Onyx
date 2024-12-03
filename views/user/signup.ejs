@@ -60,6 +60,7 @@
           </div>
 
           <!-- Password Input with Show Icon -->
+          <!-- Password Input with Eye Icon -->
           <div class="relative">
             <input
               type="password"
@@ -69,13 +70,17 @@
               class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
-            <button type="button" class="absolute right-3 top-3">
-              <i class="fa-regular fa-eye"></i>
+            <button
+              type="button"
+              id="toggle-password"
+              class="absolute right-3 top-3"
+            >
+              <i class="fa-regular fa-eye" id="password-eye"></i>
             </button>
             <div id="password-error" class="error-text text-red-500"></div>
           </div>
 
-          <!-- Confirm Password Input with Show Icon -->
+          <!-- Confirm Password Input with Eye Icon -->
           <div class="relative">
             <input
               type="password"
@@ -85,8 +90,12 @@
               class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
-            <button type="button" class="absolute right-3 top-3">
-              <i class="fa-regular fa-eye"></i>
+            <button
+              type="button"
+              id="toggle-confirm-password"
+              class="absolute right-3 top-3"
+            >
+              <i class="fa-regular fa-eye" id="confirm-password-eye"></i>
             </button>
             <div
               id="confirmPassword-error"
@@ -128,5 +137,6 @@
 
     <!------------- Footer ------------>
     <%- include("../partials/footer") %>
+    <script src="/javascript/signupValidation.js"></script>
   </body>
 </html>

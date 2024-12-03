@@ -3,6 +3,7 @@ import passport from "passport";
 import session from "express-session";
 import connnectDb from "./connections/connection.js";
 import userRoute from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoute.js"
 import nocache from "nocache";
 import { config } from "dotenv";
 import './utils/googleAuth.js';
@@ -33,6 +34,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/', userRoute); 
+app.use('/admin', adminRoutes)
 
 connnectDb();
 
