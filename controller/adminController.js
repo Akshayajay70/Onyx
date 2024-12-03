@@ -1,4 +1,4 @@
-
+import User from '../model/userModel.js';
 import { config } from 'dotenv';
 
 config()
@@ -27,4 +27,38 @@ const getDashboard = (req, res) => {
     res.render('admin/dashboard')
 }
 
-export default { getAdmin, postAdmin, getLogout, getDashboard }
+
+// Get the list of all users
+const getUserList = async (req, res) => {
+    try {
+        const userList = await User.find(); // Fetch all users from the database
+        res.render('admin/userList', { userList }); // Render a view to display the users
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+};
+
+const getToggle = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await User.findById(userId);
+  
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+  
+      // Toggle the block status
+      user.blocked = !user.blocked;
+      await user.save();
+  
+      // Redirect back to the user list page
+      res.redirect('/admin/userList');
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+    }
+  }
+
+
+export default { getAdmin, postAdmin, getLogout, getDashboard, getUserList, getToggle }

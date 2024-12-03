@@ -123,6 +123,10 @@ const postLogin = async (req, res) => {
             return res.status(400).json({ error: 'Please verify your email first' });
         }
 
+        if (user.blocked) {
+            return res.status(400).json({ error: 'You\'re blocked' });
+        }
+
         req.session.user = {
             id: user._id,
             email: user.email

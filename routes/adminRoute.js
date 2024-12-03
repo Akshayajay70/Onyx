@@ -12,4 +12,8 @@ router.get('/dashboard', adminMiddleware.checkSession, adminController.getDashbo
 
 router.get('/logout', adminMiddleware.checkSession, adminController.getLogout);
 
+router.get('/userList', adminMiddleware.checkSession, adminController.getUserList)
+
+router.post('/user/:id/toggle-block', adminMiddleware.checkSession, adminController.getToggle);
+  
 export default router;
