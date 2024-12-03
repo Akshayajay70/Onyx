@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-500 flex items-center justify-center min-h-screen ">
+  <!-- Logo Section -->
+  <div class="absolute top-10 text-center">
+    <img src="/images/blacklogo.png" alt="UrbanTick Logo" class="h-20 mx-auto">
+  </div>
+
+  <!-- Login Box -->
+  <div class="w-full max-w-md px-8 py-8 bg-zinc-900 rounded-lg shadow-lg text-center">
+    <h2 class="mb-8 text-xl font-semibold text-gray-200">Admin Login</h2>
+
+
+  <form action="/admin/login" method="POST" class="space-y-6">
+      <!-- Email Input -->
+      <div class="relative">
+        <input type="email" name="email" placeholder="Email" aria-label="Email" required
+          class="w-full px-4 py-2 text-white bg-transparent border border-gray-600 rounded-md focus:outline-none focus:border-white">
+      </div>
+      
+      <!-- Password Input -->
+      <div class="relative">
+        <input type="password" name="password" placeholder="Password" aria-label="Password" required
+          class="w-full px-4 py-2 text-white bg-transparent border border-gray-600 rounded-md focus:outline-none focus:border-white">
+      </div>
+      
+      <!-- Login Button -->
+      <button type="submit" class="w-full py-2 text-black bg-white rounded-md hover:bg-gray-200">Login</button>
+  </form>
+    </div>
+
+  <!-- Footer -->
+  <footer class="absolute bottom-5 text-sm">
+    © 2024 Onyx. All Rights Reserved.
+  </footer>
+
+
+</body>
+</html>
