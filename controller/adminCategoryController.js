@@ -15,11 +15,28 @@ const getCategories = async (req, res) => {
 const addCategory = async (req, res) => {
     try {
         const { categoryName, categoryDescription } = req.body;
+
+        // Validate categoryName
+        if (!/^[A-Za-z]+$/.test(categoryName.trim())) {
+            return res.status(400).send('Category name can only contain alphabets.');
+        }
+        if (categoryName.trim().length > 10) {
+            return res.status(400).send('Category name must not exceed 10 characters.');
+        }
+
+        // Validate categoryDescription
+        if (categoryDescription.length < 25 || categoryDescription.length > 100) {
+            return res.status(400).send(
+                'Description must be between 25 and 100 characters.'
+            );
+        }
+
         const newCategory = new Category({
-            name: categoryName,
+            name: categoryName.trim(),
             description: categoryDescription,
-            isActive: true, // Default to active
+            isActive: true,
         });
+
         await newCategory.save();
         res.redirect('/admin/category');
     } catch (error) {
@@ -32,10 +49,27 @@ const addCategory = async (req, res) => {
 const editCategory = async (req, res) => {
     try {
         const { categoryId, categoryName, categoryDescription } = req.body;
+
+        // Validate categoryName
+        if (!/^[A-Za-z]+$/.test(categoryName.trim())) {
+            return res.status(400).send('Category name can only contain alphabets.');
+        }
+        if (categoryName.trim().length > 10) {
+            return res.status(400).send('Category name must not exceed 10 characters.');
+        }
+
+        // Validate categoryDescription
+        if (categoryDescription.length < 25 || categoryDescription.length > 100) {
+            return res.status(400).send(
+                'Description must be between 25 and 100 characters.'
+            );
+        }
+
         await Category.findByIdAndUpdate(categoryId, {
-            name: categoryName,
+            name: categoryName.trim(),
             description: categoryDescription,
         });
+
         res.redirect('/admin/category');
     } catch (error) {
         console.error('Error editing category:', error);
