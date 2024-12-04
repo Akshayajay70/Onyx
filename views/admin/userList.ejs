@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Admin UserList</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
   </head>
-  <body class="bg-gray-500 text-white min-h-screen">
+  <body class="mybg-green text-white min-h-screen">
     <!-- Sidebar -->
     <%- include("../partials/sidebar") %>
 
@@ -25,7 +25,7 @@
     <div class="lg:ml-64 transition-all" id="main-content">
       <!-- Header -->
       <header
-        class="flex items-center justify-between mb-8 p-4 lg:p-8 bg-gray-500 border-b border-gray-700"
+        class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700"
       >
         <button
           id="toggleSidebar"
