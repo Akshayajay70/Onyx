@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Categories</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
+  </head>
+  <body class="bg-gray-900 text-gray-200 min-h-screen">
+    <%- include('../partials/sidebar') %>
+
+    <main class="ml-64 p-8">
+      <div class="bg-gray-800 p-6 rounded-lg">
+        <header class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl font-bold text-gray-200">Manage Categories</h1>
+          <!-- Add Category Button -->
+          <button
+            onclick="openAddModal()"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            Add Category
+          </button>
+        </header>
+
+        <!-- List of Categories -->
+        <div class="space-y-4">
+          <% categories.forEach(category => { %>
+          <div
+            class="bg-gray-700 p-4 rounded-lg flex items-center justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-semibold"><%= category.name %></h2>
+              <p class="text-sm text-gray-400"><%= category.description %></p>
+              <% if (!category.isActive) { %>
+              <span class="text-red-500 text-xs">Inactive</span>
+              <% } %>
+            </div>
+            <div class="flex space-x-4">
+              <!-- Hide/Unhide Button -->
+              <button
+                onclick="toggleCategoryStatus('<%= category._id %>')"
+                class="text-yellow-500 hover:text-yellow-400"
+              >
+                <%= category.isActive ? 'Hide' : 'Unhide' %>
+              </button>
+
+              <!-- Edit Button -->
+              <button
+                onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
+                class="text-green-500 hover:text-green-400"
+              >
+                Edit
+              </button>
+
+              <!-- Delete Button -->
+              <button
+                onclick="confirmDeleteCategory('<%= category._id %>')"
+                class="text-red-500 hover:text-red-400"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+    </main>
+
+    <!-- Add Category Modal -->
+    <div
+      id="addModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div class="bg-gray-800 p-6 rounded-lg w-96">
+        <h2 class="text-xl font-bold text-gray-200 mb-4">Add Category</h2>
+        <form id="addCategoryForm" action="/admin/category/add" method="POST">
+          <input
+            type="text"
+            name="categoryName"
+            placeholder="Category Name"
+            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            required
+          />
+          <textarea
+            name="categoryDescription"
+            placeholder="Category Description"
+            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            required
+          ></textarea>
+          <div class="flex justify-end space-x-4">
+            <button
+              type="button"
+              onclick="closeAddModal()"
+              class="bg-gray-600 text-white px-4 py-2 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg"
+            >
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Category Modal -->
+    <div
+      id="editModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div class="bg-gray-800 p-6 rounded-lg w-96">
+        <h2 class="text-xl font-bold text-gray-200 mb-4">Edit Category</h2>
+        <form id="editCategoryForm" action="/admin/category/edit" method="POST">
+          <input type="hidden" name="categoryId" id="editCategoryId" />
+          <input
+            type="text"
+            name="categoryName"
+            id="editCategoryName"
+            placeholder="Category Name"
+            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            required
+          />
+          <textarea
+            name="categoryDescription"
+            id="editCategoryDescription"
+            placeholder="Category Description"
+            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            required
+          ></textarea>
+          <div class="flex justify-end space-x-4">
+            <button
+              type="button"
+              onclick="closeEditModal()"
+              class="bg-gray-600 text-white px-4 py-2 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded-lg"
+            >
+              Update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Open Add Modal
+      function openAddModal() {
+        document.getElementById("addModal").classList.remove("hidden");
+      }
+
+      // Close Add Modal
+      function closeAddModal() {
+        document.getElementById("addModal").classList.add("hidden");
+      }
+
+      // Open Edit Modal
+      function openEditModal(id, name, description) {
+        document.getElementById("editCategoryId").value = id;
+        document.getElementById("editCategoryName").value = name;
+        document.getElementById("editCategoryDescription").value = description;
+        document.getElementById("editModal").classList.remove("hidden");
+      }
+
+      // Close Edit Modal
+      function closeEditModal() {
+        document.getElementById("editModal").classList.add("hidden");
+      }
+
+      // Confirm Delete Category
+      function confirmDeleteCategory(categoryId) {
+        if (confirm("Are you sure you want to delete this category?")) {
+          window.location.href = `/admin/category/delete?id=${categoryId}`;
+        }
+      }
+
+      // Toggle Category Status
+      function toggleCategoryStatus(categoryId) {
+        window.location.href = `/admin/category/toggle?id=${categoryId}`;
+      }
+    </script>
+  </body>
+</html>
