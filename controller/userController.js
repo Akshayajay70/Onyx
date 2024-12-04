@@ -51,15 +51,11 @@ const postSignUp = async (req, res) => {
     }
 }
 
-const getOtp = (req, res) => {
-    res.render('user/otp')
-}
-
 const postOtp = async (req, res) => {
     try {
         const { userOtp } = req.body;
         const user = await userSchema.findOne({ otp: userOtp });
-
+        
         if (!user || Date.now() > user.otpExpiresAt) {
             if (user) {
                 user.otpAttempts += 1;
@@ -71,13 +67,15 @@ const postOtp = async (req, res) => {
             }
             return res.status(400).json({ error: 'Invalid OTP' });
         }
-
+        
         await userSchema.findByIdAndUpdate(user._id, {
             $set: { isVerified: true },
             $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
         });
-
-        res.redirect('/home');
+        
+        req.session.user = true
+        res.render('user/home');
+        
     } catch (error) {
         res.status(500).json({ error: 'Validation failed' });
     }
@@ -127,10 +125,7 @@ const postLogin = async (req, res) => {
             return res.status(400).json({ error: 'You\'re blocked' });
         }
 
-        req.session.user = {
-            id: user._id,
-            email: user.email
-        };
+        req.session.user = true
 
         res.redirect('/home');
     } catch (error) {
@@ -142,6 +137,11 @@ const getHome = (req, res) => {
     res.render('user/home')
 }
 
+const getLogout = (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+}
 
 
-export default { getSignUp, postSignUp, getOtp, postOtp, postResendOtp, getLogin, postLogin, getHome }
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout }
