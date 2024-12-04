@@ -1,6 +1,7 @@
 import userSchema from '../model/userModel.js'
 import bcrypt from 'bcrypt'
 import { generateOTP, sendOTPEmail } from '../utils/sendOTP.js'
+import passport from 'passport';
 
 const saltRounds = 10;
 
@@ -55,7 +56,7 @@ const postOtp = async (req, res) => {
     try {
         const { userOtp } = req.body;
         const user = await userSchema.findOne({ otp: userOtp });
-        
+
         if (!user || Date.now() > user.otpExpiresAt) {
             if (user) {
                 user.otpAttempts += 1;
@@ -67,15 +68,15 @@ const postOtp = async (req, res) => {
             }
             return res.status(400).json({ error: 'Invalid OTP' });
         }
-        
+
         await userSchema.findByIdAndUpdate(user._id, {
             $set: { isVerified: true },
             $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
         });
-        
+
         req.session.user = true
         res.render('user/home');
-        
+
     } catch (error) {
         res.status(500).json({ error: 'Validation failed' });
     }
@@ -143,5 +144,29 @@ const getLogout = (req, res) => {
     });
 }
 
+const getGoogleCallback = (req, res) => {
+    passport.authenticate("google", { failureRedirect: "/login" }, (err, user, info) => {
+        if (err || !user) {
+            return res.redirect("/login");  // Redirect to login page in case of failure
+        }
 
-export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout }
+        // Store user information in session after successful Google login
+        req.session.user = {
+            id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+        };
+
+        // Redirect to home page after successful login
+        return res.redirect("/home");
+    })(req, res);
+};
+
+const getGoogle = (req, res) => {
+    passport.authenticate("google", {
+        scope: ["email", "profile"],
+    })(req, res);
+};
+
+
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle}

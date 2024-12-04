@@ -23,6 +23,7 @@ passport.use(new GoogleStrategy({
 
         await user.save();
       }
+      
 
       return done(null, user);  // Return the user to the next middleware
     } catch (error) {
