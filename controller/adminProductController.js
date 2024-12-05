@@ -235,19 +235,15 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
     try {
         const productId = req.params.id;
-        console.log('Deleting product:', productId); // Debug log
         
         // Find the product first to get the variant ID
         const product = await Product.findById(productId);
         if (!product) {
-            console.log('Product not found'); // Debug log
             return res.status(404).json({ message: 'Product not found' });
         }
 
         // Get variant ID before deleting product
         const variantId = product.varientId;
-        console.log('Associated variant:', variantId); // Debug log
-
         // Find variant to get image URLs
         const variant = await Variant.findById(variantId);
         if (variant && variant.imageUrl) {
@@ -257,7 +253,6 @@ export const deleteProduct = async (req, res) => {
                     const fullPath = path.join('public', imagePath);
                     if (fs.existsSync(fullPath)) {
                         fs.unlinkSync(fullPath);
-                        console.log('Deleted image:', fullPath); // Debug log
                     }
                 } catch (err) {
                     console.error('Error deleting image file:', err);
@@ -270,10 +265,8 @@ export const deleteProduct = async (req, res) => {
         await Product.findByIdAndDelete(productId);
         await Variant.findByIdAndDelete(variantId);
 
-        console.log('Product and variant deleted successfully'); // Debug log
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
-        console.error('Error in delete operation:', error); // Debug log
         res.status(500).json({ 
             message: 'Error deleting product',
             error: error.message 

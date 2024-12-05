@@ -8,6 +8,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+      .image-preview {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 0;
+        padding-bottom: 100%; /* Maintain a square aspect ratio */
+      }
+
+      .image-preview img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
   </head>
   <body class="mybg-green text-white min-h-screen">
     <%- include("../partials/sidebar") %>
@@ -140,15 +159,24 @@
             </div>
 
             <div class="col-span-2">
-              <label class="block text-gray-400 mb-1">Images (Select up to 3 images)</label>
+              <label class="block text-gray-400 mb-1">
+                Images (Select up to 3 images - Max 5MB each, Square format recommended)
+              </label>
               <div class="grid grid-cols-3 gap-4">
                 <% for(let i = 0; i < 3; i++) { %>
                   <div class="image-upload-container">
-                    <input type="file" name="images" class="product-image hidden" accept="image/*" required>
-                    <div class="image-preview bg-zinc-800 border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-green-500 transition-colors">
+                    <input type="file" 
+                           name="images" 
+                           class="product-image hidden" 
+                           accept="image/*"
+                           data-max-size="5120" <!-- 5MB in KB -->
+                           required>
+                    <div class="image-preview bg-zinc-800 border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-green-500 transition-colors h-48">
                       <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
                       <p class="text-sm text-gray-400">Click to upload</p>
+                      <p class="text-xs text-gray-500 mt-1">Max 5MB, Square format</p>
                     </div>
+                    <p class="error-message text-red-500 text-xs mt-1 hidden"></p>
                   </div>
                 <% } %>
               </div>
@@ -394,21 +422,61 @@
           });
         });
 
-        // Image preview functionality
+        // Image handling functions
+        function handleImageUpload(input, preview, errorMessage) {
+          const file = input.files[0];
+          const maxSize = input.getAttribute('data-max-size') * 1024; // Convert KB to bytes
+
+          // Reset error message
+          errorMessage.textContent = '';
+          errorMessage.classList.add('hidden');
+          
+          if (file) {
+            // Check file size
+            if (file.size > maxSize) {
+              errorMessage.textContent = 'Image size must be less than 5MB';
+              errorMessage.classList.remove('hidden');
+              input.value = '';
+              return;
+            }
+
+            // Check image dimensions
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+              img.src = e.target.result;
+              img.onload = function() {
+                // Check aspect ratio
+                const aspectRatio = this.width / this.height;
+                if (aspectRatio < 0.8 || aspectRatio > 1.2) {
+                  errorMessage.textContent = 'Please use a square image (1:1 ratio)';
+                  errorMessage.classList.remove('hidden');
+                  input.value = '';
+                  return;
+                }
+
+                // If all checks pass, show preview
+                preview.innerHTML = `
+                  <img src="${e.target.result}" 
+                       class="w-full h-full object-cover rounded">
+                `;
+              };
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+
+        // Update image upload event listeners
         document.querySelectorAll('.image-upload-container').forEach(container => {
           const preview = container.querySelector('.image-preview');
           const input = container.querySelector('input[type="file"]');
+          const errorMessage = container.querySelector('.error-message');
 
           preview.addEventListener('click', () => input.click());
 
-          input.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                preview.innerHTML = `<img src="${e.target.result}" class="w-full h-32 object-cover rounded">`;
-              };
-              reader.readAsDataURL(e.target.files[0]);
-            }
+          input.addEventListener('change', () => {
+            handleImageUpload(input, preview, errorMessage);
           });
         });
       });
