@@ -5,29 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="tailwindcss/output.css" />
     <title>Home Page</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
   </head>
 
-  <body class="bg-gray-300">
-    <!------------ Navbar ---------->
+  <body class="bg-gray-100">
     <%- include("../partials/nav") %>
-    <div class="mt-16"></div>
-
-    <!-- Page Content -->
-    <div class="w-full mt-16">
-      <img src="/images/main-banner.png" alt="Banner Image" class="w-full" />
+    
+    <!-- Banner Section -->
+    <div class="w-full h-[500px] relative overflow-hidden mt-16">
+      <img 
+        src="/images/bannerImage.png" 
+        alt="Banner"
+        class="w-full h-full object-cover object-center animate-fadeIn"
+      >
+      
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+    <!-- Products Grid -->
+    <div class="container mx-auto px-4 py-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Featured Products</h2>
       
+      <!-- Update grid to better handle 5 items -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
+        <% products.forEach(product => { %>
+          <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+            <!-- Product Image with Discount Badge -->
+            <div class="relative aspect-square overflow-hidden">
+              <img 
+                src="<%= product.varientId.imageUrl[0] %>" 
+                alt="<%= product.productName %>"
+                class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              >
+              <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                  -<%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%
+                </div>
+              <% } %>
+            </div>
 
-    <!------------- Footer ------------>
+            <!-- Product Info -->
+            <div class="p-3">
+              <!-- Product Name -->
+              <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
+                <%= product.productName %>
+              </h2>
+
+              <!-- Price Section -->
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                    <span class="text-gray-500 line-through text-xs">₹<%= product.varientId.price %></span>
+                  <% } %>
+                  <span class="text-base font-bold text-gray-900">₹<%= product.varientId.discountPrice %></span>
+                </div>
+
+                <!-- Divider Line -->
+                <div class="border-b border-gray-200 my-1"></div>
+
+                <!-- Savings Info -->
+                <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                  <div class="text-green-600 text-xs font-medium">
+                    Save ₹<%= product.varientId.price - product.varientId.discountPrice %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
     <%- include("../partials/footer") %>
+
+    <style>
+      /* Custom hover effect for product cards */
+      .product-card:hover .product-image {
+        transform: scale(1.05);
+      }
+      
+      /* Smooth transitions */
+      .product-image {
+        transition: transform 0.3s ease-in-out;
+      }
+      
+      /* Price animation */
+      @keyframes priceHighlight {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      
+      .price-highlight {
+        animation: priceHighlight 0.3s ease-in-out;
+      }
+
+      /* New animation styles */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideDown {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 1s ease-out;
+      }
+
+      .animate-slideDown {
+        animation: slideDown 1s ease-out;
+      }
+
+      .animate-slideUp {
+        animation: slideUp 1s ease-out;
+      }
+    </style>
   </body>
 </html>

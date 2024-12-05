@@ -2,6 +2,7 @@ import userSchema from '../model/userModel.js'
 import bcrypt from 'bcrypt'
 import { generateOTP, sendOTPEmail } from '../utils/sendOTP.js'
 import passport from 'passport';
+import Product from '../model/productModel.js'
 
 const saltRounds = 10;
 
@@ -134,9 +135,20 @@ const postLogin = async (req, res) => {
     }
 }
 
-const getHome = (req, res) => {
-    res.render('user/home')
-}
+const getHome = async (req, res) => {
+    try {
+        const products = await Product.find({ isActive: true })
+            .populate('categoriesId')
+            .populate('varientId')
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        res.render('user/home', { products });
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.render('user/home', { products: [] });
+    }
+};
 
 const getLogout = (req, res) => {
     req.session.destroy(() => {
