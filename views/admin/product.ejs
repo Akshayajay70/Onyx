@@ -53,6 +53,7 @@
                 <th class="py-3 px-4">Gender</th>
                 <th class="py-3 px-4">Price</th>
                 <th class="py-3 px-4">Stock</th>
+                <th class="py-3 px-4">Color</th>
                 <th class="py-3 px-4">Status</th>
                 <th class="py-3 px-4">Actions</th>
               </tr>
@@ -60,12 +61,35 @@
             <tbody>
               <% products.forEach((product) => { %>
               <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                <td class="py-3 px-4"><%= product.productName %></td>
-                <td class="py-3 px-4"><%= product.brand %></td>
-                <td class="py-3 px-4"><%= product.categoriesId.name %></td>
-                <td class="py-3 px-4 capitalize"><%= product.gender %></td>
-                <td class="py-3 px-4">₹<%= product.price %></td>
-                <td class="py-3 px-4"><%= product.stock %></td>
+                <td class="py-3 px-4">
+                  <div class="font-medium"><%= product.productName %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium"><%= product.brand %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium"><%= product.categoriesId.name %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="capitalize font-medium"><%= product.gender %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="text-sm">
+                    <div class="font-medium">₹<%= product.varientId.price %></div>
+                    <div class="text-gray-500">
+                      <span class="text-green-500">-<%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%</span>
+                      <span class="line-through">₹<%= product.varientId.discountPrice %></span>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium <%= product.varientId.stock < 10 ? 'text-red-500' : 'text-green-500' %>">
+                    <%= product.varientId.stock %>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium"><%= product.varientId.color %></div>
+                </td>
                 <td class="py-3 px-4">
                   <span class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500' : 'bg-red-500' %>">
                     <%= product.isActive ? 'Active' : 'Inactive' %>
@@ -101,17 +125,31 @@
         <form id="productForm" enctype="multipart/form-data">
           <input type="hidden" id="productId" name="productId">
           
+          <div id="formErrorMessage" class="hidden bg-red-500 text-white p-3 rounded mb-4"></div>
+          
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-gray-400 mb-1">Product Name</label>
-              <input type="text" name="productName" id="productName" required
+              <input type="text" 
+                     name="productName" 
+                     id="productName" 
+                     required
+                     pattern="[A-Za-z\s]+"
+                     oninput="this.value = capitalizeAndTrim(this.value)"
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
+              <p class="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
             </div>
 
             <div>
               <label class="block text-gray-400 mb-1">Brand</label>
-              <input type="text" name="brand" id="brand" required
+              <input type="text" 
+                     name="brand" 
+                     id="brand" 
+                     required
+                     pattern="[A-Za-z\s]+"
+                     oninput="this.value = capitalizeAndTrim(this.value)"
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
+              <p class="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
             </div>
 
             <div>
@@ -136,8 +174,14 @@
 
             <div>
               <label class="block text-gray-400 mb-1">Color</label>
-              <input type="text" name="color" id="color" required
+              <input type="text" 
+                     name="color" 
+                     id="color" 
+                     required
+                     pattern="[A-Za-z\s]+"
+                     oninput="this.value = capitalizeAndTrim(this.value)"
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
+              <p class="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
             </div>
 
             <div>
@@ -160,7 +204,7 @@
 
             <div class="col-span-2">
               <label class="block text-gray-400 mb-1">
-                Images (Select up to 3 images - Max 5MB each, Square format recommended)
+                Images (All 3 images are required - Max 5MB each, Square format)
               </label>
               <div class="grid grid-cols-3 gap-4">
                 <% for(let i = 0; i < 3; i++) { %>
@@ -169,12 +213,12 @@
                            name="images" 
                            class="product-image hidden" 
                            accept="image/*"
-                           data-max-size="5120" <!-- 5MB in KB -->
+                           data-max-size="5120"
                            required>
                     <div class="image-preview bg-zinc-800 border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-green-500 transition-colors h-48">
                       <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
                       <p class="text-sm text-gray-400">Click to upload</p>
-                      <p class="text-xs text-gray-500 mt-1">Max 5MB, Square format</p>
+                      <p class="text-xs text-gray-500 mt-1">Required image <%= i + 1 %></p>
                     </div>
                     <p class="error-message text-red-500 text-xs mt-1 hidden"></p>
                   </div>
@@ -292,30 +336,85 @@
         });
 
         // Handle Form Submission
-        productForm.addEventListener('submit', async (e) => {
+        productForm.addEventListener('submit', async function(e) {
           e.preventDefault();
-          const formData = new FormData(productForm);
-          const productId = document.getElementById('productId').value;
           
+          // Reset error message
+          const errorMessageDiv = document.getElementById('formErrorMessage');
+          errorMessageDiv.classList.add('hidden');
+          errorMessageDiv.textContent = '';
+
+          // Validate text inputs
+          const nameInput = document.getElementById('productName');
+          const brandInput = document.getElementById('brand');
+          const colorInput = document.getElementById('color');
+          
+          const letterPattern = /^[A-Za-z\s]+$/;
+          let errors = [];
+
+          if (!letterPattern.test(nameInput.value)) {
+            errors.push('Product Name must contain only letters and spaces');
+          }
+          
+          if (!letterPattern.test(brandInput.value)) {
+            errors.push('Brand must contain only letters and spaces');
+          }
+          
+          if (!letterPattern.test(colorInput.value)) {
+            errors.push('Color must contain only letters and spaces');
+          }
+
+          // Check if all 3 images are selected
+          const imageInputs = document.querySelectorAll('input[type="file"]');
+          let imageCount = 0;
+          imageInputs.forEach(input => {
+            if (input.files && input.files[0]) {
+              imageCount++;
+            }
+          });
+
+          if (imageCount !== 3) {
+            errors.push('Please upload exactly 3 images');
+          }
+
+          // Check for any visible error messages from image validation
+          const imageErrors = document.querySelectorAll('.error-message:not(.hidden)');
+          if (imageErrors.length > 0) {
+            errors.push('Please fix all image errors before submitting');
+          }
+
+          // If there are any errors, display them and stop submission
+          if (errors.length > 0) {
+            errorMessageDiv.textContent = errors.join('\n');
+            errorMessageDiv.classList.remove('hidden');
+            return false;
+          }
+
+          // If validation passes, prepare form data and submit
           try {
+            const formData = new FormData(this);
+            const productId = document.getElementById('productId').value;
+            
             const url = productId 
-              ? `/admin/product/edit/${productId}` // Edit existing product
-              : '/admin/product/add'; // Add new product
-              
+              ? `/admin/product/edit/${productId}`
+              : '/admin/product/add';
+
             const response = await fetch(url, {
-              method: 'POST', // Both add and edit use POST
+              method: 'POST',
               body: formData
             });
 
             if (response.ok) {
               window.location.reload();
             } else {
-              const error = await response.json();
-              alert(error.message || 'Error processing request');
+              const data = await response.json();
+              errorMessageDiv.textContent = data.message || 'Error processing request';
+              errorMessageDiv.classList.remove('hidden');
             }
           } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred while processing your request');
+            errorMessageDiv.textContent = 'An error occurred while processing your request';
+            errorMessageDiv.classList.remove('hidden');
           }
         });
 
@@ -425,58 +524,109 @@
         // Image handling functions
         function handleImageUpload(input, preview, errorMessage) {
           const file = input.files[0];
-          const maxSize = input.getAttribute('data-max-size') * 1024; // Convert KB to bytes
+          const maxSize = input.getAttribute('data-max-size') * 1024;
 
-          // Reset error message
           errorMessage.textContent = '';
           errorMessage.classList.add('hidden');
           
-          if (file) {
-            // Check file size
-            if (file.size > maxSize) {
-              errorMessage.textContent = 'Image size must be less than 5MB';
-              errorMessage.classList.remove('hidden');
-              input.value = '';
-              return;
-            }
-
-            // Check image dimensions
-            const img = new Image();
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-              img.src = e.target.result;
-              img.onload = function() {
-                // Check aspect ratio
-                const aspectRatio = this.width / this.height;
-                if (aspectRatio < 0.8 || aspectRatio > 1.2) {
-                  errorMessage.textContent = 'Please use a square image (1:1 ratio)';
-                  errorMessage.classList.remove('hidden');
-                  input.value = '';
-                  return;
-                }
-
-                // If all checks pass, show preview
-                preview.innerHTML = `
-                  <img src="${e.target.result}" 
-                       class="w-full h-full object-cover rounded">
-                `;
-              };
-            };
-            reader.readAsDataURL(file);
+          if (!file) {
+            errorMessage.textContent = 'Image is required';
+            errorMessage.classList.remove('hidden');
+            return;
           }
+
+          if (file.size > maxSize) {
+            errorMessage.textContent = 'Image size must be less than 5MB';
+            errorMessage.classList.remove('hidden');
+            input.value = '';
+            return;
+          }
+
+          const img = new Image();
+          const reader = new FileReader();
+
+          reader.onload = function(e) {
+            img.src = e.target.result;
+            img.onload = function() {
+              const aspectRatio = this.width / this.height;
+              if (aspectRatio < 0.8 || aspectRatio > 1.2) {
+                errorMessage.textContent = 'Please use a square image (1:1 ratio)';
+                errorMessage.classList.remove('hidden');
+                input.value = '';
+                return;
+              }
+
+              preview.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="w-full h-full object-cover rounded">
+              `;
+            };
+          };
+          reader.readAsDataURL(file);
         }
 
-        // Update image upload event listeners
+        // Initialize image upload handlers
         document.querySelectorAll('.image-upload-container').forEach(container => {
           const preview = container.querySelector('.image-preview');
           const input = container.querySelector('input[type="file"]');
           const errorMessage = container.querySelector('.error-message');
 
           preview.addEventListener('click', () => input.click());
+          input.addEventListener('change', () => handleImageUpload(input, preview, errorMessage));
+        });
 
-          input.addEventListener('change', () => {
-            handleImageUpload(input, preview, errorMessage);
+        function capitalizeAndTrim(value) {
+          // Remove extra spaces and trim
+          value = value.replace(/\s+/g, ' ').trim();
+          
+          // Capitalize first letter of each word
+          return value.split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        }
+
+        // Form validation
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+          const nameInput = document.getElementById('productName');
+          const brandInput = document.getElementById('brand');
+          const colorInput = document.getElementById('color');
+          
+          // Check if inputs contain only letters and spaces
+          const letterPattern = /^[A-Za-z\s]+$/;
+          let isValid = true;
+          let errorMessage = '';
+
+          if (!letterPattern.test(nameInput.value)) {
+            errorMessage += 'Product Name must contain only letters and spaces\n';
+            isValid = false;
+          }
+          
+          if (!letterPattern.test(brandInput.value)) {
+            errorMessage += 'Brand must contain only letters and spaces\n';
+            isValid = false;
+          }
+          
+          if (!letterPattern.test(colorInput.value)) {
+            errorMessage += 'Color must contain only letters and spaces\n';
+            isValid = false;
+          }
+
+          if (!isValid) {
+            e.preventDefault();
+            alert(errorMessage);
+            return false;
+          }
+
+          // Capitalize and trim all text inputs before submission
+          nameInput.value = capitalizeAndTrim(nameInput.value);
+          brandInput.value = capitalizeAndTrim(brandInput.value);
+          colorInput.value = capitalizeAndTrim(colorInput.value);
+        });
+
+        // Initialize all text inputs with proper formatting
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+          input.addEventListener('blur', function() {
+            this.value = capitalizeAndTrim(this.value);
           });
         });
       });
