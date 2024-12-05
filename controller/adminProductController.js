@@ -4,7 +4,6 @@ import Category from '../model/categoryModel.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import mongoose from 'mongoose';
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -234,40 +233,51 @@ export const updateProduct = async (req, res) => {
 
 // Delete Product
 export const deleteProduct = async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-        const product = await Product.findByIdAndDelete(req.params.id).session(session);
-
+        const productId = req.params.id;
+        console.log('Deleting product:', productId); // Debug log
+        
+        // Find the product first to get the variant ID
+        const product = await Product.findById(productId);
         if (!product) {
-            await session.abortTransaction();
-            session.endSession();
+            console.log('Product not found'); // Debug log
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Delete associated variant and images
-        const variant = await Variant.findByIdAndDelete(product.varientId).session(session);
+        // Get variant ID before deleting product
+        const variantId = product.varientId;
+        console.log('Associated variant:', variantId); // Debug log
 
-        // Delete image files
+        // Find variant to get image URLs
+        const variant = await Variant.findById(variantId);
         if (variant && variant.imageUrl) {
+            // Delete image files from storage
             variant.imageUrl.forEach(imagePath => {
-                const fullPath = path.join('public', imagePath);
-                if (fs.existsSync(fullPath)) {
-                    fs.unlinkSync(fullPath);
+                try {
+                    const fullPath = path.join('public', imagePath);
+                    if (fs.existsSync(fullPath)) {
+                        fs.unlinkSync(fullPath);
+                        console.log('Deleted image:', fullPath); // Debug log
+                    }
+                } catch (err) {
+                    console.error('Error deleting image file:', err);
+                    // Continue with deletion even if image removal fails
                 }
             });
         }
 
-        await session.commitTransaction();
-        session.endSession();
+        // Delete the product and variant
+        await Product.findByIdAndDelete(productId);
+        await Variant.findByIdAndDelete(variantId);
 
-        res.json({ message: 'Product deleted successfully' });
+        console.log('Product and variant deleted successfully'); // Debug log
+        res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        console.error('Error deleting product:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Error in delete operation:', error); // Debug log
+        res.status(500).json({ 
+            message: 'Error deleting product',
+            error: error.message 
+        });
     }
 };
 

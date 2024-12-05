@@ -332,13 +332,12 @@
           });
         });
 
-        // Handle Product Delete
+        // Delete Product Handler
         document.querySelectorAll('.delete-product').forEach(button => {
-          button.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const productId = button.getAttribute('data-id');
-            console.log('Deleting product:', productId); // Debug log
-
+          button.addEventListener('click', async function() {
+            const productId = this.getAttribute('data-id');
+            console.log('Attempting to delete product:', productId); // Debug log
+            
             if (confirm('Are you sure you want to delete this product?')) {
               try {
                 const response = await fetch(`/admin/product/delete/${productId}`, {
@@ -348,15 +347,20 @@
                   }
                 });
 
+                console.log('Delete response status:', response.status); // Debug log
+
+                const data = await response.json();
+                console.log('Delete response data:', data); // Debug log
+
                 if (response.ok) {
+                  alert('Product deleted successfully');
                   window.location.reload();
                 } else {
-                  const data = await response.json();
                   alert(data.message || 'Error deleting product');
                 }
               } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the product');
+                console.error('Delete error:', error); // Detailed error log
+                alert('An error occurred while deleting the product. Check console for details.');
               }
             }
           });
