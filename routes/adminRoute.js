@@ -26,5 +26,7 @@ router.post('/category/edit', adminMiddleware.checkSession, adminCategoryControl
 router.get('/category/delete', adminMiddleware.checkSession, adminCategoryController.deleteCategory);
 
 router.get('/category/toggle', adminMiddleware.checkSession, adminCategoryController.toggleCategoryStatus);
-  
+
+
+
 export default router;

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Product Management</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="mybg-green text-white min-h-screen">
+    <!-- Sidebar -->
+    <%- include("../partials/sidebar") %>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 transition-all" id="main-content">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700"
+      >
+        <button
+          id="toggleSidebar"
+          class="text-white lg:hidden"
+          aria-label="Toggle Sidebar"
+        >
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-2xl font-semibold text-gray-200">Product Management</h1>
+        <button
+          id="addProductBtn"
+          class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-6 rounded-lg shadow transition duration-300"
+        >
+          Add New Product
+        </button>
+      </header>
+
+      <!-- Product Table -->
+      <main class="p-4 lg:p-8">
+        <div class="bg-zinc-800 rounded-lg p-6 overflow-x-auto">
+          <table class="min-w-full text-left text-gray-400 table-auto">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="py-3 px-4">Product Name</th>
+                <th class="py-3 px-4">Brand</th>
+                <th class="py-3 px-4">Category</th>
+                <th class="py-3 px-4">Gender</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% products.forEach((product, index) => { %>
+              <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                <td class="py-3 px-4"><%= product.productName %></td>
+                <td class="py-3 px-4"><%= product.brand %></td>
+                <td class="py-3 px-4"><%= product.categoriesId.name %></td>
+                <td class="py-3 px-4 capitalize"><%= product.gender %></td>
+                <td class="py-3 px-4">
+                  <span
+                    class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white' %>"
+                  >
+                    <%= product.isActive ? 'Active' : 'Inactive' %>
+                  </span>
+                </td>
+                <td class="py-3 px-4 space-x-3 flex">
+                  <button
+                    class="text-blue-500 hover:text-blue-300 transition edit-product"
+                    data-id="<%= product._id %>"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="text-red-500 hover:text-red-300 transition delete-product"
+                    data-id="<%= product._id %>"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                  <button
+                    class="toggle-status <%= product.isActive ? 'text-gray-500' : 'text-green-500' %> hover:text-opacity-75 transition"
+                    data-id="<%= product._id %>"
+                  >
+                    <i
+                      class="fas <%= product.isActive ? 'fa-eye-slash' : 'fa-eye' %>"
+                    ></i>
+                  </button>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div
+      id="productModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center"
+    >
+      <div
+        class="bg-zinc-900 rounded-lg w-[90%] md:w-[800px] max-h-[90vh] overflow-y-auto p-6 shadow-lg transform scale-95 opacity-0 transition duration-300 ease-in-out"
+      >
+        <h2 id="modalTitle" class="text-xl font-bold text-gray-100 mb-4">
+          Add New Product
+        </h2>
+        <form id="productForm" enctype="multipart/form-data">
+          <input type="hidden" id="productId" name="productId" />
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-gray-400 font-medium mb-1"
+                >Product Name</label
+              >
+              <input
+                type="text"
+                name="productName"
+                id="productName"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1">Brand</label>
+              <input
+                type="text"
+                name="brand"
+                id="brand"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1">Gender</label>
+              <select
+                name="gender"
+                id="gender"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1"
+                >Category</label
+              >
+              <select
+                name="categoriesId"
+                id="categoriesId"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              >
+                <% categories.forEach(category => { %>
+                <option value="<%= category._id %>">
+                  <%= category.name %>
+                </option>
+                <% }); %>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1">Color</label>
+              <input
+                type="text"
+                name="color"
+                id="color"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1">Price</label>
+              <input
+                type="number"
+                name="price"
+                id="price"
+                min="0"
+                step="0.01"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1"
+                >Discount Price</label
+              >
+              <input
+                type="number"
+                name="discountPrice"
+                id="discountPrice"
+                min="0"
+                step="0.01"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-gray-400 font-medium mb-1">Stock</label>
+              <input
+                type="number"
+                name="stock"
+                id="stock"
+                min="0"
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                required
+              />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-gray-400 font-medium mb-1">Images</label>
+              <input
+                type="file"
+                name="images"
+                id="images"
+                multiple
+                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
+                accept="image/*"
+                required
+              />
+            </div>
+          </div>
+          <div class="flex justify-end mt-6 space-x-4">
+            <button
+              type="button"
+              id="cancelModal"
+              class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg shadow transition duration-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300"
+            >
+              Save Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/javascript/product.js"></script>
+  </body>
+</html>

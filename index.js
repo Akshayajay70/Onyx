@@ -8,6 +8,8 @@ import nocache from "nocache";
 import { config } from "dotenv";
 import './utils/googleAuth.js';
 
+import adminProductRoute from './routes/adminProductRoutes.js'
+
 config();  // Load environment variables
 
 const app = express();
@@ -35,6 +37,7 @@ app.use(passport.session());
 
 app.use('/', userRoute); 
 app.use('/admin', adminRoutes)
+app.use('/', adminProductRoute)
 
 connnectDb();
 
