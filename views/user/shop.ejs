@@ -30,7 +30,7 @@
               <span class="text-gray-400">/</span>
             </li>
             <!-- Current Page -->
-            <li class="text-gray-500">Shop All</li>
+            <li class="text-gray-500">Shop</li>
           </ol>
         </nav>
       </div>
@@ -84,34 +84,6 @@
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="unisex">Unisex</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    for="category"
-                    class="block text-gray-700 font-medium mb-2"
-                    >Category</label
-                  >
-                  <select
-                    id="category"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
-                  >
-                    <option value>All</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    for="brand"
-                    class="block text-gray-700 font-medium mb-2"
-                    >Brand</label
-                  >
-                  <select
-                    id="brand"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
-                  >
-                    <option value>All</option>
                   </select>
                 </div>
 
@@ -269,8 +241,6 @@
           const searchButton = document.getElementById('searchButton');
           const sortFilter = document.getElementById('sortFilter');
           const genderFilter = document.getElementById('gender');
-          const categoryFilter = document.getElementById('category');
-          const brandFilter = document.getElementById('brand');
           const colorFilter = document.getElementById('color');
           const minPriceFilter = document.getElementById('minPrice');
           const maxPriceFilter = document.getElementById('maxPrice');
@@ -298,20 +268,6 @@
               if (genderFilter.value) {
                   filteredProducts = filteredProducts.filter(product =>
                       product.gender === genderFilter.value
-                  );
-              }
-
-              // Category filter
-              if (categoryFilter.value) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.category === categoryFilter.value
-                  );
-              }
-
-              // Brand filter
-              if (brandFilter.value) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.brand === brandFilter.value
                   );
               }
 
@@ -414,8 +370,6 @@
           });
           sortFilter.addEventListener('change', applyFilters);
           genderFilter.addEventListener('change', applyFilters);
-          categoryFilter.addEventListener('change', applyFilters);
-          brandFilter.addEventListener('change', applyFilters);
           colorFilter.addEventListener('change', applyFilters);
           minPriceFilter.addEventListener('change', applyFilters);
           maxPriceFilter.addEventListener('change', applyFilters);
@@ -426,8 +380,6 @@
               searchInput.value = '';
               sortFilter.value = 'default';
               genderFilter.value = '';
-              categoryFilter.value = '';
-              brandFilter.value = '';
               colorFilter.value = '';
               minPriceFilter.value = '';
               maxPriceFilter.value = '';
@@ -437,19 +389,7 @@
 
           // Populate filter options from available products
           function populateFilterOptions() {
-              const brands = [...new Set(originalProducts.map(p => p.brand))];
-              const categories = [...new Set(originalProducts.map(p => p.category))];
               const colors = [...new Set(originalProducts.map(p => p.varientId.color))];
-
-              brands.forEach(brand => {
-                  const option = new Option(brand, brand);
-                  brandFilter.add(option);
-              });
-
-              categories.forEach(category => {
-                  const option = new Option(category, category);
-                  categoryFilter.add(option);
-              });
 
               colors.forEach(color => {
                   const option = new Option(color, color);
