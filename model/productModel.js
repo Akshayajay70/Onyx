@@ -28,7 +28,7 @@ const productSchema = new mongoose.Schema({
     varientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Variant",
-        required: false,
+        required: true,
     },
 }, { timestamps: true });
 

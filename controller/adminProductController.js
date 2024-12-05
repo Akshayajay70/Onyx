@@ -79,22 +79,13 @@ export const addProduct = async (req, res) => {
             // Calculate discount percentage
             const discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
 
-            // Create Product first
-            const newProduct = new Product({
-                productName,
-                brand,
-                gender,
-                categoriesId
-            });
-
-            const savedProduct = await newProduct.save();
 
             // Upload images
             const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
 
+
             // Create Variant with product reference
             const newVariant = new Variant({
-                productId: savedProduct._id,
                 color,
                 price: parseFloat(price),
                 discountPrice: parseFloat(discountPrice),
@@ -106,9 +97,18 @@ export const addProduct = async (req, res) => {
 
             const savedVariant = await newVariant.save();
 
-            // Update product with variant reference
-            savedProduct.varientId = savedVariant._id;
-            await savedProduct.save();
+            const savedVariantId = savedVariant._id
+
+            // Create Product first
+            const newProduct = new Product({
+                productName,
+                brand,
+                gender,
+                categoriesId,
+                varientId: savedVariantId
+            });
+
+            const savedProduct = await newProduct.save();
 
             res.status(201).json({
                 message: 'Product added successfully',

@@ -247,6 +247,182 @@
       </div>
     </div>
 
-    <script src="/javascript/product.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const productModal = document.getElementById("productModal");
+        const modalContent = productModal.querySelector("div");
+        const addProductBtn = document.getElementById("addProductBtn");
+        const cancelModalBtn = document.getElementById("cancelModal");
+        const productForm = document.getElementById("productForm");
+
+        // Show modal with animation
+        const showModal = () => {
+          productModal.classList.remove("hidden");
+          productModal.classList.add("flex");
+          setTimeout(() => {
+            modalContent.classList.remove("scale-95", "opacity-0");
+            modalContent.classList.add("scale-100", "opacity-100");
+          }, 10);
+        };
+
+        // Hide modal with animation
+        const hideModal = () => {
+          modalContent.classList.remove("scale-100", "opacity-100");
+          modalContent.classList.add("scale-95", "opacity-0");
+          setTimeout(() => {
+            productModal.classList.add("hidden");
+            productModal.classList.remove("flex");
+          }, 300);
+        };
+
+        // Show the modal when "Add New Product" button is clicked
+        addProductBtn.addEventListener("click", () => {
+          productForm.reset();
+          document.getElementById("modalTitle").innerText = "Add New Product";
+          document.getElementById("productId").value = "";
+          document.getElementById("images").required = true;
+          showModal();
+        });
+
+        // Hide the modal when "Cancel" button is clicked
+        cancelModalBtn.addEventListener("click", hideModal);
+
+        // Handle form submission for adding/editing a product
+        productForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const formData = new FormData(productForm);
+          const productId = document.getElementById("productId").value;
+          const url = productId
+            ? `/admin/product/update/${productId}`
+            : "/admin/product/add";
+          const method = productId ? "PUT" : "POST";
+
+          try {
+            const response = await fetch(url, {
+              method: method,
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              alert("Product saved successfully");
+              hideModal();
+              location.reload();
+            } else {
+              alert("Error saving product: " + result.message);
+            }
+          } catch (error) {
+            alert("Error saving product: " + error.message);
+          }
+        });
+
+        // Event delegation for edit, delete, and toggle status buttons
+        document
+          .querySelector("tbody")
+          .addEventListener("click", async (event) => {
+            const target = event.target.closest("button");
+            if (!target) return;
+
+            const productId = target.getAttribute("data-id");
+            if (!productId) return;
+
+            // Edit button handler
+            if (
+              target.classList.contains("edit-product") ||
+              target.closest(".edit-product")
+            ) {
+              try {
+                const response = await fetch(`/admin/product/${productId}`);
+                const product = await response.json();
+
+                // Fill in the form with the product data
+                document.getElementById("modalTitle").innerText =
+                  "Edit Product";
+                document.getElementById("productId").value = product._id;
+                document.getElementById("productName").value =
+                  product.productName;
+                document.getElementById("brand").value = product.brand;
+                document.getElementById("gender").value = product.gender;
+                document.getElementById("categoriesId").value =
+                  product.categoriesId;
+                document.getElementById("color").value = product.color;
+                document.getElementById("price").value = product.price;
+                document.getElementById("discountPrice").value =
+                  product.discountPrice;
+                document.getElementById("stock").value = product.stock;
+                document.getElementById("images").required = false;
+
+                showModal();
+              } catch (error) {
+                alert("Error loading product data: " + error.message);
+              }
+            }
+
+            // Delete button handler
+            if (
+              target.classList.contains("delete-product") ||
+              target.closest(".delete-product")
+            ) {
+              if (confirm("Are you sure you want to delete this product?")) {
+                try {
+                  const response = await fetch(
+                    `/admin/product/${product._id}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
+                  const result = await response.json();
+
+                  if (result.success) {
+                    alert("Product deleted successfully");
+                    location.reload();
+                  } else {
+                    alert("Error deleting product: " + result.message);
+                  }
+                } catch (error) {
+                  alert("Error deleting product: " + error.message);
+                }
+              }
+            }
+
+            // Toggle status button handler
+            if (
+              target.classList.contains("toggle-status") ||
+              target.closest(".toggle-status")
+            ) {
+              const button = target.classList.contains("toggle-status")
+                ? target
+                : target.closest(".toggle-status");
+              const action = button.classList.contains("text-green-500")
+                ? "activate"
+                : "deactivate";
+
+              try {
+                const response = await fetch(
+                  `/admin/product/status/${productId}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ action }),
+                  }
+                );
+                const result = await response.json();
+
+                if (result.success) {
+                  alert("Product status updated");
+                  location.reload();
+                } else {
+                  alert("Error updating product status: " + result.message);
+                }
+              } catch (error) {
+                alert("Error updating product status: " + error.message);
+              }
+            }
+          });
+      });
+    </script>
   </body>
 </html>
