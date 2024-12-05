@@ -4,6 +4,7 @@ import Category from '../model/categoryModel.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import mongoose from 'mongoose';
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -33,11 +34,13 @@ const upload = multer({
 // Render Product Management Page
 export const renderProductPage = async (req, res) => {
     try {
+        // Fetch products with populated references
         const products = await Product.find()
             .populate('categoriesId')
             .populate('varientId')
             .sort({ createdAt: -1 });
 
+        // Fetch active categories for the dropdown
         const categories = await Category.find({ isActive: true });
 
         res.render('admin/product', {
@@ -79,10 +82,8 @@ export const addProduct = async (req, res) => {
             // Calculate discount percentage
             const discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
 
-
             // Upload images
             const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
-
 
             // Create Variant with product reference
             const newVariant = new Variant({
@@ -97,7 +98,7 @@ export const addProduct = async (req, res) => {
 
             const savedVariant = await newVariant.save();
 
-            const savedVariantId = savedVariant._id
+            const savedVariantId = savedVariant._id;
 
             // Create Product first
             const newProduct = new Product({
@@ -141,7 +142,7 @@ export const getProductDetails = async (req, res) => {
 
 // Update Product
 export const updateProduct = async (req, res) => {
-    const uploadMultiple = upload.array('productImage', 5);
+    const uploadMultiple = upload.array('images', 5);
 
     uploadMultiple(req, res, async (err) => {
         if (err) {

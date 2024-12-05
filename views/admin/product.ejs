@@ -5,45 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Product Management</title>
     <link rel="stylesheet" href="/tailwindcss/output.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
   </head>
   <body class="mybg-green text-white min-h-screen">
-    <!-- Sidebar -->
     <%- include("../partials/sidebar") %>
 
-    <!-- Main Content -->
     <div class="lg:ml-64 transition-all" id="main-content">
-      <!-- Header -->
-      <header
-        class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700"
-      >
-        <button
-          id="toggleSidebar"
-          class="text-white lg:hidden"
-          aria-label="Toggle Sidebar"
-        >
+      <header class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700">
+        <button id="toggleSidebar" class="text-white lg:hidden">
           <i class="fas fa-bars"></i>
         </button>
         <h1 class="text-2xl font-semibold text-gray-200">Product Management</h1>
-        <button
-          id="addProductBtn"
-          class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-6 rounded-lg shadow transition duration-300"
-        >
+        <button id="addProductBtn" class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-6 rounded-lg shadow transition duration-300">
           Add New Product
         </button>
       </header>
 
-      <!-- Product Table -->
       <main class="p-4 lg:p-8">
         <div class="bg-zinc-800 rounded-lg p-6 overflow-x-auto">
           <table class="min-w-full text-left text-gray-400 table-auto">
@@ -53,44 +32,39 @@
                 <th class="py-3 px-4">Brand</th>
                 <th class="py-3 px-4">Category</th>
                 <th class="py-3 px-4">Gender</th>
+                <th class="py-3 px-4">Price</th>
+                <th class="py-3 px-4">Stock</th>
                 <th class="py-3 px-4">Status</th>
                 <th class="py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <% products.forEach((product, index) => { %>
+              <% products.forEach((product) => { %>
               <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
                 <td class="py-3 px-4"><%= product.productName %></td>
                 <td class="py-3 px-4"><%= product.brand %></td>
                 <td class="py-3 px-4"><%= product.categoriesId.name %></td>
                 <td class="py-3 px-4 capitalize"><%= product.gender %></td>
+                <td class="py-3 px-4">₹<%= product.price %></td>
+                <td class="py-3 px-4"><%= product.stock %></td>
                 <td class="py-3 px-4">
-                  <span
-                    class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white' %>"
-                  >
+                  <span class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500' : 'bg-red-500' %>">
                     <%= product.isActive ? 'Active' : 'Inactive' %>
                   </span>
                 </td>
                 <td class="py-3 px-4 space-x-3 flex">
-                  <button
-                    class="text-blue-500 hover:text-blue-300 transition edit-product"
-                    data-id="<%= product._id %>"
-                  >
+                  <button class="text-blue-500 hover:text-blue-300 transition edit-product" 
+                          data-product='<%- JSON.stringify(product) %>'>
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button
-                    class="text-red-500 hover:text-red-300 transition delete-product"
-                    data-id="<%= product._id %>"
-                  >
+                  <button class="text-red-500 hover:text-red-300 transition delete-product" 
+                          data-id="<%= product._id %>">
                     <i class="fas fa-trash"></i>
                   </button>
-                  <button
-                    class="toggle-status <%= product.isActive ? 'text-gray-500' : 'text-green-500' %> hover:text-opacity-75 transition"
-                    data-id="<%= product._id %>"
-                  >
-                    <i
-                      class="fas <%= product.isActive ? 'fa-eye-slash' : 'fa-eye' %>"
-                    ></i>
+                  <button class="toggle-status <%= product.isActive ? 'text-gray-500' : 'text-green-500' %>" 
+                          data-id="<%= product._id %>" 
+                          data-active="<%= product.isActive %>">
+                    <i class="fas <%= product.isActive ? 'fa-eye-slash' : 'fa-eye' %>"></i>
                   </button>
                 </td>
               </tr>
@@ -101,145 +75,93 @@
       </main>
     </div>
 
-    <!-- Add/Edit Product Modal -->
-    <div
-      id="productModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center"
-    >
-      <div
-        class="bg-zinc-900 rounded-lg w-[90%] md:w-[800px] max-h-[90vh] overflow-y-auto p-6 shadow-lg transform scale-95 opacity-0 transition duration-300 ease-in-out"
-      >
-        <h2 id="modalTitle" class="text-xl font-bold text-gray-100 mb-4">
-          Add New Product
-        </h2>
+    <!-- Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+      <div class="bg-zinc-900 rounded-lg w-[90%] md:w-[800px] max-h-[90vh] overflow-y-auto p-6">
+        <h2 id="modalTitle" class="text-xl font-bold text-gray-100 mb-4">Add New Product</h2>
         <form id="productForm" enctype="multipart/form-data">
-          <input type="hidden" id="productId" name="productId" />
-
+          <input type="hidden" id="productId" name="productId">
+          
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-gray-400 font-medium mb-1"
-                >Product Name</label
-              >
-              <input
-                type="text"
-                name="productName"
-                id="productName"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Product Name</label>
+              <input type="text" name="productName" id="productName" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1">Brand</label>
-              <input
-                type="text"
-                name="brand"
-                id="brand"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Brand</label>
+              <input type="text" name="brand" id="brand" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1">Gender</label>
-              <select
-                name="gender"
-                id="gender"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              >
+              <label class="block text-gray-400 mb-1">Gender</label>
+              <select name="gender" id="gender" required
+                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="unisex">Unisex</option>
               </select>
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1"
-                >Category</label
-              >
-              <select
-                name="categoriesId"
-                id="categoriesId"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              >
+              <label class="block text-gray-400 mb-1">Category</label>
+              <select name="categoriesId" id="categoriesId" required
+                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
                 <% categories.forEach(category => { %>
-                <option value="<%= category._id %>">
-                  <%= category.name %>
-                </option>
+                  <option value="<%= category._id %>"><%= category.name %></option>
                 <% }); %>
               </select>
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1">Color</label>
-              <input
-                type="text"
-                name="color"
-                id="color"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Color</label>
+              <input type="text" name="color" id="color" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1">Price</label>
-              <input
-                type="number"
-                name="price"
-                id="price"
-                min="0"
-                step="0.01"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Price (₹)</label>
+              <input type="number" name="price" id="price" min="0" step="0.01" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1"
-                >Discount Price</label
-              >
-              <input
-                type="number"
-                name="discountPrice"
-                id="discountPrice"
-                min="0"
-                step="0.01"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Discount Price (₹)</label>
+              <input type="number" name="discountPrice" id="discountPrice" min="0" step="0.01" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div>
-              <label class="block text-gray-400 font-medium mb-1">Stock</label>
-              <input
-                type="number"
-                name="stock"
-                id="stock"
-                min="0"
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Stock</label>
+              <input type="number" name="stock" id="stock" min="0" required
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
+
             <div class="col-span-2">
-              <label class="block text-gray-400 font-medium mb-1">Images</label>
-              <input
-                type="file"
-                name="images"
-                id="images"
-                multiple
-                class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                accept="image/*"
-                required
-              />
+              <label class="block text-gray-400 mb-1">Images (Select up to 3 images)</label>
+              <div class="grid grid-cols-3 gap-4">
+                <% for(let i = 0; i < 3; i++) { %>
+                  <div class="image-upload-container">
+                    <input type="file" name="images" class="product-image hidden" accept="image/*" required>
+                    <div class="image-preview bg-zinc-800 border-2 border-dashed border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-green-500 transition-colors">
+                      <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                      <p class="text-sm text-gray-400">Click to upload</p>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
             </div>
           </div>
+
           <div class="flex justify-end mt-6 space-x-4">
-            <button
-              type="button"
-              id="cancelModal"
-              class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg shadow transition duration-300"
-            >
+            <button type="button" id="cancelModal" 
+                    class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg">
               Cancel
             </button>
-            <button
-              type="submit"
-              class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300"
-            >
+            <button type="submit"
+                    class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">
               Save Product
             </button>
           </div>
@@ -247,181 +169,244 @@
       </div>
     </div>
 
+    <!-- Image Cropper Modal -->
+    <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+      <div class="bg-zinc-900 rounded-lg p-6 w-[90%] md:w-[600px]">
+        <div class="mb-4">
+          <div id="cropperContainer" class="max-h-[400px] overflow-hidden">
+            <img id="cropperImage" src="" alt="Image to crop">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-4">
+          <button id="cancelCrop" class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg">
+            Cancel
+          </button>
+          <button id="cropImage" class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">
+            Crop & Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const productModal = document.getElementById("productModal");
-        const modalContent = productModal.querySelector("div");
-        const addProductBtn = document.getElementById("addProductBtn");
-        const cancelModalBtn = document.getElementById("cancelModal");
-        const productForm = document.getElementById("productForm");
+      document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
+        const productModal = document.getElementById('productModal');
+        const cropperModal = document.getElementById('cropperModal');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const cancelModal = document.getElementById('cancelModal');
+        const productForm = document.getElementById('productForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const mainContent = document.getElementById('main-content');
+        const cropperImage = document.getElementById('cropperImage');
+        const cancelCrop = document.getElementById('cancelCrop');
+        const cropImage = document.getElementById('cropImage');
 
-        // Show modal with animation
-        const showModal = () => {
-          productModal.classList.remove("hidden");
-          productModal.classList.add("flex");
-          setTimeout(() => {
-            modalContent.classList.remove("scale-95", "opacity-0");
-            modalContent.classList.add("scale-100", "opacity-100");
-          }, 10);
-        };
+        let currentImageInput = null;
+        let cropper = null;
 
-        // Hide modal with animation
-        const hideModal = () => {
-          modalContent.classList.remove("scale-100", "opacity-100");
-          modalContent.classList.add("scale-95", "opacity-0");
-          setTimeout(() => {
-            productModal.classList.add("hidden");
-            productModal.classList.remove("flex");
-          }, 300);
-        };
-
-        // Show the modal when "Add New Product" button is clicked
-        addProductBtn.addEventListener("click", () => {
-          productForm.reset();
-          document.getElementById("modalTitle").innerText = "Add New Product";
-          document.getElementById("productId").value = "";
-          document.getElementById("images").required = true;
-          showModal();
+        // Toggle Sidebar
+        toggleSidebar.addEventListener('click', () => {
+          mainContent.classList.toggle('lg:ml-64');
         });
 
-        // Hide the modal when "Cancel" button is clicked
-        cancelModalBtn.addEventListener("click", hideModal);
+        // Show Modal for New Product
+        addProductBtn.addEventListener('click', () => {
+          modalTitle.textContent = 'Add New Product';
+          productForm.reset();
+          document.getElementById('productId').value = '';
+          productModal.classList.remove('hidden');
+        });
 
-        // Handle form submission for adding/editing a product
-        productForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
+        // Hide Modal
+        cancelModal.addEventListener('click', () => {
+          productModal.classList.add('hidden');
+        });
+
+        // Handle Image Upload and Preview
+        document.querySelectorAll('.product-image').forEach(input => {
+          input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              currentImageInput = input;
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                cropperImage.src = e.target.result;
+                cropperModal.classList.remove('hidden');
+                if (cropper) {
+                  cropper.destroy();
+                }
+                cropper = new Cropper(cropperImage, {
+                  aspectRatio: 1,
+                  viewMode: 2,
+                });
+              };
+              reader.readAsDataURL(file);
+            }
+          });
+        });
+
+        // Cancel Crop
+        cancelCrop.addEventListener('click', () => {
+          cropperModal.classList.add('hidden');
+          currentImageInput.value = '';
+        });
+
+        // Crop Image
+        cropImage.addEventListener('click', () => {
+          const croppedCanvas = cropper.getCroppedCanvas();
+          const preview = currentImageInput.nextElementSibling;
+          preview.innerHTML = '';
+          preview.appendChild(croppedCanvas);
+          cropperModal.classList.add('hidden');
+        });
+
+        // Handle Form Submission
+        productForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
           const formData = new FormData(productForm);
-          const productId = document.getElementById("productId").value;
-          const url = productId
-            ? `/admin/product/update/${productId}`
-            : "/admin/product/add";
-          const method = productId ? "PUT" : "POST";
-
+          const productId = document.getElementById('productId').value;
+          
           try {
+            const url = productId 
+              ? `/admin/product/edit/${productId}` // Edit existing product
+              : '/admin/product/add'; // Add new product
+              
             const response = await fetch(url, {
-              method: method,
-              body: formData,
+              method: 'POST', // Both add and edit use POST
+              body: formData
             });
 
-            const result = await response.json();
-
-            if (result.success) {
-              alert("Product saved successfully");
-              hideModal();
-              location.reload();
+            if (response.ok) {
+              window.location.reload();
             } else {
-              alert("Error saving product: " + result.message);
+              const error = await response.json();
+              alert(error.message || 'Error processing request');
             }
           } catch (error) {
-            alert("Error saving product: " + error.message);
+            console.error('Error:', error);
+            alert('An error occurred while processing your request');
           }
         });
 
-        // Event delegation for edit, delete, and toggle status buttons
-        document
-          .querySelector("tbody")
-          .addEventListener("click", async (event) => {
-            const target = event.target.closest("button");
-            if (!target) return;
+        // Handle Product Edit
+        document.querySelectorAll('.edit-product').forEach(button => {
+          button.addEventListener('click', () => {
+            try {
+              const product = JSON.parse(button.getAttribute('data-product'));
+              console.log('Editing product:', product); // Debug log
 
-            const productId = target.getAttribute("data-id");
-            if (!productId) return;
+              // Update modal title
+              modalTitle.textContent = 'Edit Product';
+              
+              // Fill form fields
+              document.getElementById('productId').value = product._id;
+              document.getElementById('productName').value = product.productName;
+              document.getElementById('brand').value = product.brand;
+              document.getElementById('gender').value = product.gender;
+              document.getElementById('categoriesId').value = product.categoriesId._id;
+              document.getElementById('color').value = product.varientId.color;
+              document.getElementById('price').value = product.varientId.price;
+              document.getElementById('discountPrice').value = product.varientId.discountPrice;
+              document.getElementById('stock').value = product.varientId.stock;
 
-            // Edit button handler
-            if (
-              target.classList.contains("edit-product") ||
-              target.closest(".edit-product")
-            ) {
-              try {
-                const response = await fetch(`/admin/product/${productId}`);
-                const product = await response.json();
-
-                // Fill in the form with the product data
-                document.getElementById("modalTitle").innerText =
-                  "Edit Product";
-                document.getElementById("productId").value = product._id;
-                document.getElementById("productName").value =
-                  product.productName;
-                document.getElementById("brand").value = product.brand;
-                document.getElementById("gender").value = product.gender;
-                document.getElementById("categoriesId").value =
-                  product.categoriesId;
-                document.getElementById("color").value = product.color;
-                document.getElementById("price").value = product.price;
-                document.getElementById("discountPrice").value =
-                  product.discountPrice;
-                document.getElementById("stock").value = product.stock;
-                document.getElementById("images").required = false;
-
-                showModal();
-              } catch (error) {
-                alert("Error loading product data: " + error.message);
-              }
-            }
-
-            // Delete button handler
-            if (
-              target.classList.contains("delete-product") ||
-              target.closest(".delete-product")
-            ) {
-              if (confirm("Are you sure you want to delete this product?")) {
-                try {
-                  const response = await fetch(
-                    `/admin/product/${product._id}`,
-                    {
-                      method: "DELETE",
-                    }
-                  );
-                  const result = await response.json();
-
-                  if (result.success) {
-                    alert("Product deleted successfully");
-                    location.reload();
-                  } else {
-                    alert("Error deleting product: " + result.message);
-                  }
-                } catch (error) {
-                  alert("Error deleting product: " + error.message);
+              // Show existing images
+              const previews = document.querySelectorAll('.image-preview');
+              product.varientId.imageUrl.forEach((url, index) => {
+                if (previews[index]) {
+                  previews[index].innerHTML = `<img src="${url}" class="w-full h-32 object-cover rounded">`;
+                  // Make image upload optional for editing
+                  const fileInput = previews[index].closest('.image-upload-container').querySelector('input[type="file"]');
+                  fileInput.removeAttribute('required');
                 }
-              }
+              });
+
+              // Show modal
+              productModal.classList.remove('hidden');
+            } catch (error) {
+              console.error('Error parsing product data:', error);
+              alert('Error loading product data');
             }
+          });
+        });
 
-            // Toggle status button handler
-            if (
-              target.classList.contains("toggle-status") ||
-              target.closest(".toggle-status")
-            ) {
-              const button = target.classList.contains("toggle-status")
-                ? target
-                : target.closest(".toggle-status");
-              const action = button.classList.contains("text-green-500")
-                ? "activate"
-                : "deactivate";
+        // Handle Product Delete
+        document.querySelectorAll('.delete-product').forEach(button => {
+          button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const productId = button.getAttribute('data-id');
+            console.log('Deleting product:', productId); // Debug log
 
+            if (confirm('Are you sure you want to delete this product?')) {
               try {
-                const response = await fetch(
-                  `/admin/product/status/${productId}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ action }),
+                const response = await fetch(`/admin/product/delete/${productId}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
                   }
-                );
-                const result = await response.json();
+                });
 
-                if (result.success) {
-                  alert("Product status updated");
-                  location.reload();
+                if (response.ok) {
+                  window.location.reload();
                 } else {
-                  alert("Error updating product status: " + result.message);
+                  const data = await response.json();
+                  alert(data.message || 'Error deleting product');
                 }
               } catch (error) {
-                alert("Error updating product status: " + error.message);
+                console.error('Error:', error);
+                alert('An error occurred while deleting the product');
               }
             }
           });
+        });
+
+        // Handle Status Toggle
+        document.querySelectorAll('.toggle-status').forEach(button => {
+          button.addEventListener('click', async () => {
+            const productId = button.dataset.id;
+            const isActive = button.dataset.active === 'true';
+            
+            try {
+              const response = await fetch(`/admin/product/toggle-status/${productId}`, {
+                method: 'POST', // Changed to POST
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ isActive: !isActive })
+              });
+
+              if (response.ok) {
+                window.location.reload();
+              } else {
+                const error = await response.json();
+                alert(error.message || 'Error toggling product status');
+              }
+            } catch (error) {
+              console.error('Error:', error);
+              alert('An error occurred while toggling product status');
+            }
+          });
+        });
+
+        // Image preview functionality
+        document.querySelectorAll('.image-upload-container').forEach(container => {
+          const preview = container.querySelector('.image-preview');
+          const input = container.querySelector('input[type="file"]');
+
+          preview.addEventListener('click', () => input.click());
+
+          input.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" class="w-full h-32 object-cover rounded">`;
+              };
+              reader.readAsDataURL(e.target.files[0]);
+            }
+          });
+        });
       });
     </script>
   </body>

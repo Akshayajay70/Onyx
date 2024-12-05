@@ -20,12 +20,12 @@ router.post('/admin/product/add', addProduct);
 router.get('/admin/product/:id', getProductDetails);
 
 // Update Product
-router.put('/admin/product/update', updateProduct);
+router.post('/admin/product/edit/:id', updateProduct);
 
 // Delete Product
-router.delete('/admin/product/:id', deleteProduct);
+router.post('/admin/product/delete/:id', deleteProduct);
 
 // Toggle Product Status
-router.patch('/admin/product/toggle/:id', toggleProductStatus);
+router.post('/admin/product/toggle-status/:id', toggleProductStatus);
 
 export default router;
