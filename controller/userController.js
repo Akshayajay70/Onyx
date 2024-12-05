@@ -180,5 +180,18 @@ const getGoogle = (req, res) => {
     })(req, res);
 };
 
+const getShop = async (req, res) => {
+    try {
+        const products = await Product.find({ isActive: true })
+            .populate('categoriesId')
+            .populate('varientId')
+            .sort({ createdAt: -1 });
 
-export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle}
+        res.render('user/shop', { products });
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.render('user/shop', { products: [] });
+    }
+};
+
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop }

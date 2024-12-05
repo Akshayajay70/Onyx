@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="tailwindcss/output.css" />
+    <title>Shop Page</title>
+  </head>
+
+  <body class="bg-gray-50">
+    <%- include("../partials/nav") %>
+    <div class="mt-16"></div>
+
+    <!-- Breadcrumb -->
+    <div class="bg-gray-50 pt-4">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm font-medium text-gray-500" aria-label="Breadcrumb">
+          <ol class="flex items-center space-x-2">
+            <!-- Home Link -->
+            <li>
+              <a
+                href="/home"
+                class="text-gray-800 hover:text-gray-900 transition"
+              >
+                Home
+              </a>
+            </li>
+            <!-- Separator -->
+            <li>
+              <span class="text-gray-400">/</span>
+            </li>
+            <!-- Current Page -->
+            <li class="text-gray-500">Shop All</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
+          Shop All
+        </h2>
+
+        <div class="flex flex-col md:flex-row gap-8">
+          <!-- Left Sidebar - Filters -->
+          <div class="md:w-1/4">
+            <div
+              class="sticky top-4 space-y-6 bg-white p-6 rounded-lg shadow-sm"
+            >
+              <!-- Sorting Section -->
+              <div class="mb-6">
+                <label
+                  for="sortFilter"
+                  class="block text-gray-700 font-medium mb-2"
+                  >Sort By</label
+                >
+                <select
+                  id="sortFilter"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                >
+                  <option value="default">Default</option>
+                  <option value="priceLowToHigh">Price: Low to High</option>
+                  <option value="priceHighToLow">Price: High to Low</option>
+                  <option value="ratingHighToLow">Rating: High to Low</option>
+                  <option value="newArrivals">New Arrivals</option>
+                </select>
+              </div>
+
+              <!-- Filter Section -->
+              <div class="space-y-4">
+                <div>
+                  <label
+                    for="gender"
+                    class="block text-gray-700 font-medium mb-2"
+                    >Gender</label
+                  >
+                  <select
+                    id="gender"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  >
+                    <option value>All</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="unisex">Unisex</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    for="category"
+                    class="block text-gray-700 font-medium mb-2"
+                    >Category</label
+                  >
+                  <select
+                    id="category"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  >
+                    <option value>All</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    for="brand"
+                    class="block text-gray-700 font-medium mb-2"
+                    >Brand</label
+                  >
+                  <select
+                    id="brand"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  >
+                    <option value>All</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    for="color"
+                    class="block text-gray-700 font-medium mb-2"
+                    >Colour</label
+                  >
+                  <select
+                    id="color"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  >
+                    <option value>All</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-gray-700 font-medium mb-2"
+                    >Price Range</label
+                  >
+                  <div class="flex gap-2">
+                    <input
+                      type="number"
+                      id="minPrice"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                      placeholder="Min"
+                    />
+                    <input
+                      type="number"
+                      id="maxPrice"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                      placeholder="Max"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    for="stockFilter"
+                    class="block text-gray-700 font-medium mb-2"
+                    >Stock Status</label
+                  >
+                  <select
+                    id="stockFilter"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  >
+                    <option value>All Products</option>
+                    <option value="inStock">In Stock</option>
+                    <option value="outOfStock">Out of Stock</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Reset Button -->
+              <div class="mt-6">
+                <button
+                  id="resetButton"
+                  class="px-4 py-2 bg-zinc-800 text-white rounded-lg transform transition-transform duration-300 ease-in-out hover:bg-zinc-600 hover:scale-105 active:bg-zinc-700 active:scale-95"
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Side - Product Grid -->
+          <div class="md:w-3/4">
+            <!-- Search Bar -->
+            <div class="mb-6 flex-1">
+              <div class="flex items-center">
+                <input
+                  type="text"
+                  id="searchInput"
+                  class="h-10 flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:border-2 focus:border-gray-900"
+                  placeholder="Search products..."
+                />
+                <button
+                  id="searchButton"
+                  class="h-10 px-4 py-2 bg-zinc-800 text-white rounded-r-lg transform transition-transform duration-300 ease-in-out hover:bg-zinc-600 hover:scale-105 active:bg-zinc-700 active:scale-95"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="productGrid"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              <!-- Dynamic product rendering here -->
+              <% products.forEach(product => { %>
+              <div
+                class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+              >
+                <!-- Product Image with Discount Badge -->
+                <div class="relative aspect-square overflow-hidden">
+                  <img
+                    src="<%= product.varientId.imageUrl[0] %>"
+                    alt="<%= product.productName %>"
+                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                  <div
+                    class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    <%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%
+                  </div>
+                  <% } %>
+                </div>
+
+                <!-- Product Info -->
+                <div class="p-4">
+                  <h3 class="text-gray-800 font-medium text-base mb-2 truncate">
+                    <%= product.productName %>
+                  </h3>
+                  <p class="text-gray-600 text-sm mb-2"><%= product.brand %></p>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                      <span class="text-gray-900 font-semibold"
+                        >₹<%= product.varientId.discountPrice %></span
+                      >
+                      <span class="text-gray-500 text-sm line-through"
+                        >₹<%= product.varientId.price %></span
+                      >
+                      <% } else { %>
+                      <span class="text-gray-900 font-semibold"
+                        >₹<%= product.varientId.price %></span
+                      >
+                      <% } %>
+                    </div>
+                    <% if (product.varientId.stock > 0) { %>
+                    <span class="text-green-600 text-sm">In Stock</span>
+                    <% } else { %>
+                    <span class="text-red-600 text-sm">Out of Stock</span>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../partials/footer") %>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          // Cache DOM elements
+          const productGrid = document.getElementById('productGrid');
+          const searchInput = document.getElementById('searchInput');
+          const searchButton = document.getElementById('searchButton');
+          const sortFilter = document.getElementById('sortFilter');
+          const genderFilter = document.getElementById('gender');
+          const categoryFilter = document.getElementById('category');
+          const brandFilter = document.getElementById('brand');
+          const colorFilter = document.getElementById('color');
+          const minPriceFilter = document.getElementById('minPrice');
+          const maxPriceFilter = document.getElementById('maxPrice');
+          const stockFilter = document.getElementById('stockFilter');
+          const resetButton = document.getElementById('resetButton');
+
+          // Store original products data
+          let products = <%- JSON.stringify(products) %>;
+          const originalProducts = [...products];
+
+          // Function to apply all filters
+          function applyFilters() {
+              let filteredProducts = [...originalProducts];
+
+              // Search filter
+              const searchTerm = searchInput.value.toLowerCase();
+              if (searchTerm) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.productName.toLowerCase().includes(searchTerm) ||
+                      product.brand.toLowerCase().includes(searchTerm)
+                  );
+              }
+
+              // Gender filter
+              if (genderFilter.value) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.gender === genderFilter.value
+                  );
+              }
+
+              // Category filter
+              if (categoryFilter.value) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.category === categoryFilter.value
+                  );
+              }
+
+              // Brand filter
+              if (brandFilter.value) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.brand === brandFilter.value
+                  );
+              }
+
+              // Color filter
+              if (colorFilter.value) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.varientId.color === colorFilter.value
+                  );
+              }
+
+              // Price range filter
+              const minPrice = Number(minPriceFilter.value);
+              const maxPrice = Number(maxPriceFilter.value);
+              if (minPrice) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.varientId.discountPrice >= minPrice
+                  );
+              }
+              if (maxPrice) {
+                  filteredProducts = filteredProducts.filter(product =>
+                      product.varientId.discountPrice <= maxPrice
+                  );
+              }
+
+              // Stock filter
+              if (stockFilter.value) {
+                  filteredProducts = filteredProducts.filter(product => {
+                      if (stockFilter.value === 'inStock') return product.varientId.stock > 0;
+                      if (stockFilter.value === 'outOfStock') return product.varientId.stock === 0;
+                      return true;
+                  });
+              }
+
+              // Sort products
+              switch(sortFilter.value) {
+                  case 'priceLowToHigh':
+                      filteredProducts.sort((a, b) => a.varientId.discountPrice - b.varientId.discountPrice);
+                      break;
+                  case 'priceHighToLow':
+                      filteredProducts.sort((a, b) => b.varientId.discountPrice - a.varientId.discountPrice);
+                      break;
+                  case 'ratingHighToLow':
+                      filteredProducts.sort((a, b) => b.rating - a.rating);
+                      break;
+                  case 'newArrivals':
+                      filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                      break;
+              }
+
+              renderProducts(filteredProducts);
+          }
+
+          // Function to render products
+          function renderProducts(productsToRender) {
+              productGrid.innerHTML = productsToRender.map(product => `
+                  <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                      <div class="relative aspect-square overflow-hidden">
+                          <img
+                              src="${product.varientId.imageUrl[0]}"
+                              alt="${product.productName}"
+                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                          >
+                          ${product.varientId.discountPrice < product.varientId.price ? `
+                              <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                  -${Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100)}%
+                              </div>
+                          ` : ''}
+                      </div>
+                      <div class="p-4">
+                          <h3 class="text-gray-800 font-medium text-base mb-2 truncate">
+                              ${product.productName}
+                          </h3>
+                          <p class="text-gray-600 text-sm mb-2">
+                              ${product.brand}
+                          </p>
+                          <div class="flex items-center justify-between">
+                              <div class="flex items-center gap-2">
+                                  ${product.varientId.discountPrice < product.varientId.price ? `
+                                      <span class="text-gray-900 font-semibold">₹${product.varientId.discountPrice}</span>
+                                      <span class="text-gray-500 text-sm line-through">₹${product.varientId.price}</span>
+                                  ` : `
+                                      <span class="text-gray-900 font-semibold">₹${product.varientId.price}</span>
+                                  `}
+                              </div>
+                              ${product.varientId.stock > 0 ?
+                                  '<span class="text-green-600 text-sm">In Stock</span>' :
+                                  '<span class="text-red-600 text-sm">Out of Stock</span>'
+                              }
+                          </div>
+                      </div>
+                  </div>
+              `).join('');
+          }
+
+          // Event listeners
+          searchButton.addEventListener('click', applyFilters);
+          searchInput.addEventListener('keyup', (e) => {
+              if (e.key === 'Enter') applyFilters();
+          });
+          sortFilter.addEventListener('change', applyFilters);
+          genderFilter.addEventListener('change', applyFilters);
+          categoryFilter.addEventListener('change', applyFilters);
+          brandFilter.addEventListener('change', applyFilters);
+          colorFilter.addEventListener('change', applyFilters);
+          minPriceFilter.addEventListener('change', applyFilters);
+          maxPriceFilter.addEventListener('change', applyFilters);
+          stockFilter.addEventListener('change', applyFilters);
+
+          // Reset filters
+          resetButton.addEventListener('click', () => {
+              searchInput.value = '';
+              sortFilter.value = 'default';
+              genderFilter.value = '';
+              categoryFilter.value = '';
+              brandFilter.value = '';
+              colorFilter.value = '';
+              minPriceFilter.value = '';
+              maxPriceFilter.value = '';
+              stockFilter.value = '';
+              renderProducts(originalProducts);
+          });
+
+          // Populate filter options from available products
+          function populateFilterOptions() {
+              const brands = [...new Set(originalProducts.map(p => p.brand))];
+              const categories = [...new Set(originalProducts.map(p => p.category))];
+              const colors = [...new Set(originalProducts.map(p => p.varientId.color))];
+
+              brands.forEach(brand => {
+                  const option = new Option(brand, brand);
+                  brandFilter.add(option);
+              });
+
+              categories.forEach(category => {
+                  const option = new Option(category, category);
+                  categoryFilter.add(option);
+              });
+
+              colors.forEach(color => {
+                  const option = new Option(color, color);
+                  colorFilter.add(option);
+              });
+          }
+
+          // Initialize
+          populateFilterOptions();
+      });
+    </script>
+  </body>
+</html>
