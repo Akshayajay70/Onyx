@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import userController from '../controller/userController.js';
+import productController from '../controller/productController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 
 const route = Router();
@@ -18,13 +19,17 @@ route.post('/login', userController.postLogin);
 
 route.get('/home', userMiddlewares.checkSession, userController.getHome);
 
+route.get('/shop', userMiddlewares.checkSession, userController.getShop);
+
+route.get('/logout', userMiddlewares.checkSession, userController.getLogout);
+
+route.get('/product/:id', userMiddlewares.checkSession, productController.getProductDetails);
+
+route.post('/wishlist/add', userMiddlewares.checkSession, productController.addToWishlist);
+
 route.get('/auth/google', userMiddlewares.isLogin, userMiddlewares.restrictManualAccess, userController.getGoogle);
 
 route.get('/auth/google/callback', userMiddlewares.isLogin, userController.getGoogleCallback);
-
-route.get('/logout', userMiddlewares.checkSession, userController.getLogout)
-
-route.get('/shop', userMiddlewares.checkSession, userController.getShop);
 
 export default route;
 

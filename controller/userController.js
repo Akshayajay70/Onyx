@@ -143,10 +143,16 @@ const getHome = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(5);
 
-        res.render('user/home', { products });
+        res.render('user/home', { 
+            products,
+            title: 'Home'
+        });
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.render('user/home', { products: [] });
+        res.render('user/home', { 
+            products: [],
+            title: 'Home'
+        });
     }
 };
 
@@ -187,10 +193,16 @@ const getShop = async (req, res) => {
             .populate('varientId')
             .sort({ createdAt: -1 });
 
-        res.render('user/shop', { products });
+        res.render('user/shop', { 
+            products,
+            title: 'Shop'
+        });
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.render('user/shop', { products: [] });
+        res.render('user/shop', { 
+            products: [],
+            title: 'Shop'
+        });
     }
 };
 

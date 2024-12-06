@@ -27,7 +27,7 @@
       <!-- Update grid to better handle 5 items -->
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
         <% products.forEach(product => { %>
-          <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+          <a href="/product/<%= product._id %>" class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <!-- Product Image with Discount Badge -->
             <div class="relative aspect-square overflow-hidden">
               <img 
@@ -70,7 +70,7 @@
                 <% } %>
               </div>
             </div>
-          </div>
+          </a>
         <% }); %>
       </div>
     </div>
