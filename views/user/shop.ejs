@@ -176,55 +176,38 @@
             >
               <!-- Dynamic product rendering here -->
               <% products.forEach(product => { %>
-              <div
-                class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
-              >
+              <a href="/product/<%= product._id %>" 
+                 class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
                 <!-- Product Image with Discount Badge -->
                 <div class="relative aspect-square overflow-hidden">
-                  <img
-                    src="<%= product.varientId.imageUrl[0] %>"
+                  <img 
+                    src="<%= product.varientId.imageUrl[0] %>" 
                     alt="<%= product.productName %>"
-                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
-                  />
-                  <% if (product.varientId.discountPrice < product.varientId.price) { %>
-                  <div
-                    class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium"
                   >
-                    <%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%
-                  </div>
+                  <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                    <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      -<%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%
+                    </div>
                   <% } %>
                 </div>
 
                 <!-- Product Info -->
-                <div class="p-4">
-                  <h3 class="text-gray-800 font-medium text-base mb-2 truncate">
+                <div class="p-3">
+                  <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
                     <%= product.productName %>
-                  </h3>
-                  <p class="text-gray-600 text-sm mb-2"><%= product.brand %></p>
-                  <div class="flex items-center justify-between">
+                  </h2>
+                  <div class="space-y-1">
                     <div class="flex items-center gap-2">
                       <% if (product.varientId.discountPrice < product.varientId.price) { %>
-                      <span class="text-gray-900 font-semibold"
-                        >₹<%= product.varientId.discountPrice %></span
-                      >
-                      <span class="text-gray-500 text-sm line-through"
-                        >₹<%= product.varientId.price %></span
-                      >
-                      <% } else { %>
-                      <span class="text-gray-900 font-semibold"
-                        >₹<%= product.varientId.price %></span
-                      >
+                        <span class="text-gray-500 line-through text-xs">₹<%= product.varientId.price %></span>
                       <% } %>
+                      <span class="text-base font-bold text-gray-900">₹<%= product.varientId.discountPrice %></span>
                     </div>
-                    <% if (product.varientId.stock > 0) { %>
-                    <span class="text-green-600 text-sm">In Stock</span>
-                    <% } else { %>
-                    <span class="text-red-600 text-sm">Out of Stock</span>
-                    <% } %>
                   </div>
                 </div>
-              </div>
+              </a>
               <% }) %>
             </div>
           </div>
