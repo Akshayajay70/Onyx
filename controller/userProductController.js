@@ -15,7 +15,6 @@ const getProductDetails = async (req, res) => {
         const relatedProducts = await Product.find({
             categoriesId: product.categoriesId,
             _id: { $ne: productId },
-            isActive: true
         })
         .populate('varientId')
         .limit(4); // Show 4 related products
@@ -31,18 +30,7 @@ const getProductDetails = async (req, res) => {
     }
 };
 
-// Add to wishlist functionality (you can implement this later)
-const addToWishlist = async (req, res) => {
-    try {
-        // Implement wishlist functionality
-        res.status(200).json({ message: 'Added to wishlist' });
-    } catch (error) {
-        console.error('Error adding to wishlist:', error);
-        res.status(500).json({ error: 'Failed to add to wishlist' });
-    }
-};
 
 export default {
     getProductDetails,
-    addToWishlist
 }; 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import userController from '../controller/userController.js';
-import productController from '../controller/productController.js';
+import productController from '../controller/userProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 
 const route = Router();
@@ -24,8 +24,6 @@ route.get('/shop', userMiddlewares.checkSession, userController.getShop);
 route.get('/logout', userMiddlewares.checkSession, userController.getLogout);
 
 route.get('/product/:id', userMiddlewares.checkSession, productController.getProductDetails);
-
-route.post('/wishlist/add', userMiddlewares.checkSession, productController.addToWishlist);
 
 route.get('/auth/google', userMiddlewares.isLogin, userMiddlewares.restrictManualAccess, userController.getGoogle);
 
