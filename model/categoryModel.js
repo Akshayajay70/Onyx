@@ -13,12 +13,8 @@ const categorySchema = new mongoose.Schema(
         description: {
             type: String,
             required: [true, 'Description is required'],
-            minlength: [25, 'Description must be at least 25 characters'],
+            minlength: [10, 'Description must be at least 25 characters'],
             maxlength: [100, 'Description must be at most 100 characters'],
-        },
-        isActive: {
-            type: Boolean,
-            default: true,
         },
     },
     { timestamps: true }

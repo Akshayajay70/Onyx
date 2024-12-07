@@ -25,9 +25,9 @@ const addCategory = async (req, res) => {
         }
 
         // Validate categoryDescription
-        if (categoryDescription.length < 25 || categoryDescription.length > 100) {
+        if (categoryDescription.length < 10 || categoryDescription.length > 100) {
             return res.status(400).send(
-                'Description must be between 25 and 100 characters.'
+                'Description must be between 10 and 100 characters.'
             );
         }
 
@@ -59,9 +59,9 @@ const editCategory = async (req, res) => {
         }
 
         // Validate categoryDescription
-        if (categoryDescription.length < 25 || categoryDescription.length > 100) {
+        if (categoryDescription.length < 10 || categoryDescription.length > 100) {
             return res.status(400).send(
-                'Description must be between 25 and 100 characters.'
+                'Description must be between 10 and 100 characters.'
             );
         }
 
@@ -89,21 +89,7 @@ const deleteCategory = async (req, res) => {
     }
 };
 
-// GET: Toggle Category Status
-const toggleCategoryStatus = async (req, res) => {
-    try {
-        const { id } = req.query;
-        const category = await Category.findById(id);
-        if (category) {
-            category.isActive = !category.isActive; // Toggle the isActive status
-            await category.save();
-        }
-        res.redirect('/admin/category');
-    } catch (error) {
-        console.error('Error toggling category status:', error);
-        res.status(500).send('Error toggling category status.');
-    }
-};
 
 
-export default { addCategory, getCategories, editCategory, deleteCategory, toggleCategoryStatus }
+
+export default { addCategory, getCategories, editCategory, deleteCategory }
