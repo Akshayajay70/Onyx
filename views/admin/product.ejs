@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <style>
       .image-preview {
         position: relative;
@@ -76,24 +77,24 @@
                 </td>
                 <td class="py-3 px-4">
                   <div class="text-sm">
-                    <div class="font-medium">₹<%= product.varientId.price %></div>
+                    <div class="font-medium">₹<%= product.price %></div>
                     <div class="text-gray-500">
-                      <span class="text-green-500">-<%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%</span>
-                      <span class="line-through">₹<%= product.varientId.discountPrice %></span>
+                      <span class="text-green-500">-<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%</span>
+                      <span class="line-through">₹<%= product.discountPrice %></span>
                     </div>
                   </div>
                 </td>
                 <td class="py-3 px-4">
-                  <div class="font-medium <%= product.varientId.stock < 10 ? 'text-red-500' : 'text-green-500' %>">
-                    <%= product.varientId.stock %>
+                  <div class="font-medium <%= product.stock < 10 ? 'text-red-500' : 'text-green-500' %>">
+                    <%= product.stock %>
                   </div>
                 </td>
                 <td class="py-3 px-4">
-                  <div class="font-medium"><%= product.varientId.color %></div>
+                  <div class="font-medium"><%= product.color %></div>
                 </td>
                 <td class="py-3 px-4">
                   <div class="font-medium text-sm">
-                    <%= product.varientId.description %>
+                    <%= product.description %>
                   </div>
                 </td>
                 <td class="py-3 px-4">
@@ -209,9 +210,9 @@
             </div>
 
             <div>
-              <label class="block text-gray-400 mb-1">Variant Description</label>
+              <label class="block text-gray-400 mb-1">Description</label>
               <input type="text" 
-                     name="variantDescription" 
+                     name="description" 
                      id="variantDescription" 
                      required
                      minlength="10"
@@ -281,7 +282,6 @@
       </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         // DOM Elements
@@ -455,14 +455,14 @@
               document.getElementById('brand').value = product.brand;
               document.getElementById('gender').value = product.gender;
               document.getElementById('categoriesId').value = product.categoriesId._id;
-              document.getElementById('color').value = product.varientId.color;
-              document.getElementById('price').value = product.varientId.price;
-              document.getElementById('discountPrice').value = product.varientId.discountPrice;
-              document.getElementById('stock').value = product.varientId.stock;
+              document.getElementById('color').value = product.color;
+              document.getElementById('price').value = product.price;
+              document.getElementById('discountPrice').value = product.discountPrice;
+              document.getElementById('stock').value = product.stock;
 
               // Show existing images
               const previews = document.querySelectorAll('.image-preview');
-              product.varientId.imageUrl.forEach((url, index) => {
+              product.imageUrl.forEach((url, index) => {
                 if (previews[index]) {
                   previews[index].innerHTML = `<img src="${url}" class="w-full h-32 object-cover rounded">`;
                   // Make image upload optional for editing
@@ -679,9 +679,9 @@
                     const product = JSON.parse(button.getAttribute('data-product'));
                     
                     // ... existing field assignments ...
-                    if (product.varientId && product.varientId.description) {
-                        document.getElementById('variantDescription').value = product.varientId.description;
-                        variantCharCount.textContent = product.varientId.description.length;
+                    if (product.description) {
+                        document.getElementById('variantDescription').value = product.description;
+                        variantCharCount.textContent = product.description.length;
                     }
                     
                     // ... rest of edit handler ...
