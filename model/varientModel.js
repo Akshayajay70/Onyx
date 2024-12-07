@@ -5,6 +5,13 @@ const variantSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    description: {
+        type: String,
+        required: true,
+        trim: true,
+        minLength: 10,
+        maxLength: 25
+    },
     price: {
         type: Number,
         required: true,

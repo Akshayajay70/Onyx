@@ -54,6 +54,7 @@
                 <th class="py-3 px-4">Price</th>
                 <th class="py-3 px-4">Stock</th>
                 <th class="py-3 px-4">Color</th>
+                <th class="py-3 px-4">Description</th>
                 <th class="py-3 px-4">Status</th>
                 <th class="py-3 px-4">Actions</th>
               </tr>
@@ -89,6 +90,11 @@
                 </td>
                 <td class="py-3 px-4">
                   <div class="font-medium"><%= product.varientId.color %></div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium text-sm">
+                    <%= product.varientId.description %>
+                  </div>
                 </td>
                 <td class="py-3 px-4">
                   <span class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500' : 'bg-red-500' %>">
@@ -200,6 +206,21 @@
               <label class="block text-gray-400 mb-1">Stock</label>
               <input type="number" name="stock" id="stock" min="0" required
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
+            </div>
+
+            <div>
+              <label class="block text-gray-400 mb-1">Variant Description</label>
+              <input type="text" 
+                     name="variantDescription" 
+                     id="variantDescription" 
+                     required
+                     minlength="10"
+                     maxlength="25"
+                     oninput="this.value = validateVariantDescription(this.value)"
+                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
+              <p class="text-xs text-gray-500 mt-1">
+                  <span id="variantCharCount">0</span>/25 characters (minimum 10)
+              </p>
             </div>
 
             <div class="col-span-2">
@@ -629,6 +650,120 @@
             this.value = capitalizeAndTrim(this.value);
           });
         });
+
+        // Character counter for variant description
+        const variantDescField = document.getElementById('variantDescription');
+        const variantCharCount = document.getElementById('variantCharCount');
+
+        function validateVariantDescription(value) {
+            // Update character count
+            variantCharCount.textContent = value.length;
+            
+            // Trim and limit length
+            value = value.trim();
+            if (value.length > 25) {
+                value = value.substring(0, 25);
+            }
+            
+            return value;
+        }
+
+        variantDescField.addEventListener('input', function() {
+            variantCharCount.textContent = this.value.length;
+        });
+
+        // Update the edit handler
+        document.querySelectorAll('.edit-product').forEach(button => {
+            button.addEventListener('click', () => {
+                try {
+                    const product = JSON.parse(button.getAttribute('data-product'));
+                    
+                    // ... existing field assignments ...
+                    if (product.varientId && product.varientId.description) {
+                        document.getElementById('variantDescription').value = product.varientId.description;
+                        variantCharCount.textContent = product.varientId.description.length;
+                    }
+                    
+                    // ... rest of edit handler ...
+                } catch (error) {
+                    console.error('Error parsing product data:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error loading product data'
+                    });
+                }
+            });
+        });
+
+        // Add validation before form submission
+        productForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const variantDesc = document.getElementById('variantDescription').value.trim();
+            
+            if (variantDesc.length < 10 || variantDesc.length > 25) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Variant Description',
+                    text: 'Variant description must be between 10 and 25 characters'
+                });
+                return false;
+            }
+
+            // If validation passes, proceed with form submission
+            submitForm(this);
+        });
+
+        async function submitForm(form) {
+            try {
+                const formData = new FormData(form);
+                const productId = document.getElementById('productId').value;
+                
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we save the product',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const url = productId 
+                    ? `/admin/product/edit/${productId}`
+                    : '/admin/product/add';
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: productId ? 'Product updated successfully' : 'Product added successfully',
+                        timer: 1500
+                    });
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Error processing request'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while processing your request'
+                });
+            }
+        }
       });
     </script>
   </body>

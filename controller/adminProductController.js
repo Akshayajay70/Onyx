@@ -54,7 +54,7 @@ export const renderProductPage = async (req, res) => {
 
 // Add New Product
 export const addProduct = async (req, res) => {
-    const uploadMultiple = upload.array('images', 5);
+    const uploadMultiple = upload.array('images', 4);
 
     uploadMultiple(req, res, async (err) => {
         if (err) {
@@ -68,52 +68,44 @@ export const addProduct = async (req, res) => {
                 gender,
                 categoriesId,
                 color,
+                variantDescription,
                 price,
                 discountPrice,
                 stock
             } = req.body;
 
-            // Validate required fields
-            if (!productName || !brand || !gender || !categoriesId || !color || !price || !discountPrice || !stock) {
-                return res.status(400).json({ message: 'All fields are required' });
+            // Validate variant description
+            if (!variantDescription || variantDescription.length < 10 || variantDescription.length > 25) {
+                return res.status(400).json({ 
+                    message: 'Variant description must be between 10 and 25 characters' 
+                });
             }
 
-            // Calculate discount percentage
-            const discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
-
-            // Upload images
-            const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
-
-            // Create Variant with product reference
+            // Create Variant
             const newVariant = new Variant({
                 color,
+                description: variantDescription.trim(),
                 price: parseFloat(price),
                 discountPrice: parseFloat(discountPrice),
-                discountPercentage: parseFloat(discountPercentage),
+                discountPercentage: ((price - discountPrice) / price * 100).toFixed(2),
                 stock: parseInt(stock),
-                rating: 0, // Default rating
-                imageUrl: imageUrls
+                imageUrl: req.files.map(file => `/uploads/products/${file.filename}`)
             });
 
             const savedVariant = await newVariant.save();
 
-            const savedVariantId = savedVariant._id;
-
-            // Create Product first
+            // Create Product
             const newProduct = new Product({
                 productName,
                 brand,
                 gender,
                 categoriesId,
-                varientId: savedVariantId
+                varientId: savedVariant._id
             });
 
-            const savedProduct = await newProduct.save();
+            await newProduct.save();
 
-            res.status(201).json({
-                message: 'Product added successfully',
-                product: savedProduct
-            });
+            res.status(201).json({ message: 'Product added successfully' });
         } catch (error) {
             console.error('Error adding product:', error);
             res.status(500).json({ message: 'Internal server error' });
@@ -141,7 +133,7 @@ export const getProductDetails = async (req, res) => {
 
 // Update Product
 export const updateProduct = async (req, res) => {
-    const uploadMultiple = upload.array('images', 5);
+    const uploadMultiple = upload.array('images', 4);
 
     uploadMultiple(req, res, async (err) => {
         if (err) {
@@ -156,74 +148,49 @@ export const updateProduct = async (req, res) => {
                 gender,
                 categoriesId,
                 color,
+                variantDescription,
                 price,
                 discountPrice,
                 stock
             } = req.body;
 
-            // Find existing product
+            // Validate variant description
+            if (!variantDescription || variantDescription.length < 10 || variantDescription.length > 25) {
+                return res.status(400).json({ 
+                    message: 'Variant description must be between 10 and 25 characters' 
+                });
+            }
+
             const existingProduct = await Product.findById(productId);
             if (!existingProduct) {
                 return res.status(404).json({ message: 'Product not found' });
             }
 
-            // Calculate discount percentage
-            const discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
-
-            // Prepare variant update
+            // Update variant
             const variantUpdate = {
                 color,
+                description: variantDescription.trim(),
                 price: parseFloat(price),
                 discountPrice: parseFloat(discountPrice),
-                discountPercentage: parseFloat(discountPercentage),
+                discountPercentage: ((price - discountPrice) / price * 100).toFixed(2),
                 stock: parseInt(stock)
             };
 
-            // Handle image updates
             if (req.files && req.files.length > 0) {
-                const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
-
-                // Delete old images if they exist
-                const existingVariant = await Variant.findById(existingProduct.varientId);
-                if (existingVariant && existingVariant.imageUrl) {
-                    existingVariant.imageUrl.forEach(imagePath => {
-                        const fullPath = path.join('public', imagePath);
-                        if (fs.existsSync(fullPath)) {
-                            fs.unlinkSync(fullPath);
-                        }
-                    });
-                }
-
-                variantUpdate.imageUrl = imageUrls;
+                variantUpdate.imageUrl = req.files.map(file => `/uploads/products/${file.filename}`);
             }
 
-            // Update variant
-            const updatedVariant = await Variant.findByIdAndUpdate(
-                existingProduct.varientId,
-                variantUpdate,
-                { new: true }
-            );
+            await Variant.findByIdAndUpdate(existingProduct.varientId, variantUpdate);
 
-            // Prepare product update
-            const productUpdate = {
+            // Update product
+            await Product.findByIdAndUpdate(productId, {
                 productName,
                 brand,
                 gender,
                 categoriesId
-            };
-
-            // Update product
-            const updatedProduct = await Product.findByIdAndUpdate(
-                productId,
-                productUpdate,
-                { new: true }
-            );
-
-            res.json({
-                message: 'Product updated successfully',
-                product: updatedProduct,
-                variant: updatedVariant
             });
+
+            res.json({ message: 'Product updated successfully' });
         } catch (error) {
             console.error('Error updating product:', error);
             res.status(500).json({ message: 'Internal server error' });
