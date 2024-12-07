@@ -1,37 +1,12 @@
 import Product from '../model/productModel.js';
 import Variant from '../model/varientModel.js';
 import Category from '../model/categoryModel.js';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-
-// Multer storage configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/uploads/products');
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|gif|webp/;
-        const mimetype = filetypes.test(file.mimetype);
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
-        if (mimetype && extname) {
-            return cb(null, true);
-        }
-        cb(new Error('Only images are allowed'));
-    },
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
-});
+import upload from '../utils/multer.js'
 
 // Render Product Management Page
-export const renderProductPage = async (req, res) => {
+const renderProductPage = async (req, res) => {
     try {
         // Fetch products with populated references
         const products = await Product.find()
@@ -53,7 +28,7 @@ export const renderProductPage = async (req, res) => {
 };
 
 // Add New Product
-export const addProduct = async (req, res) => {
+const addProduct = async (req, res) => {
     const uploadMultiple = upload.array('images', 4);
 
     uploadMultiple(req, res, async (err) => {
@@ -114,7 +89,7 @@ export const addProduct = async (req, res) => {
 };
 
 // Get Product Details for Editing
-export const getProductDetails = async (req, res) => {
+const getProductDetails = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
             .populate('categoriesId')
@@ -132,7 +107,7 @@ export const getProductDetails = async (req, res) => {
 };
 
 // Update Product
-export const updateProduct = async (req, res) => {
+const updateProduct = async (req, res) => {
     const uploadMultiple = upload.array('images', 4);
 
     uploadMultiple(req, res, async (err) => {
@@ -199,7 +174,7 @@ export const updateProduct = async (req, res) => {
 };
 
 // Delete Product
-export const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => {
     try {
         const productId = req.params.id;
         
@@ -242,7 +217,7 @@ export const deleteProduct = async (req, res) => {
 };
 
 // Toggle Product Status
-export const toggleProductStatus = async (req, res) => {
+const toggleProductStatus = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
 
@@ -262,3 +237,6 @@ export const toggleProductStatus = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
+export default { renderProductPage, addProduct, getProductDetails, updateProduct, deleteProduct, toggleProductStatus }
