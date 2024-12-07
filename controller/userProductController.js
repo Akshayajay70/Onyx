@@ -15,7 +15,6 @@ const getProductDetails = async (req, res) => {
             categoriesId: product.categoriesId,
             _id: { $ne: productId },
         })
-        .populate('productId')
         .limit(4); // Show 4 related products
 
         res.render('user/viewProduct', { 

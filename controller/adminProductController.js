@@ -54,7 +54,8 @@ const addProduct = async (req, res) => {
                 });
             }
 
-            // Create Product
+            // Process and save the cropped images
+            const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
 
             const newProduct = new Product({
                 productName,
@@ -67,13 +68,19 @@ const addProduct = async (req, res) => {
                 discountPrice: parseFloat(discountPrice),
                 discountPercentage: ((price - discountPrice) / price * 100).toFixed(2),
                 stock: parseInt(stock),
-                imageUrl: req.files.map(file => `/uploads/products/${file.filename}`)
+                imageUrl: imageUrls
             });
 
-            await newProduct.save();
-
+           await newProduct.save();
             res.status(201).json({ message: 'Product added successfully' });
         } catch (error) {
+            // Delete uploaded files if there's an error
+            req.files?.forEach(file => {
+                fs.unlink(file.path, (err) => {
+                    if (err) console.error('Error deleting file:', err);
+                });
+            });
+            
             console.error('Error adding product:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
@@ -107,51 +114,49 @@ const updateProduct = async (req, res) => {
         }
 
         try {
-            const {
-                productId,
-                productName,
-                brand,
-                gender,
-                categoriesId,
-                color,
-                description,
-                price,
-                discountPrice,
-                stock
-            } = req.body;
-
-            // Validate product description
-            if (!description || description.length < 10 || description.length > 25) {
-                return res.status(400).json({ 
-                    message: 'Variant description must be between 10 and 25 characters' 
-                });
-            }
-
-            const existingProduct = await Product.findById(productId);
+            const existingProduct = await Product.findById(req.body.productId);
             if (!existingProduct) {
                 return res.status(404).json({ message: 'Product not found' });
             }
 
-            // Update product
-            await Product.findByIdAndUpdate(productId, {
-                productName,
-                categoriesId,
-                brand,
-                gender,
-                color,
-                description: description.trim(),
-                price: parseFloat(price),
-                discountPrice: parseFloat(discountPrice),
-                discountPercentage: ((price - discountPrice) / price * 100).toFixed(2),
-                stock: parseInt(stock),
-            });
-
+            // If new images are uploaded, delete old ones
             if (req.files && req.files.length > 0) {
-                Product.imageUrl = req.files.map(file => `/uploads/products/${file.filename}`);
+                // Delete old images
+                existingProduct.imageUrl.forEach(imagePath => {
+                    const fullPath = path.join('public', imagePath);
+                    if (fs.existsSync(fullPath)) {
+                        fs.unlinkSync(fullPath);
+                    }
+                });
+
+                // Update with new image URLs
+                existingProduct.imageUrl = req.files.map(file => `/uploads/products/${file.filename}`);
             }
 
+            // Update other fields
+            Object.assign(existingProduct, {
+                productName: req.body.productName,
+                categoriesId: req.body.categoriesId,
+                brand: req.body.brand,
+                gender: req.body.gender,
+                color: req.body.color,
+                description: req.body.description.trim(),
+                price: parseFloat(req.body.price),
+                discountPrice: parseFloat(req.body.discountPrice),
+                discountPercentage: ((req.body.price - req.body.discountPrice) / req.body.price * 100).toFixed(2),
+                stock: parseInt(req.body.stock),
+            });
+
+            await existingProduct.save();
             res.json({ message: 'Product updated successfully' });
         } catch (error) {
+            // Delete uploaded files if there's an error
+            req.files?.forEach(file => {
+                fs.unlink(file.path, (err) => {
+                    if (err) console.error('Error deleting file:', err);
+                });
+            });
+            
             console.error('Error updating product:', error);
             res.status(500).json({ message: 'Internal server error' });
         }

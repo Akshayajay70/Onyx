@@ -232,6 +232,7 @@
                 <% for(let i = 0; i < 3; i++) { %>
                   <div class="image-upload-container">
                     <input type="file" 
+                           id="image"
                            name="images" 
                            class="product-image hidden" 
                            accept="image/*"
@@ -266,6 +267,7 @@
     <!-- Image Cropper Modal -->
     <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
       <div class="bg-zinc-900 rounded-lg p-6 w-[90%] md:w-[600px]">
+        <h3 class="text-lg font-semibold mb-4 text-gray-200">Crop Image</h3>
         <div class="mb-4">
           <div id="cropperContainer" class="max-h-[400px] overflow-hidden">
             <img id="cropperImage" src="" alt="Image to crop">
@@ -299,6 +301,7 @@
 
         let currentImageInput = null;
         let cropper = null;
+        let croppedImageBlob = null;
 
         // Toggle Sidebar
         toggleSidebar.addEventListener('click', () => {
@@ -323,17 +326,30 @@
           input.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+              // Validate file size
+              const maxSize = input.getAttribute('data-max-size') * 1024;
+              if (file.size > maxSize) {
+                alert('Image size must be less than 5MB');
+                input.value = '';
+                return;
+              }
+
               currentImageInput = input;
               const reader = new FileReader();
               reader.onload = (e) => {
                 cropperImage.src = e.target.result;
                 cropperModal.classList.remove('hidden');
+                
                 if (cropper) {
                   cropper.destroy();
                 }
+                
                 cropper = new Cropper(cropperImage, {
                   aspectRatio: 1,
                   viewMode: 2,
+                  crop: function(event) {
+                    // Optional: Add crop event handling if needed
+                  }
                 });
               };
               reader.readAsDataURL(file);
@@ -345,15 +361,44 @@
         cancelCrop.addEventListener('click', () => {
           cropperModal.classList.add('hidden');
           currentImageInput.value = '';
+          if (cropper) {
+            cropper.destroy();
+            cropper = null;
+          }
         });
 
         // Crop Image
-        cropImage.addEventListener('click', () => {
-          const croppedCanvas = cropper.getCroppedCanvas();
-          const preview = currentImageInput.nextElementSibling;
-          preview.innerHTML = '';
-          preview.appendChild(croppedCanvas);
+        cropImage.addEventListener('click', async () => {
+          if (!cropper) return;
+
+          const canvas = cropper.getCroppedCanvas({
+            width: 800,  
+            height: 800,
+          });
+
+          // Show preview
+          const preview = currentImageInput.closest('.image-upload-container').querySelector('.image-preview');
+          preview.innerHTML = `<img src="${canvas.toDataURL()}" class="w-full h-full object-cover rounded">`;
+
+          // Convert canvas to Blob
+          canvas.toBlob(async (blob) => {
+            // Create a new File object from the blob
+            const croppedFile = new File([blob], 'cropped-image.jpg', {
+              type: 'image/jpeg',
+              lastModified: new Date().getTime()
+            });
+
+            // Create a new FileList-like object
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(croppedFile);
+            
+            // Update the file input with the cropped image
+            currentImageInput.files = dataTransfer.files;
+          }, 'image/jpeg', 0.9);
+
           cropperModal.classList.add('hidden');
+          cropper.destroy();
+          cropper = null;
         });
 
         // Handle Form Submission
