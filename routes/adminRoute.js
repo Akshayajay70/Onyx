@@ -38,11 +38,11 @@ router.post('/product/add', adminProductController.addProduct);
 
 router.get('/product/:id', adminProductController.getProductDetails);
 
-router.post('/product/edit/:id', adminProductController.updateProduct);
+router.post('/product/edit/:id', adminMiddleware.checkSession, adminProductController.updateProduct);
 
-router.post('/product/delete/:id', adminProductController.deleteProduct);
+router.post('/product/delete/:id', adminMiddleware.checkSession, adminProductController.deleteProduct);
 
-router.post('/product/toggle-status/:id', adminProductController.toggleProductStatus);
+router.post('/product/toggle-status/:id', adminMiddleware.checkSession, adminProductController.toggleProductStatus);
 
 
 
