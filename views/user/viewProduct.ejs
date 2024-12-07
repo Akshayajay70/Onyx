@@ -12,6 +12,55 @@
         .zoom-hover:hover {
             transform: scale(1.05);
         }
+        .image-zoom-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-zoom-lens {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: none;
+            display: none;
+        }
+
+        .zoomed-image-container {
+            position: absolute;
+            top: 0;
+            left: 105%;
+            width: 400px;
+            height: 400px;
+            overflow: hidden;
+            border: 1px solid #d4d4d4;
+            display: none;
+            background-color: white;
+        }
+
+        .zoomed-image {
+            position: absolute;
+            max-width: none;
+        }
+
+        .thumbnail-container {
+            position: sticky;
+            top: 20px;
+        }
+
+        .thumbnail {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .thumbnail:hover {
+            border-color: #2563eb;
+        }
+
+        .thumbnail.active {
+            border-color: #2563eb;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -43,27 +92,35 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Image Gallery -->
-                <div class="space-y-4">
-                    <div class="aspect-square rounded-lg overflow-hidden">
-                        <img 
-                            id="mainImage"
-                            src="<%= product.varientId.imageUrl[0] %>" 
-                            alt="<%= product.productName %>"
-                            class="w-full h-full object-cover"
-                        >
+                <div class="grid grid-cols-12 gap-4">
+                    <!-- Thumbnails Column -->
+                    <div class="col-span-2">
+                        <div class="thumbnail-container space-y-4">
+                            <% product.varientId.imageUrl.forEach((image, index) => { %>
+                                <div class="thumbnail aspect-square rounded-lg overflow-hidden border-2 <%= index === 0 ? 'active' : '' %>"
+                                     onclick="changeMainImage('<%= image %>', this)">
+                                    <img src="<%= image %>" 
+                                         alt="<%= product.productName %> thumbnail"
+                                         class="w-full h-full object-cover">
+                                </div>
+                            <% }) %>
+                        </div>
                     </div>
-                    <!-- Thumbnails -->
-                    <div class="grid grid-cols-4 gap-4">
-                        <% product.varientId.imageUrl.forEach((image, index) => { %>
-                            <div class="aspect-square rounded-lg overflow-hidden cursor-pointer border-2 hover:border-gray-400 <%= index === 0 ? 'border-gray-800' : 'border-transparent' %>">
-                                <img 
-                                    src="<%= image %>" 
-                                    alt="Thumbnail <%= index + 1 %>"
-                                    class="w-full h-full object-cover"
-                                    onclick="updateMainImage(this.src, this)"
-                                >
+
+                    <!-- Main Image Column -->
+                    <div class="col-span-10">
+                        <div class="image-zoom-container aspect-square rounded-lg overflow-hidden bg-white">
+                            <div class="image-zoom-lens"></div>
+                            <img id="mainImage" 
+                                 src="<%= product.varientId.imageUrl[0] %>" 
+                                 alt="<%= product.productName %>"
+                                 class="w-full h-full object-contain">
+                            <div class="zoomed-image-container">
+                                <img class="zoomed-image" 
+                                     src="<%= product.varientId.imageUrl[0] %>" 
+                                     alt="<%= product.productName %> zoomed">
                             </div>
-                        <% }) %>
+                        </div>
                     </div>
                 </div>
 
@@ -150,21 +207,84 @@
     <%- include("../partials/footer") %>
 
     <script>
-        function updateMainImage(src, thumbnail) {
-            // Update main image
-            document.getElementById('mainImage').src = src;
-            
-            // Update thumbnail borders
-            document.querySelectorAll('.aspect-square.rounded-lg').forEach(thumb => {
-                thumb.classList.remove('border-gray-800');
-                thumb.classList.add('border-transparent');
-            });
-            
-            if (thumbnail) {
-                thumbnail.classList.remove('border-transparent');
-                thumbnail.classList.add('border-gray-800');
+        // Image zoom functionality
+        function imageZoom() {
+            const container = document.querySelector(".image-zoom-container");
+            const mainImage = document.getElementById("mainImage");
+            const lens = document.querySelector(".image-zoom-lens");
+            const zoomContainer = document.querySelector(".zoomed-image-container");
+            const zoomedImage = document.querySelector(".zoomed-image");
+
+            let isZooming = false;
+
+            container.addEventListener("mouseenter", startZoom);
+            container.addEventListener("mouseleave", stopZoom);
+            container.addEventListener("mousemove", moveZoom);
+
+            function startZoom(e) {
+                isZooming = true;
+                lens.style.display = "block";
+                zoomContainer.style.display = "block";
+                updateZoom(e);
+            }
+
+            function stopZoom() {
+                isZooming = false;
+                lens.style.display = "none";
+                zoomContainer.style.display = "none";
+            }
+
+            function moveZoom(e) {
+                if (!isZooming) return;
+                updateZoom(e);
+            }
+
+            function updateZoom(e) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Calculate lens position
+                let lensX = x - lens.offsetWidth / 2;
+                let lensY = y - lens.offsetHeight / 2;
+
+                // Boundary checks
+                lensX = Math.max(0, Math.min(lensX, container.offsetWidth - lens.offsetWidth));
+                lensY = Math.max(0, Math.min(lensY, container.offsetHeight - lens.offsetHeight));
+
+                // Update lens position
+                lens.style.left = `${lensX}px`;
+                lens.style.top = `${lensY}px`;
+
+                // Calculate zoom
+                const xRatio = zoomContainer.offsetWidth / lens.offsetWidth;
+                const yRatio = zoomContainer.offsetHeight / lens.offsetHeight;
+
+                // Update zoomed image
+                zoomedImage.style.width = `${container.offsetWidth * xRatio}px`;
+                zoomedImage.style.height = `${container.offsetHeight * yRatio}px`;
+                zoomedImage.style.left = `-${lensX * xRatio}px`;
+                zoomedImage.style.top = `-${lensY * yRatio}px`;
             }
         }
+
+        // Thumbnail functionality
+        function changeMainImage(imageSrc, thumbnail) {
+            const mainImage = document.getElementById('mainImage');
+            const zoomedImage = document.querySelector('.zoomed-image');
+            const thumbnails = document.querySelectorAll('.thumbnail');
+
+            // Update images
+            mainImage.src = imageSrc;
+            zoomedImage.src = imageSrc;
+
+            // Update active thumbnail
+            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            thumbnail.classList.add('active');
+        }
+
+        // Initialize zoom when page loads
+        document.addEventListener('DOMContentLoaded', imageZoom);
     </script>
 </body>
 </html>
