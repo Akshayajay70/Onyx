@@ -31,14 +31,14 @@
             <!-- Product Image with Discount Badge -->
             <div class="relative aspect-square overflow-hidden">
               <img 
-                src="<%= product.varientId.imageUrl[0] %>" 
+                src="<%= product.imageUrl[0] %>" 
                 alt="<%= product.productName %>"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               >
-              <% if (product.varientId.discountPrice < product.varientId.price) { %>
+              <% if (product.discountPrice < product.price) { %>
                 <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                  -<%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>%
+                  -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
                 </div>
               <% } %>
             </div>
@@ -50,10 +50,10 @@
               </h2>
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <% if (product.varientId.discountPrice < product.varientId.price) { %>
-                    <span class="text-gray-500 line-through text-xs">₹<%= product.varientId.price %></span>
+                  <% if (product.discountPrice < product.price) { %>
+                    <span class="text-gray-500 line-through text-xs">₹<%= product.price %></span>
                   <% } %>
-                  <span class="text-base font-bold text-gray-900">₹<%= product.varientId.discountPrice %></span>
+                  <span class="text-base font-bold text-gray-900">₹<%= product.discountPrice %></span>
                 </div>
               </div>
             </div>

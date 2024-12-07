@@ -96,7 +96,7 @@
                     <!-- Thumbnails Column -->
                     <div class="col-span-2">
                         <div class="thumbnail-container space-y-4">
-                            <% product.varientId.imageUrl.forEach((image, index) => { %>
+                            <% product.imageUrl.forEach((image, index) => { %>
                                 <div class="thumbnail aspect-square rounded-lg overflow-hidden border-2 <%= index === 0 ? 'active' : '' %>"
                                      onclick="changeMainImage('<%= image %>', this)">
                                     <img src="<%= image %>" 
@@ -112,12 +112,12 @@
                         <div class="image-zoom-container aspect-square rounded-lg overflow-hidden bg-white">
                             <div class="image-zoom-lens"></div>
                             <img id="mainImage" 
-                                 src="<%= product.varientId.imageUrl[0] %>" 
+                                 src="<%= product.imageUrl[0] %>" 
                                  alt="<%= product.productName %>"
                                  class="w-full h-full object-contain">
                             <div class="zoomed-image-container">
                                 <img class="zoomed-image" 
-                                     src="<%= product.varientId.imageUrl[0] %>" 
+                                     src="<%= product.imageUrl[0] %>" 
                                      alt="<%= product.productName %> zoomed">
                             </div>
                         </div>
@@ -131,31 +131,31 @@
                     <div class="space-y-2">
                         <p class="text-gray-600">Brand: <span class="font-medium text-gray-900"><%= product.brand %></span></p>
                         <p class="text-gray-600">Category: <span class="font-medium text-gray-900"><%= product.categoriesId.name %></span></p>
-                        <p class="text-gray-600">Color: <span class="font-medium text-gray-900"><%= product.varientId.color %></span></p>
+                        <p class="text-gray-600">Color: <span class="font-medium text-gray-900"><%= product.color %></span></p>
                     </div>
 
                     <!-- Price Section -->
                     <div class="space-y-2">
                         <div class="flex items-center space-x-4">
-                            <span class="text-3xl font-bold text-gray-900">₹<%= product.varientId.discountPrice %></span>
-                            <% if (product.varientId.discountPrice < product.varientId.price) { %>
-                                <span class="text-xl text-gray-500 line-through">₹<%= product.varientId.price %></span>
+                            <span class="text-3xl font-bold text-gray-900">₹<%= product.discountPrice %></span>
+                            <% if (product.discountPrice < product.price) { %>
+                                <span class="text-xl text-gray-500 line-through">₹<%= product.price %></span>
                                 <span class="text-green-600 font-semibold">
-                                    <%= Math.round((product.varientId.price - product.varientId.discountPrice) / product.varientId.price * 100) %>% OFF
+                                    <%= Math.round((product.price - product.discountPrice) / product.price * 100) %>% OFF
                                 </span>
                             <% } %>
                         </div>
-                        <% if (product.varientId.discountPrice < product.varientId.price) { %>
+                        <% if (product.discountPrice < product.price) { %>
                             <p class="text-green-600">
-                                You save: ₹<%= product.varientId.price - product.varientId.discountPrice %>
+                                You save: ₹<%= product.price - product.discountPrice %>
                             </p>
                         <% } %>
                     </div>
 
                     <!-- Stock Status -->
                     <div>
-                        <% if (product.varientId.stock > 0) { %>
-                            <p class="text-green-600 font-medium">In Stock (<%= product.varientId.stock %> available)</p>
+                        <% if (product.stock > 0) { %>
+                            <p class="text-green-600 font-medium">In Stock (<%= product.stock %> available)</p>
                         <% } else { %>
                             <p class="text-red-600 font-medium">Out of Stock</p>
                         <% } %>
@@ -165,7 +165,7 @@
                     <div class="flex space-x-4">
                         <button 
                             class="flex-1 bg-gray-900 text-white py-3 px-6 rounded-lg hover:bg-gray-800 transition duration-300"
-                            <%= product.varientId.stock === 0 ? 'disabled' : '' %>
+                            <%= product.stock === 0 ? 'disabled' : '' %>
                         >
                             Add to Cart
                         </button>
@@ -187,7 +187,7 @@
                             <!-- Related Product Content -->
                             <div class="relative aspect-square overflow-hidden">
                                 <img 
-                                    src="<%= relatedProduct.varientId.imageUrl[0] %>" 
+                                    src="<%= relatedProduct.imageUrl[0] %>" 
                                     alt="<%= relatedProduct.productName %>"
                                     class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 >
@@ -195,7 +195,7 @@
                             <div class="p-4">
                                 <h3 class="text-gray-900 font-medium"><%= relatedProduct.productName %></h3>
                                 <p class="text-gray-600 text-sm"><%= relatedProduct.brand %></p>
-                                <p class="text-gray-900 font-bold mt-2">₹<%= relatedProduct.varientId.discountPrice %></p>
+                                <p class="text-gray-900 font-bold mt-2">₹<%= relatedProduct.discountPrice %></p>
                             </div>
                         </a>
                     <% }) %>

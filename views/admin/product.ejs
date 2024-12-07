@@ -77,10 +77,10 @@
                 </td>
                 <td class="py-3 px-4">
                   <div class="text-sm">
-                    <div class="font-medium">₹<%= product.price %></div>
+                    <div class="font-medium">₹<%= product.discountPrice %></div>
                     <div class="text-gray-500">
                       <span class="text-green-500">-<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%</span>
-                      <span class="line-through">₹<%= product.discountPrice %></span>
+                      <span class="line-through">₹<%= product.price %></span>
                     </div>
                   </div>
                 </td>

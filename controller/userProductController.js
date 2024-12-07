@@ -4,7 +4,6 @@ const getProductDetails = async (req, res) => {
     try {
         const productId = req.params.id;
         const product = await Product.findById(productId)
-            .populate('varientId')
             .populate('categoriesId');
 
         if (!product) {
@@ -16,7 +15,7 @@ const getProductDetails = async (req, res) => {
             categoriesId: product.categoriesId,
             _id: { $ne: productId },
         })
-        .populate('varientId')
+        .populate('productId')
         .limit(4); // Show 4 related products
 
         res.render('user/viewProduct', { 
