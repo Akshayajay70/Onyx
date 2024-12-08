@@ -145,28 +145,43 @@ const postLogin = async (req, res) => {
         const { email, password } = req.body;
         const user = await userSchema.findOne({ email });
 
+        if (!user.isVerified) {
+            return res.render('user/login', {
+                message: 'Verify your email first',
+                alertType: "error",
+            })
+        }
+
         if (!user) {
-            return res.status(400).json({ error: 'Invalid credentials' });
+            return res.render('user/login', {
+                message: 'Invalid credentials',
+                alertType: "error",
+            })
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid credentials' });
-        }
-
-        if (!user.isVerified) {
-            return res.status(400).json({ error: 'Please verify your email first' });
+            return res.render('user/login', {
+                message: 'Invalid credentials',
+                alertType: "error",
+            })
         }
 
         if (user.blocked) {
-            return res.status(400).json({ error: 'You\'re blocked' });
+            return res.render('user/login', {
+                message: 'You\'re Blocked',
+                alertType: "error",
+            })
         }
 
         req.session.user = true
 
         res.redirect('/home');
     } catch (error) {
-        res.status(500).json({ error: 'Login failed' });
+        return res.render('user/login', {
+            message: 'Login Failed',
+            alertType: "error",
+        })
     }
 }
 
