@@ -254,11 +254,11 @@ const getGoogleCallback = (req, res) => {
             
             // If user exists, log them in regardless of auth trigger
             if (existingUser) {
-                // Update googleId if it doesn't exist (for users who previously used email/password)
-                if (!existingUser.googleId) {
-                    existingUser.googleId = profile.id;
-                    await existingUser.save();
-                }
+                // Update googleId if it doesn't exist and unset otpAttempts
+                await userSchema.findByIdAndUpdate(existingUser._id, {
+                    $set: { googleId: existingUser.googleId || profile.id },
+                    $unset: { otpAttempts: 1 }
+                });
                 
                 req.session.user = existingUser._id;
                 return res.redirect("/home");
@@ -269,9 +269,12 @@ const getGoogleCallback = (req, res) => {
                 fullName: profile.displayName,
                 email: profile.email,
                 googleId: profile.id,
-                isVerified: true
+                isVerified: true,
             });
             await newUser.save();
+            await userSchema.findByIdAndUpdate(newUser._id, {
+                $unset: { otpAttempts: 1 }
+            });
             
             req.session.user = newUser._id;
             return res.redirect("/home");
