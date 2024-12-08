@@ -101,6 +101,13 @@
               class="error-text text-red-500"
             ></div>
           </div>
+          <% if (locals.message && locals.alertType) { %>
+            <div id="alertMessage" 
+                 class="mb-4 p-3 rounded-md 
+                 <%= alertType === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' %>">
+              <%= message %>
+            </div>
+          <% } %>
 
           <!-- Login Links -->
           <div class="flex justify-between text-sm text-gray-500">
