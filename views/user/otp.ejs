@@ -132,7 +132,7 @@
         });
 
         if (response.ok) {
-          timeLeft = 60; // Reset timer
+          timeLeft = 59; // Reset timer
           localStorage.setItem("otpTimer", timeLeft);
           startTimer();
           errorDiv.textContent = "OTP resent successfully";

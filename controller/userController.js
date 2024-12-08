@@ -17,11 +17,7 @@ const postSignUp = async (req, res) => {
         // Check if user exists and not verified
         const existingUser = await userSchema.findOne({ email });
         if (existingUser) {
-            if (!existingUser.isVerified) {
-                await userSchema.deleteOne({ _id: existingUser._id });
-            } else {
-                return res.status(400).json({ error: 'User already exists' });
-            }
+            res.status(400).json({ error: 'User already exists' });
         }
 
         const otp = generateOTP();
@@ -44,7 +40,7 @@ const postSignUp = async (req, res) => {
             if (user && !user.isVerified) {
                 await userSchema.deleteOne({ _id: user._id });
             }
-        }, 120000);
+        }, 180000);
 
         await sendOTPEmail(email, otp);
         res.render('user/otp');
@@ -52,36 +48,83 @@ const postSignUp = async (req, res) => {
         res.status(500).json({ error: 'Signup failed' });
     }
 }
-
 const postOtp = async (req, res) => {
     try {
         const { userOtp } = req.body;
         const user = await userSchema.findOne({ otp: userOtp });
 
-        if (!user || Date.now() > user.otpExpiresAt) {
-            if (user) {
-                user.otpAttempts += 1;
-                if (user.otpAttempts >= 3) {
-                    await userSchema.deleteOne({ _id: user._id });
-                    return res.status(400).json({ error: 'Too many attempts' });
-                }
-                await user.save();
-            }
+        if (!user) {
             return res.status(400).json({ error: 'Invalid OTP' });
         }
 
-        await userSchema.findByIdAndUpdate(user._id, {
-            $set: { isVerified: true },
-            $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
-        });
+        if (Date.now() > user.otpExpiresAt) {
+            user.otpAttempts += 1;
+            if (user.otpAttempts >= 3) {
+                await userSchema.deleteOne({ _id: user._id });
+                return res.status(400).json({ error: 'Too many attempts. Please signup again.' });
+            }
+            await user.save();
+            return res.status(400).json({ error: 'OTP expired' });
+        }
 
-        req.session.user = true
-        res.render('user/home');
+        // Increment attempts before validating to prevent brute force
+        user.otpAttempts += 1;
+        if (user.otpAttempts >= 3) {
+            await userSchema.deleteOne({ _id: user._id });
+            return res.status(400).json({ error: 'Too many attempts. Please signup again.' });
+        }
+        await user.save();
+
+        // If OTP matches, verify user
+        if (user.otp === userOtp) {
+            await userSchema.findByIdAndUpdate(user._id, {
+                $set: { isVerified: true },
+                $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
+            });
+
+            req.session.user = user._id; // Store user ID in session
+            return res.redirect('/home')
+        } else {
+            return res.status(400).json({ error: 'Invalid OTP' });
+        }
 
     } catch (error) {
-        res.status(500).json({ error: 'Validation failed' });
+        console.error('OTP verification error:', error);
+        return res.status(500).json({ error: 'OTP verification failed' });
     }
 }
+
+// const postOtp = async (req, res) => {
+//     try {
+//         const { userOtp } = req.body;
+//         const user = await userSchema.findOne({ otp: userOtp });
+
+
+//         if (!user || Date.now() > user.otpExpiresAt) {
+//             if (user) {
+//                 user.otpAttempts += 1;
+//                 if (user.otpAttempts >= 3) {
+//                     await userSchema.deleteOne({ _id: user._id });
+//                     return res.status(400).json({ error: 'Too many attempts' });
+//                 }
+//                 await user.save();
+//             }
+//             return res.status(400).json({ error: 'Invalid OTP' });
+//         }
+
+//         await userSchema.findByIdAndUpdate(user._id, {
+//             $set: { isVerified: true },
+//             $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
+//         });
+
+//         req.session.user = true
+//         res.render('user/home');
+
+//     } catch (error) {
+//         res.status(500).json({ error: 'Validation failed' });
+//     }
+
+
 
 const postResendOtp = async (req, res) => {
     try {
