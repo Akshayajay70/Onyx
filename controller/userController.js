@@ -252,8 +252,13 @@ const getGoogleCallback = (req, res) => {
 
             const existingUser = await userSchema.findOne({ email: profile.email });
             
-            // If user exists, log them in regardless of auth trigger
+            // If user exists, check if blocked before logging in
             if (existingUser) {
+                // Check if user is blocked
+                if (existingUser.blocked) {
+                    return res.redirect("/login?message=Your account has been blocked&alertType=error");
+                }
+
                 // Update googleId if it doesn't exist and unset otpAttempts
                 await userSchema.findByIdAndUpdate(existingUser._id, {
                     $set: { googleId: existingUser.googleId || profile.id },
