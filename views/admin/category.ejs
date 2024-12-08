@@ -144,169 +144,158 @@
       </div>
     </div>
 
+    <!-- Add a loading spinner -->
+    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+
     <script>
-      // Open Add Modal
-      function openAddModal() {
-        document.getElementById("addModal").classList.remove("hidden");
-      }
-
-      // Close Add Modal
-      function closeAddModal() {
-        document.getElementById("addModal").classList.add("hidden");
-      }
-
-      // Open Edit Modal
-      function openEditModal(id, name, description) {
-        document.getElementById("editCategoryId").value = id;
-        document.getElementById("editCategoryName").value = name;
-        document.getElementById("editCategoryDescription").value = description;
-        document.getElementById("editModal").classList.remove("hidden");
-      }
-
-      // Close Edit Modal
-      function closeEditModal() {
-        document.getElementById("editModal").classList.add("hidden");
-      }
-
-      // Handle Add Category Form Submit
-      document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+      // Utility functions for modal and loading management
+      const utils = {
+        toggleLoading: (show) => {
+          document.getElementById('loadingSpinner').classList.toggle('hidden', !show);
+        },
         
-        try {
-            const formData = new FormData(this);
-            const response = await fetch('/admin/category/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(formData),
+        showAlert: ({ title, text, icon = 'success', confirmButtonColor = '#3B82F6' }) => {
+          return Swal.fire({ title, text, icon, confirmButtonColor });
+        },
+        
+        handleApiError: async (response) => {
+          const error = await response.text();
+          throw new Error(error || 'Something went wrong');
+        }
+      };
+
+      // Modal management
+      const modals = {
+        toggle: (modalId, show) => {
+          document.getElementById(modalId).classList.toggle('hidden', !show);
+        },
+        
+        openAdd: () => modals.toggle('addModal', true),
+        closeAdd: () => modals.toggle('addModal', false),
+        
+        openEdit: (id, name, description) => {
+          document.getElementById('editCategoryId').value = id;
+          document.getElementById('editCategoryName').value = name;
+          document.getElementById('editCategoryDescription').value = description;
+          modals.toggle('editModal', true);
+        },
+        closeEdit: () => modals.toggle('editModal', false)
+      };
+
+      // Form submission handlers
+      const submitHandlers = {
+        async handleSubmit(url, formData, successMessage) {
+          utils.toggleLoading(true);
+          
+          try {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams(formData)
             });
 
-            if (response.ok) {
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Category added successfully',
-                    icon: 'success',
-                    confirmButtonColor: '#3B82F6'
-                }).then(() => {
-                    window.location.reload();
-                });
-            } else {
-                const error = await response.text();
-                throw new Error(error);
-            }
-        } catch (error) {
-            Swal.fire({
-                title: 'Error!',
-                text: error.message,
-                icon: 'error',
-                confirmButtonColor: '#EF4444'
+            if (!response.ok) await utils.handleApiError(response);
+
+            await utils.showAlert({
+              title: 'Success!',
+              text: successMessage
             });
+            
+            window.location.reload();
+          } catch (error) {
+            await utils.showAlert({
+              title: 'Error!',
+              text: error.message,
+              icon: 'error',
+              confirmButtonColor: '#EF4444'
+            });
+          } finally {
+            utils.toggleLoading(false);
+          }
         }
+      };
+
+      // Event Listeners
+      document.addEventListener('DOMContentLoaded', () => {
+        // Form submissions
+        document.getElementById('addCategoryForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          await submitHandlers.handleSubmit(
+            '/admin/category/add', 
+            new FormData(this), 
+            'Category added successfully'
+          );
+        });
+
+        document.getElementById('editCategoryForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          await submitHandlers.handleSubmit(
+            '/admin/category/edit', 
+            new FormData(this), 
+            'Category updated successfully'
+          );
+        });
+
+        // Check URL params for messages
+        const urlParams = new URLSearchParams(window.location.search);
+        ['success', 'error'].forEach(type => {
+          const message = urlParams.get(type);
+          if (message) {
+            utils.showAlert({
+              title: type.charAt(0).toUpperCase() + type.slice(1) + '!',
+              text: decodeURIComponent(message),
+              icon: type,
+              confirmButtonColor: type === 'success' ? '#3B82F6' : '#EF4444'
+            });
+          }
+        });
       });
 
-      // Handle Edit Category Form Submit
-      document.getElementById('editCategoryForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        try {
-            const formData = new FormData(this);
-            const response = await fetch('/admin/category/edit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(formData),
-            });
-
-            if (response.ok) {
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Category updated successfully',
-                    icon: 'success',
-                    confirmButtonColor: '#10B981'
-                }).then(() => {
-                    window.location.reload();
-                });
-            } else {
-                const error = await response.text();
-                throw new Error(error);
-            }
-        } catch (error) {
-            Swal.fire({
-                title: 'Error!',
-                text: error.message,
-                icon: 'error',
-                confirmButtonColor: '#EF4444'
-            });
-        }
-      });
-
-      // Confirm Delete Category
+      // Delete confirmation
       function confirmDeleteCategory(categoryId) {
         Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Perform delete operation
-                fetch(`/admin/category/delete?id=${categoryId}`)
-                    .then(response => {
-                        if (response.ok) {
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: 'Category has been deleted.',
-                                icon: 'success',
-                                confirmButtonColor: '#3B82F6'
-                            }).then(() => {
-                                window.location.reload();
-                            });
-                        } else {
-                            throw new Error('Failed to delete category');
-                        }
-                    })
-                    .catch(error => {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: error.message,
-                            icon: 'error',
-                            confirmButtonColor: '#EF4444'
-                        });
-                    });
+          title: 'Are you sure?',
+          text: "You won't be able to revert this!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#EF4444',
+          cancelButtonColor: '#6B7280',
+          confirmButtonText: 'Yes, delete it!',
+          cancelButtonText: 'Cancel'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            utils.toggleLoading(true);
+            try {
+              const response = await fetch(`/admin/category/delete?id=${categoryId}`);
+              if (!response.ok) await utils.handleApiError(response);
+              
+              await utils.showAlert({
+                title: 'Deleted!',
+                text: 'Category has been deleted.'
+              });
+              
+              window.location.reload();
+            } catch (error) {
+              await utils.showAlert({
+                title: 'Error!',
+                text: error.message,
+                icon: 'error',
+                confirmButtonColor: '#EF4444'
+              });
+            } finally {
+              utils.toggleLoading(false);
             }
+          }
         });
       }
 
-      // Show success message if redirected with success message
-      document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const successMessage = urlParams.get('success');
-        const errorMessage = urlParams.get('error');
-
-        if (successMessage) {
-            Swal.fire({
-                title: 'Success!',
-                text: decodeURIComponent(successMessage),
-                icon: 'success',
-                confirmButtonColor: '#3B82F6'
-            });
-        }
-
-        if (errorMessage) {
-            Swal.fire({
-                title: 'Error!',
-                text: decodeURIComponent(errorMessage),
-                icon: 'error',
-                confirmButtonColor: '#EF4444'
-            });
-        }
-      });
+      // Update button onclick handlers to use new modal functions
+      window.openAddModal = modals.openAdd;
+      window.closeAddModal = modals.closeAdd;
+      window.openEditModal = modals.openEdit;
+      window.closeEditModal = modals.closeEdit;
     </script>
   </body>
 </html>
