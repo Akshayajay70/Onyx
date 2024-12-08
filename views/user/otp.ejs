@@ -129,18 +129,31 @@
       try {
         const response = await fetch("/resend-otp", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
         });
+
+        const data = await response.json();
 
         if (response.ok) {
           timeLeft = 59; // Reset timer
           localStorage.setItem("otpTimer", timeLeft);
           startTimer();
-          errorDiv.textContent = "OTP resent successfully";
+          errorDiv.textContent = data.message;
+          errorDiv.style.color = "green";
         } else {
-          errorDiv.textContent = "Failed to resend OTP";
+          errorDiv.textContent = data.error;
+          errorDiv.style.color = "red";
+          if (data.error === 'Session expired. Please signup again.') {
+            setTimeout(() => {
+              window.location.href = '/signup';
+            }, 2000);
+          }
         }
       } catch (err) {
-        errorDiv.textContent = "Failed to resend OTP";
+        errorDiv.textContent = "Failed to resend OTP. Please try again.";
+        errorDiv.style.color = "red";
       }
     });
   });

@@ -14,20 +14,27 @@ const postSignUp = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
 
-        // Check if user exists and not verified
+        // Check if user exists
         const existingUser = await userSchema.findOne({ email });
 
         if (existingUser) {
-            let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
-            if (!existingUser.password) {
-                message = "This email is linked to a Google login. Please log in with Google.";
+            // If user exists but is not verified, delete the old entry
+            if (!existingUser.isVerified) {
+                await userSchema.deleteOne({ email });
+            } else {
+                // If user exists and is verified, show appropriate message
+                let message = "Email already registered";
+                if (!existingUser.password) {
+                    message = "This email is linked to a Google login. Please log in with Google.";
+                }
+                return res.render('user/signup', {
+                    message,
+                    alertType: "error",
+                });
             }
-            return res.render('user/signup', {
-                message,
-                alertType: "error",
-            });
         }
 
+        // Create new user
         const otp = generateOTP();
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -42,23 +49,28 @@ const postSignUp = async (req, res) => {
 
         await newUser.save();
 
-        // Schedule deletion after OTP expiry
+        // Store email in session for OTP resend
+        req.session.tempEmail = email;
+
+        // Schedule deletion after OTP expiry (3 minutes)
         setTimeout(async () => {
             const user = await userSchema.findOne({ email });
             if (user && !user.isVerified) {
                 await userSchema.deleteOne({ _id: user._id });
             }
-        }, 180000);
+        }, 180000); // 3 minutes
 
         await sendOTPEmail(email, otp);
         res.render('user/otp');
     } catch (error) {
+        console.error('Signup error:', error);
         res.render('user/signup', {
             message: 'Signup failed',
             alertType: "error",
         });
     }
 }
+
 const postOtp = async (req, res) => {
     try {
         const { userOtp } = req.body;
