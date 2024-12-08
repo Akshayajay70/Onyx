@@ -14,27 +14,20 @@ const postSignUp = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
 
-        // Check if user exists
+        // Check if user exists and not verified
         const existingUser = await userSchema.findOne({ email });
 
         if (existingUser) {
-            // If user exists but is not verified, delete the old entry
-            if (!existingUser.isVerified) {
-                await userSchema.deleteOne({ email });
-            } else {
-                // If user exists and is verified, show appropriate message
-                let message = "Email already registered";
-                if (!existingUser.password) {
-                    message = "This email is linked to a Google login. Please log in with Google.";
-                }
-                return res.render('user/signup', {
-                    message,
-                    alertType: "error",
-                });
+            let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
+            if (!existingUser.password) {
+                message = "This email is linked to a Google login. Please log in with Google.";
             }
+            return res.render('user/signup', {
+                message,
+                alertType: "error",
+            });
         }
 
-        // Create new user
         const otp = generateOTP();
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -49,28 +42,23 @@ const postSignUp = async (req, res) => {
 
         await newUser.save();
 
-        // Store email in session for OTP resend
-        req.session.tempEmail = email;
-
-        // Schedule deletion after OTP expiry (3 minutes)
+        // Schedule deletion after OTP expiry
         setTimeout(async () => {
             const user = await userSchema.findOne({ email });
             if (user && !user.isVerified) {
                 await userSchema.deleteOne({ _id: user._id });
             }
-        }, 180000); // 3 minutes
+        }, 180000);
 
         await sendOTPEmail(email, otp);
         res.render('user/otp');
     } catch (error) {
-        console.error('Signup error:', error);
         res.render('user/signup', {
             message: 'Signup failed',
             alertType: "error",
         });
     }
 }
-
 const postOtp = async (req, res) => {
     try {
         const { userOtp } = req.body;
@@ -143,47 +131,75 @@ const getLogin = (req, res) => {
 const postLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await userSchema.findOne({ email });
 
-        if (!user.isVerified) {
+        // Server-side validation
+        if (!email || !password) {
             return res.render('user/login', {
-                message: 'Verify your email first',
+                message: 'All fields are required',
                 alertType: "error",
-            })
+            });
         }
 
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.render('user/login', {
+                message: 'Invalid email format',
+                alertType: "error",
+            });
+        }
+
+        // Find user
+        const user = await userSchema.findOne({ email });
+
+        // Check if user exists
         if (!user) {
             return res.render('user/login', {
                 message: 'Invalid credentials',
                 alertType: "error",
-            })
+            });
         }
 
+        // Check if user is verified
+        if (!user.isVerified) {
+            return res.render('user/login', {
+                message: 'Please verify your email first',
+                alertType: "error",
+            });
+        }
+
+        // Check if user is blocked
+        if (user.blocked) {
+            return res.render('user/login', {
+                message: 'Your account has been blocked',
+                alertType: "error",
+            });
+        }
+
+        // Verify password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.render('user/login', {
                 message: 'Invalid credentials',
                 alertType: "error",
-            })
+            });
         }
 
-        if (user.blocked) {
-            return res.render('user/login', {
-                message: 'You\'re Blocked',
-                alertType: "error",
-            })
-        }
+        // Set session
+        req.session.user = user._id;
+        req.session.userEmail = user.email;
 
-        req.session.user = true
-
+        // Redirect to home
         res.redirect('/home');
+
     } catch (error) {
+        console.error('Login error:', error);
         return res.render('user/login', {
-            message: 'Login Failed',
+            message: 'Login failed',
             alertType: "error",
-        })
+        });
     }
-}
+};
 
 const getHome = async (req, res) => {
     try {
