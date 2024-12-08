@@ -13,6 +13,7 @@ const getProductDetails = async (req, res) => {
         // Find related products (same category, excluding current product)
         const relatedProducts = await Product.find({
             categoriesId: product.categoriesId,
+            isActive: product.isActive,
             _id: { $ne: productId },
         })
         .limit(4); // Show 4 related products

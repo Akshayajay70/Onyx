@@ -131,7 +131,7 @@ const getLogin = (req, res) => {
 const postLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-
+        
         // Server-side validation
         if (!email || !password) {
             return res.render('user/login', {
@@ -158,6 +158,13 @@ const postLogin = async (req, res) => {
                 message: 'Invalid credentials',
                 alertType: "error",
             });
+        }
+
+        if(!user.password) {
+            return res.render('user/login', {
+                message: 'This email is linked to a Google login. Please log in with Google.',
+                alertType: "error",
+            })
         }
 
         // Check if user is verified
