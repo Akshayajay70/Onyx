@@ -32,11 +32,11 @@ router.get('/category/delete', adminMiddleware.checkSession, adminCategoryContro
 
 // Product Routes
 
-router.get('/product', adminProductController.renderProductPage);
+router.get('/product', adminMiddleware.checkSession, adminProductController.renderProductPage);
 
-router.post('/product/add', adminProductController.addProduct);
+router.post('/product/add', adminMiddleware.checkSession, adminProductController.addProduct);
 
-router.get('/product/:id', adminProductController.getProductDetails);
+router.get('/product/:id', adminMiddleware.checkSession, adminProductController.getProductDetails);
 
 router.post('/product/edit/:id', adminMiddleware.checkSession, adminProductController.updateProduct);
 
