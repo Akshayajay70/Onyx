@@ -244,20 +244,50 @@ const getGoogle = (req, res) => {
 };
 
 const getGoogleCallback = (req, res) => {
-    passport.authenticate("google", { failureRedirect: "/login" }, (err, user, info) => {
-        if (err || !user) {
-            return res.redirect("/login");  // Redirect to login page in case of failure
+    passport.authenticate("google", { failureRedirect: "/login" }, async (err, profile) => {
+        try {
+            if (err || !profile) {
+                return res.redirect("/login?message=Authentication failed&alertType=error");
+            }
+
+            // Check if user exists with this email
+            const existingUser = await userSchema.findOne({ email: profile.email });
+            const trigger = req.query.trigger;
+
+            if (existingUser) {
+                if (trigger === 'signup') {
+                    // If trying to signup but account exists
+                    return res.redirect("/login?message=Account already exists. Please login.&alertType=error");
+                }
+
+                if (existingUser.googleId) {
+                    // User already has Google linked, proceed with login
+                    req.session.user = existingUser._id;
+                    return res.redirect("/home");
+                } else {
+                    // Email exists but not with Google
+                    return res.redirect("/login?message=Please login with your email and password&alertType=error");
+                }
+            } else if (trigger === 'login') {
+                // If trying to login but no account exists
+                return res.redirect("/login?message=No account found. Please sign up first.&alertType=error");
+            }
+
+            // If no existing user and trigger is signup, create new account
+            const newUser = new userSchema({
+                fullName: profile.displayName,
+                email: profile.email,
+                googleId: profile.id,
+                isVerified: true
+            });
+
+            await newUser.save();
+            req.session.user = newUser._id;
+            return res.redirect("/home");
+        } catch (error) {
+            console.error("Google authentication error:", error);
+            return res.redirect("/login?message=Authentication failed&alertType=error");
         }
-
-        // Store user information in session after successful Google login
-        req.session.user = {
-            id: user._id,
-            fullname: user.fullname,
-            email: user.email,
-        };
-
-        // Redirect to home page after successful login
-        return res.redirect("/home");
     })(req, res);
 };
 
