@@ -243,57 +243,69 @@ const getLogout = (req, res) => {
     });
 }
 
+const getGoogle = (req, res) => {
+    // Store the trigger in session before redirecting to Google
+    req.session.authTrigger = req.query.trigger;
+    
+    passport.authenticate("google", {
+        scope: ["email", "profile"],
+    })(req, res);
+};
+
 const getGoogleCallback = (req, res) => {
     passport.authenticate("google", { failureRedirect: "/login" }, async (err, profile) => {
         try {
+            // Early return if authentication failed
             if (err || !profile) {
                 return res.redirect("/login?message=Authentication failed&alertType=error");
             }
 
-            // Check if user exists with this email
             const existingUser = await userSchema.findOne({ email: profile.email });
-            const trigger = req.query.trigger;
+            // Get trigger from session instead of query params
+            const trigger = req.session.authTrigger;
+            
+            // Clear the trigger from session
+            delete req.session.authTrigger;
 
-            if (existingUser) {
-                if (trigger === 'signup') {
-                    // If trying to signup but account exists
+            // Handle signup attempt
+            if (trigger === 'signup') {
+                if (existingUser) {
                     return res.redirect("/login?message=Account already exists. Please login.&alertType=error");
                 }
 
-                if (existingUser.googleId) {
-                    // User already has Google linked, proceed with login
-                    req.session.user = existingUser._id;
-                    return res.redirect("/home");
-                } else {
-                    // Email exists but not with Google
-                    return res.redirect("/login?message=Please login with your email and password&alertType=error");
-                }
-            } else if (trigger === 'login') {
-                // If trying to login but no account exists
-                return res.redirect("/login?message=No account found. Please sign up first.&alertType=error");
+                // Create new user for signup
+                const newUser = new userSchema({
+                    fullName: profile.displayName,
+                    email: profile.email,
+                    googleId: profile.id,
+                    isVerified: true
+                });
+                await newUser.save();
+                req.session.user = newUser._id;
+                return res.redirect("/home");
             }
 
-            // If no existing user and trigger is signup, create new account
-            const newUser = new userSchema({
-                fullName: profile.displayName,
-                email: profile.email,
-                googleId: profile.id,
-                isVerified: true
-            });
+            // Handle login attempt
+            if (trigger === 'login') {
+                if (!existingUser) {
+                    return res.redirect("/signup?message=No account found. Please sign up first.&alertType=error");
+                }
 
-            await newUser.save();
-            req.session.user = newUser._id;
-            return res.redirect("/home");
+                if (!existingUser.googleId) {
+                    return res.redirect("/login?message=Please login with your email and password&alertType=error");
+                }
+
+                req.session.user = existingUser._id;
+                return res.redirect("/home");
+            }
+
+            // Handle invalid trigger
+            return res.redirect("/login?message=Invalid authentication request&alertType=error");
+
         } catch (error) {
             console.error("Google authentication error:", error);
             return res.redirect("/login?message=Authentication failed&alertType=error");
         }
-    })(req, res);
-};
-
-const getGoogle = (req, res) => {
-    passport.authenticate("google", {
-        scope: ["email", "profile"],
     })(req, res);
 };
 

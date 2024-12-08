@@ -27,9 +27,14 @@ route.get('/logout', userMiddlewares.checkSession, userController.getLogout);
 
 route.get('/product/:id', userMiddlewares.checkSession, productController.getProductDetails);
 
-route.get('/auth/google', userMiddlewares.isLogin, userMiddlewares.restrictManualAccess, userController.getGoogle);
+route.get('/auth/google', 
+    userMiddlewares.restrictManualAccess, 
+    userController.getGoogle
+);
 
-route.get('/auth/google/callback', userMiddlewares.isLogin, userController.getGoogleCallback);
+route.get('/auth/google/callback', 
+    userController.getGoogleCallback
+);
 
 export default route;
 
