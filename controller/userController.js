@@ -247,17 +247,17 @@ const getGoogleCallback = (req, res) => {
     passport.authenticate("google", { failureRedirect: "/login" }, async (err, profile) => {
         try {
             if (err || !profile) {
-                return res.redirect("/login");
+                return res.redirect("/login?message=Authentication failed&alertType=error");
             }
 
             // Check if user exists with this email
             const existingUser = await userSchema.findOne({ email: profile.email });
-            const trigger = req.query.trigger; // Get the trigger parameter
+            const trigger = req.query.trigger;
 
             if (existingUser) {
                 if (trigger === 'signup') {
                     // If trying to signup but account exists
-                    return res.redirect("/login?error=" + encodeURIComponent("Account already exists. Please login."));
+                    return res.redirect("/login?message=Account already exists. Please login.&alertType=error");
                 }
 
                 if (existingUser.googleId) {
@@ -266,11 +266,11 @@ const getGoogleCallback = (req, res) => {
                     return res.redirect("/home");
                 } else {
                     // Email exists but not with Google
-                    return res.redirect("/login?error=" + encodeURIComponent("Please login with your email and password"));
+                    return res.redirect("/login?message=Please login with your email and password&alertType=error");
                 }
             } else if (trigger === 'login') {
                 // If trying to login but no account exists
-                return res.redirect("/login?error=" + encodeURIComponent("No account found. Please sign up first."));
+                return res.redirect("/login?message=No account found. Please sign up first.&alertType=error");
             }
 
             // If no existing user and trigger is signup, create new account
@@ -278,7 +278,7 @@ const getGoogleCallback = (req, res) => {
                 fullName: profile.displayName,
                 email: profile.email,
                 googleId: profile.id,
-                isVerified: true // Google accounts are pre-verified
+                isVerified: true
             });
 
             await newUser.save();
@@ -286,7 +286,7 @@ const getGoogleCallback = (req, res) => {
             return res.redirect("/home");
         } catch (error) {
             console.error("Google authentication error:", error);
-            return res.redirect("/login?error=" + encodeURIComponent("Authentication failed"));
+            return res.redirect("/login?message=Authentication failed&alertType=error");
         }
     })(req, res);
 };
