@@ -16,8 +16,13 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body class="mybg-green text-white min-h-screen">
+    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+
     <!-- Sidebar -->
     <%- include("../partials/sidebar") %>
 
@@ -54,35 +59,33 @@
             <tbody>
               <% if (userList.length > 0) { %>
                 <% userList.forEach((user, index) => { %>
-                  <tr class="border-b border-gray-700">
+                  <tr class="border-b border-gray-700 hover:bg-zinc-700 transition-colors">
                     <td class="py-3 px-4"><%= index + 1 %></td>
                     <td class="py-3 px-4"><%= user.fullName %></td>
                     <td class="py-3 px-4"><%= user.email %></td>
                     <td class="py-3 px-4"><%= user.mobileNumber || "N/A" %></td>
                     <td class="py-3 px-4">
-                      <% if (user.isVerified) { %>
-                        <span class="text-green-500">Verified</span>
-                      <% } else { %>
-                        <span class="text-red-500">Not Verified</span>
-                      <% } %>
+                      <span class="px-2 py-1 rounded-full text-sm <%= user.isVerified ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500' %>">
+                        <%= user.isVerified ? 'Verified' : 'Not Verified' %>
+                      </span>
                     </td>
                     <td class="py-3 px-4">
-                      <!-- Action Button -->
-                      <form action="/admin/user/<%= user._id %>/toggle-block" method="POST">
-                        <button 
-                          type="submit"
-                          class="text-white py-1 px-3 rounded
-                          <%= user.blocked ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600' %>">
-                          <%= user.blocked ? 'Unblock' : 'Block' %>
-                        </button>
-                      </form>
+                      <button 
+                        onclick="toggleUserBlock('<%= user._id %>', <%= user.blocked %>)"
+                        class="text-white py-1 px-3 rounded transition-colors
+                        <%= user.blocked ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600' %>">
+                        <%= user.blocked ? 'Unblock' : 'Block' %>
+                      </button>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="6" class="py-4 text-center text-gray-400">
-                    No users found
+                  <td colspan="6" class="py-8 text-center text-gray-400">
+                    <div class="flex flex-col items-center">
+                      <i class="fas fa-users text-4xl mb-2"></i>
+                      <p>No users found</p>
+                    </div>
                   </td>
                 </tr>
               <% } %>
@@ -96,5 +99,93 @@
         </div>
       </main>
     </div>
+
+    <script>
+    const utils = {
+      toggleLoading: (show) => {
+        document.getElementById('loadingSpinner').classList.toggle('hidden', !show);
+      },
+
+      showAlert: async ({ title, text, icon = 'success', showCancelButton = false }) => {
+        return Swal.fire({
+          title,
+          text,
+          icon,
+          showCancelButton,
+          confirmButtonColor: '#10B981',
+          cancelButtonColor: '#6B7280',
+          confirmButtonText: showCancelButton ? 'Yes, proceed' : 'OK',
+          cancelButtonText: 'Cancel'
+        });
+      }
+    };
+
+    async function toggleUserBlock(userId, currentStatus) {
+      try {
+        const action = currentStatus ? 'unblock' : 'block';
+        
+        const result = await utils.showAlert({
+          title: `Confirm ${action}?`,
+          text: `Are you sure you want to ${action} this user?`,
+          icon: 'warning',
+          showCancelButton: true
+        });
+
+        if (!result.isConfirmed) return;
+
+        utils.toggleLoading(true);
+
+        const response = await fetch(`/admin/user/${userId}/toggle-block`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update user status');
+        }
+
+        await utils.showAlert({
+          title: 'Success!',
+          text: `User has been ${action}ed successfully`,
+          icon: 'success'
+        });
+
+        window.location.reload();
+      } catch (error) {
+        await utils.showAlert({
+          title: 'Error!',
+          text: error.message,
+          icon: 'error'
+        });
+      } finally {
+        utils.toggleLoading(false);
+      }
+    }
+
+    // Check URL parameters for messages on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const successMsg = urlParams.get('success');
+      const errorMsg = urlParams.get('error');
+
+      if (successMsg) {
+        utils.showAlert({
+          title: 'Success!',
+          text: decodeURIComponent(successMsg),
+          icon: 'success'
+        });
+      }
+
+      if (errorMsg) {
+        utils.showAlert({
+          title: 'Error!',
+          text: decodeURIComponent(errorMsg),
+          icon: 'error'
+        });
+      }
+    });
+    </script>
   </body>
 </html>

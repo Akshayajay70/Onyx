@@ -4,52 +4,18 @@ import { config } from 'dotenv';
 config()
 
 const getAdmin = (req, res) => {
-    res.render('admin/login', { message: null });
-};
+    res.render('admin/login');
+}
 
 const postAdmin = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        // Basic validation
-        if (!email || !password) {
-            return res.render('admin/login', {
-                message: 'All fields are required',
-                alertType: 'error'
-            });
-        }
-
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.render('admin/login', {
-                message: 'Invalid email format',
-                alertType: 'error'
-            });
-        }
-
-        // Check credentials
-        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-            req.session.isAdmin = true;
-            req.session.adminEmail = email;
-            return res.render('admin/dashboard', {
-                message: 'Login successful',
-                alertType: 'success'
-            });
-        } else {
-            return res.render('admin/login', {
-                message: 'Invalid credentials',
-                alertType: 'error'
-            });
-        }
-    } catch (error) {
-        console.error('Admin login error:', error);
-        res.render('admin/login', {
-            message: 'Internal server error',
-            alertType: 'error'
-        });
+    const { email, password } = req.body;
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+        req.session.isAdmin = true; // Set admin session
+        res.render('admin/dashboard');
+    } else {
+        res.render('admin/login');
     }
-};
+}
 
 const getLogout = (req, res) => {
     req.session.destroy(() => {
@@ -75,24 +41,34 @@ const getUserList = async (req, res) => {
 
 const getToggle = async (req, res) => {
     try {
-      const userId = req.params.id;
-      const user = await User.findById(userId);
-  
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
-  
-      // Toggle the block status
-      user.blocked = !user.blocked;
-      await user.save();
-  
-      // Redirect back to the user list page
-      res.redirect('/admin/userList');
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        user.blocked = !user.blocked;
+        await user.save();
+
+        // Return JSON response for API calls
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ 
+                success: true, 
+                message: `User successfully ${user.blocked ? 'blocked' : 'unblocked'}`
+            });
+        }
+
+        // Fallback to redirect for regular form submissions
+        res.redirect('/admin/userList');
     } catch (err) {
-      console.error(err);
-      res.status(500).send('Server Error');
+        console.error(err);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
+        res.status(500).send('Server Error');
     }
-  }
+};
 
 
 export default { getAdmin, postAdmin, getLogout, getDashboard, getUserList, getToggle }
