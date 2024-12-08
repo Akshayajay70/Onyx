@@ -4,18 +4,52 @@ import { config } from 'dotenv';
 config()
 
 const getAdmin = (req, res) => {
-    res.render('admin/login');
-}
+    res.render('admin/login', { message: null });
+};
 
 const postAdmin = async (req, res) => {
-    const { email, password } = req.body;
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-        req.session.isAdmin = true; // Set admin session
-        res.render('admin/dashboard');
-    } else {
-        res.render('admin/login');
+    try {
+        const { email, password } = req.body;
+
+        // Basic validation
+        if (!email || !password) {
+            return res.render('admin/login', {
+                message: 'All fields are required',
+                alertType: 'error'
+            });
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.render('admin/login', {
+                message: 'Invalid email format',
+                alertType: 'error'
+            });
+        }
+
+        // Check credentials
+        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+            req.session.isAdmin = true;
+            req.session.adminEmail = email;
+            return res.render('admin/dashboard', {
+                message: 'Login successful',
+                alertType: 'success'
+            });
+        } else {
+            return res.render('admin/login', {
+                message: 'Invalid credentials',
+                alertType: 'error'
+            });
+        }
+    } catch (error) {
+        console.error('Admin login error:', error);
+        res.render('admin/login', {
+            message: 'Internal server error',
+            alertType: 'error'
+        });
     }
-}
+};
 
 const getLogout = (req, res) => {
     req.session.destroy(() => {
