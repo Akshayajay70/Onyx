@@ -1,12 +1,9 @@
 import mongoose from 'mongoose'
-import { config } from "dotenv";
-
-config()
 
 
 const connnectDb = async () => {
     try {
-        const connection = await mongoose.connect(process.env.HOST)
+        const connection = await mongoose.connect("mongodb://localhost/Onyx")
         console.log("DB STATUS", "connected successfully")
 
     } catch (error) {

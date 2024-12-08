@@ -19,8 +19,6 @@ route.post('/login', userController.postLogin);
 
 route.get('/home', userMiddlewares.checkSession, userController.getHome);
 
-route.get('/', userController.getHome )
-
 route.get('/shop', userMiddlewares.checkSession, userController.getShop);
 
 route.get('/logout', userMiddlewares.checkSession, userController.getLogout);

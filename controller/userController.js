@@ -14,13 +14,13 @@ const postSignUp = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
 
-        // Check if user exists
+        // Check if user exists and not verified
         const existingUser = await userSchema.findOne({ email });
 
         if (existingUser) {
-            let message = "Email already registered";
-            if (existingUser.googleId) {
-                message = "This email is linked to a Google account. Please sign in with Google.";
+            let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
+            if (!existingUser.password) {
+                message = "This email is linked to a Google login. Please log in with Google.";
             }
             return res.render('user/signup', {
                 message,
@@ -160,20 +160,11 @@ const postLogin = async (req, res) => {
             });
         }
 
-        // If user has googleId but no password, they should use Google login
-        if (user.googleId && !user.password) {
+        if(!user.password) {
             return res.render('user/login', {
-                message: 'Please sign in with Google',
+                message: 'This email is linked to a Google login. Please log in with Google.',
                 alertType: "error",
-            });
-        }
-
-        // If user has both googleId and password, allow both methods
-        if (!user.password) {
-            return res.render('user/login', {
-                message: 'Invalid credentials',
-                alertType: "error",
-            });
+            })
         }
 
         // Check if user is verified
@@ -253,44 +244,20 @@ const getGoogle = (req, res) => {
 };
 
 const getGoogleCallback = (req, res) => {
-    passport.authenticate("google", { failureRedirect: "/login" }, async (err, profile) => {
-        try {
-            // Early return if authentication failed
-            if (err || !profile) {
-                return res.redirect("/login");
-            }
-
-            const existingUser = await userSchema.findOne({ email: profile.email });
-
-            if (existingUser) {
-                if (existingUser.googleId) {
-                    // User already has Google linked, proceed with login
-                    req.session.user = existingUser._id;
-                    return res.redirect("/home");
-                } else {
-                    // Link Google account to existing email account
-                    existingUser.googleId = profile.id;
-                    await existingUser.save();
-                    req.session.user = existingUser._id;
-                    return res.redirect("/home");
-                }
-            }
-
-            // If no existing user, create new account
-            const newUser = new userSchema({
-                fullName: profile.displayName,
-                email: profile.email,
-                googleId: profile.id,
-                isVerified: true // Google accounts are pre-verified
-            });
-
-            await newUser.save();
-            req.session.user = newUser._id;
-            return res.redirect("/home");
-        } catch (error) {
-            console.error("Google authentication error:", error);
-            return res.redirect("/login?error=" + encodeURIComponent("Authentication failed"));
+    passport.authenticate("google", { failureRedirect: "/login" }, (err, user, info) => {
+        if (err || !user) {
+            return res.redirect("/login");  // Redirect to login page in case of failure
         }
+
+        // Store user information in session after successful Google login
+        req.session.user = {
+            id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+        };
+
+        // Redirect to home page after successful login
+        return res.redirect("/home");
     })(req, res);
 };
 
@@ -313,4 +280,4 @@ const getShop = async (req, res) => {
     }
 };
 
-export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop, }
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop }
