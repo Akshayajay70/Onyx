@@ -257,23 +257,29 @@ const getGoogleCallback = (req, res) => {
         try {
             // Early return if authentication failed
             if (err || !profile) {
-                return res.redirect("/login?message=Authentication failed&alertType=error");
+                return res.redirect("/login");
             }
 
             const existingUser = await userSchema.findOne({ email: profile.email });
+            const trigger = req.query.trigger; // Get the trigger parameter
 
             if (existingUser) {
+                if (trigger === 'signup') {
+                    // If trying to signup but account exists
+                    return res.redirect("/login?error=" + encodeURIComponent("Account already exists. Please login."));
+                }
+
                 if (existingUser.googleId) {
                     // User already has Google linked, proceed with login
                     req.session.user = existingUser._id;
                     return res.redirect("/home");
                 } else {
-                    // Link Google account to existing email account
-                    existingUser.googleId = profile.id;
-                    await existingUser.save();
-                    req.session.user = existingUser._id;
-                    return res.redirect("/home");
+                    // Email exists but not with Google
+                    return res.redirect("/login?error=" + encodeURIComponent("Please login with your email and password"));
                 }
+            } else if (trigger === 'login') {
+                // If trying to login but no account exists
+                return res.redirect("/login?error=" + encodeURIComponent("No account found. Please sign up first."));
             }
 
             // If no existing user, create new account
@@ -289,7 +295,7 @@ const getGoogleCallback = (req, res) => {
             return res.redirect("/home");
         } catch (error) {
             console.error("Google authentication error:", error);
-            return res.redirect("/login?message=Authentication failed&alertType=error");
+            return res.redirect("/login?error=" + encodeURIComponent("Authentication failed"));
         }
     })(req, res);
 };
