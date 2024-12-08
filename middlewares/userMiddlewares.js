@@ -1,3 +1,4 @@
+
 const checkSession = (req, res, next) => {
     if (req.session.user) {
         next()
@@ -15,10 +16,9 @@ const isLogin  = (req, res, next)=>{
     }
 }
 
-const restrictManualAccess = (req, res, next) => {
-    if (req.path === '/auth/google' && 
-        req.query.trigger !== 'signup' && 
-        req.query.trigger !== 'login') {
+export const restrictManualAccess = (req, res, next) => {
+
+    if (req.path === '/auth/google' && (req.query.trigger !== 'signup'||req.query.trigger !== 'login')) {
         return res.status(403).send('Unauthorized access');
     }
     next();

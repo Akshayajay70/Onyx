@@ -261,47 +261,32 @@ const getGoogleCallback = (req, res) => {
             }
 
             const existingUser = await userSchema.findOne({ email: profile.email });
-            // Get trigger from session instead of query params
-            const trigger = req.session.authTrigger;
-            
-            // Clear the trigger from session
-            delete req.session.authTrigger;
 
-            // Handle signup attempt
-            if (trigger === 'signup') {
-                if (existingUser) {
-                    return res.redirect("/login?message=Account already exists. Please login.&alertType=error");
+            if (existingUser) {
+                if (existingUser.googleId) {
+                    // User already has Google linked, proceed with login
+                    req.session.user = existingUser._id;
+                    return res.redirect("/home");
+                } else {
+                    // Link Google account to existing email account
+                    existingUser.googleId = profile.id;
+                    await existingUser.save();
+                    req.session.user = existingUser._id;
+                    return res.redirect("/home");
                 }
-
-                // Create new user for signup
-                const newUser = new userSchema({
-                    fullName: profile.displayName,
-                    email: profile.email,
-                    googleId: profile.id,
-                    isVerified: true
-                });
-                await newUser.save();
-                req.session.user = newUser._id;
-                return res.redirect("/home");
             }
 
-            // Handle login attempt
-            if (trigger === 'login') {
-                if (!existingUser) {
-                    return res.redirect("/signup?message=No account found. Please sign up first.&alertType=error");
-                }
+            // If no existing user, create new account
+            const newUser = new userSchema({
+                fullName: profile.displayName,
+                email: profile.email,
+                googleId: profile.id,
+                isVerified: true // Google accounts are pre-verified
+            });
 
-                if (!existingUser.googleId) {
-                    return res.redirect("/login?message=Please login with your email and password&alertType=error");
-                }
-
-                req.session.user = existingUser._id;
-                return res.redirect("/home");
-            }
-
-            // Handle invalid trigger
-            return res.redirect("/login?message=Invalid authentication request&alertType=error");
-
+            await newUser.save();
+            req.session.user = newUser._id;
+            return res.redirect("/home");
         } catch (error) {
             console.error("Google authentication error:", error);
             return res.redirect("/login?message=Authentication failed&alertType=error");
