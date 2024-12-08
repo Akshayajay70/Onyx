@@ -252,22 +252,28 @@ const getGoogleCallback = (req, res) => {
 
             // Check if user exists with this email
             const existingUser = await userSchema.findOne({ email: profile.email });
+            const trigger = req.query.trigger; // Get the trigger parameter
 
             if (existingUser) {
+                if (trigger === 'signup') {
+                    // If trying to signup but account exists
+                    return res.redirect("/login?error=" + encodeURIComponent("Account already exists. Please login."));
+                }
+
                 if (existingUser.googleId) {
                     // User already has Google linked, proceed with login
                     req.session.user = existingUser._id;
                     return res.redirect("/home");
                 } else {
-                    // Link Google account to existing email account
-                    existingUser.googleId = profile.id;
-                    await existingUser.save();
-                    req.session.user = existingUser._id;
-                    return res.redirect("/home");
+                    // Email exists but not with Google
+                    return res.redirect("/login?error=" + encodeURIComponent("Please login with your email and password"));
                 }
+            } else if (trigger === 'login') {
+                // If trying to login but no account exists
+                return res.redirect("/login?error=" + encodeURIComponent("No account found. Please sign up first."));
             }
 
-            // If no existing user, create new account
+            // If no existing user and trigger is signup, create new account
             const newUser = new userSchema({
                 fullName: profile.displayName,
                 email: profile.email,
