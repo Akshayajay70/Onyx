@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
 
     password: { type: String },
 
-    googleId: { type: String },
+    googleId: { type: String, sparse: true },
 
     isVerified: { type: Boolean, default: false },
 
