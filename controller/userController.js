@@ -13,6 +13,9 @@ const getSignUp = (req, res) => {
 const postSignUp = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
+        
+        // Trim the fullName
+        const trimmedFullName = fullName.trim();
 
         // Check if user exists and not verified
         const existingUser = await userSchema.findOne({ email });
@@ -32,7 +35,7 @@ const postSignUp = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newUser = new userSchema({
-            fullName,
+            fullName: trimmedFullName,
             email,
             password: hashedPassword,
             otp,

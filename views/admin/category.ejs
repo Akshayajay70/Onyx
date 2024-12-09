@@ -163,6 +163,10 @@
         handleApiError: async (response) => {
           const error = await response.text();
           throw new Error(error || 'Something went wrong');
+        },
+        
+        validateInput: (value) => {
+          return value.trim().length > 0;
         }
       };
 
@@ -187,6 +191,18 @@
       // Form submission handlers
       const submitHandlers = {
         async handleSubmit(url, formData, successMessage) {
+          const description = formData.get('categoryDescription');
+          
+          if (!utils.validateInput(description)) {
+            await utils.showAlert({
+              title: 'Error!',
+              text: 'Description cannot be empty or contain only spaces',
+              icon: 'error',
+              confirmButtonColor: '#EF4444'
+            });
+            return;
+          }
+
           utils.toggleLoading(true);
           
           try {

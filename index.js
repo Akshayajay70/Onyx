@@ -9,7 +9,7 @@ import { config } from "dotenv";
 import './utils/googleAuth.js';
 
 
-config();  // Load environment variables
+config();  
 
 const app = express();
 const PORT = 8000;
