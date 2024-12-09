@@ -14,13 +14,16 @@ const postSignUp = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
         
-        // Trim the fullName
         const trimmedFullName = fullName.trim();
 
-        // Check if user exists and not verified
+        // Check if user exists
         const existingUser = await userSchema.findOne({ email });
-
-        if (existingUser) {
+        
+        // If user exists but is not verified, delete the old record
+        if (existingUser && !existingUser.isVerified) {
+            await userSchema.deleteOne({ _id: existingUser._id });
+        } else if (existingUser) {
+            // If user exists and is verified, show appropriate message
             let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
             if (!existingUser.password) {
                 message = "This email is linked to a Google login. Please log in with Google.";
