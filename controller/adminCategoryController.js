@@ -15,13 +15,27 @@ const getCategories = async (req, res) => {
 const addCategory = async (req, res) => {
     try {
         const { categoryName, categoryDescription } = req.body;
+        const trimmedCategoryName = categoryName.trim();
 
         // Validate categoryName
-        if (!/^[A-Za-z]+$/.test(categoryName.trim())) {
+        if (!/^[A-Za-z]+$/.test(trimmedCategoryName)) {
             return res.status(400).send('Category name can only contain alphabets.');
         }
-        if (categoryName.trim().length > 10) {
+        if (trimmedCategoryName.length > 10) {
             return res.status(400).send('Category name must not exceed 10 characters.');
+        }
+
+        // Capitalize first letter, rest lowercase
+        const formattedCategoryName = trimmedCategoryName.charAt(0).toUpperCase() + 
+                                    trimmedCategoryName.slice(1).toLowerCase();
+
+        // Check if category name already exists (case-insensitive)
+        const existingCategory = await Category.findOne({
+            name: { $regex: new RegExp(`^${formattedCategoryName}$`, 'i') }
+        });
+
+        if (existingCategory) {
+            return res.status(400).send('Category name already exists.');
         }
 
         // Validate categoryDescription
@@ -32,7 +46,7 @@ const addCategory = async (req, res) => {
         }
 
         const newCategory = new Category({
-            name: categoryName.trim(),
+            name: formattedCategoryName,
             description: categoryDescription,
             isActive: true,
         });
@@ -49,13 +63,28 @@ const addCategory = async (req, res) => {
 const editCategory = async (req, res) => {
     try {
         const { categoryId, categoryName, categoryDescription } = req.body;
+        const trimmedCategoryName = categoryName.trim();
 
         // Validate categoryName
-        if (!/^[A-Za-z]+$/.test(categoryName.trim())) {
+        if (!/^[A-Za-z]+$/.test(trimmedCategoryName)) {
             return res.status(400).send('Category name can only contain alphabets.');
         }
-        if (categoryName.trim().length > 10) {
+        if (trimmedCategoryName.length > 10) {
             return res.status(400).send('Category name must not exceed 10 characters.');
+        }
+
+        // Capitalize first letter, rest lowercase
+        const formattedCategoryName = trimmedCategoryName.charAt(0).toUpperCase() + 
+                                    trimmedCategoryName.slice(1).toLowerCase();
+
+        // Check if category name already exists (excluding current category)
+        const existingCategory = await Category.findOne({
+            _id: { $ne: categoryId },
+            name: { $regex: new RegExp(`^${formattedCategoryName}$`, 'i') }
+        });
+
+        if (existingCategory) {
+            return res.status(400).send('Category name already exists.');
         }
 
         // Validate categoryDescription
@@ -66,7 +95,7 @@ const editCategory = async (req, res) => {
         }
 
         await Category.findByIdAndUpdate(categoryId, {
-            name: categoryName.trim(),
+            name: formattedCategoryName,
             description: categoryDescription,
         });
 
