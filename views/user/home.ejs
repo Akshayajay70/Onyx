@@ -4,60 +4,77 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="tailwindcss/output.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <title>Home Page</title>
   </head>
 
   <body class="bg-gray-300">
     <%- include("../partials/nav") %>
-    
+
     <!-- Banner Section -->
     <div class="w-full h-[500px] relative overflow-hidden mt-16">
-      <img 
-        src="/images/bannerImage.png" 
+      <img
+        src="/images/bannerImage.png"
         alt="Banner"
         class="w-full h-full object-cover object-center animate-fadeIn"
-      >
-      
+      />
     </div>
 
     <!-- Products Grid -->
     <div class="container mx-auto px-4 py-8">
       <h2 class="text-2xl font-bold text-gray-800 mb-6">Featured Products</h2>
-      
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
-        <% products.forEach(product => { %>
-          <a href="/product/<%= product._id %>" 
-             class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
-            <!-- Product Image with Discount Badge -->
-            <div class="relative aspect-square overflow-hidden">
-              <img 
-                src="<%= product.imageUrl[0] %>" 
-                alt="<%= product.productName %>"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              >
-              <% if (product.discountPrice < product.price) { %>
-                <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                  -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
-                </div>
-              <% } %>
-            </div>
 
-            <!-- Product Info -->
-            <div class="p-3">
-              <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
-                <%= product.productName %>
-              </h2>
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <% if (product.discountPrice < product.price) { %>
-                    <span class="text-gray-500 line-through text-xs">₹<%= product.price %></span>
-                  <% } %>
-                  <span class="text-base font-bold text-gray-900">₹<%= product.discountPrice %></span>
-                </div>
+      <div
+        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto"
+      >
+        <% products.forEach(product => { %>
+        <a
+          href="/product/<%= product._id %>"
+          class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group"
+        >
+          <!-- Product Image with Discount Badge -->
+          <div class="relative aspect-square overflow-hidden">
+            <img
+              src="<%= product.imageUrl[0] %>"
+              alt="<%= product.productName %>"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+            <% if (product.discountPrice < product.price) { %>
+            <div
+              class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium"
+            >
+              -<%= Math.round((product.price - product.discountPrice) /
+              product.price * 100) %>%
+            </div>
+            <% } %>
+          </div>
+
+          <!-- Product Info -->
+          <div class="p-3">
+            <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
+              <%= product.productName %>
+            </h2>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <% if (product.discountPrice < product.price) { %>
+                <span class="text-gray-500 line-through text-xs"
+                  >₹<%= product.price %></span
+                >
+                <% } %>
+                <span class="text-base font-bold text-gray-900"
+                  >₹<%= product.discountPrice %></span
+                >
               </div>
             </div>
-          </a>
+          </div>
+        </a>
         <% }); %>
       </div>
     </div>
@@ -69,37 +86,59 @@
       .product-card:hover .product-image {
         transform: scale(1.05);
       }
-      
+
       /* Smooth transitions */
       .product-image {
         transition: transform 0.3s ease-in-out;
       }
-      
+
       /* Price animation */
       @keyframes priceHighlight {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
-      
+
       .price-highlight {
         animation: priceHighlight 0.3s ease-in-out;
       }
 
       /* New animation styles */
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       @keyframes slideDown {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
       @keyframes slideUp {
-        from { transform: translateY(50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+        from {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
 
       .animate-fadeIn {

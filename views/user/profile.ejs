@@ -1,186 +1,155 @@
+<!DOCTYPE html>
 <html lang="en">
- <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>
-   Onyx - Personal Information
-  </title>
-  <link rel="stylesheet" href="tailwindcss/output.css" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
- </head>
- <body class="bg-gray-100">
-  <!-- nav -->
-  <%- include("../partials/nav") %>
-  <div class="h-10"></div> <!-- Added gap -->
-  <!-- Main Content -->
-  <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
-   <!-- Sidebar -->
-   <aside class="w-full md:w-1/4 bg-white p-6 rounded-lg shadow-md">
-    <h2 class="text-xl font-bold mb-6 text-gray-800">
-     My Account
-    </h2>
-    <ul class="space-y-4">
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/profile">
-       <i class="fas fa-user text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Personal Information</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/address">
-       <i class="fas fa-map-marker-alt text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Address</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/orders">
-       <i class="fas fa-box text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Orders</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/wallet">
-       <i class="fas fa-wallet text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Wallet</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/coupons">
-       <i class="fas fa-ticket-alt text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Coupons</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors" href="/change-password">
-       <i class="fas fa-key text-gray-600 group-hover:text-black"></i>
-       <span class="text-gray-600 group-hover:text-black">Change Password</span>
-      </a>
-     </li>
-     <li class="group">
-      <a class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors text-red-600 hover:text-red-700" href="/logout">
-       <i class="fas fa-power-off"></i>
-       <span>Logout</span>
-      </a>
-     </li>
-    </ul>
-   </aside>
-   <!-- Personal Information Form -->
-   <section class="w-full md:w-3/4 bg-white p-6 rounded-lg shadow-md">
-    <h2 class="text-xl font-bold mb-6 text-gray-800">
-     Personal Information
-    </h2>
-    <form id="profileForm" class="space-y-6">
-     <div class="flex flex-col space-y-4">
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="firstName">
-         First Name
-        </label>
-        <input 
-         class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition" 
-         id="firstName" 
-         type="text"
-         placeholder="Enter your first name"
-        />
-       </div>
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="lastName">
-         Last Name
-        </label>
-        <input 
-         class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition" 
-         id="lastName" 
-         type="text"
-         placeholder="Enter your last name"
-        />
-       </div>
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="email">
-         Email Address
-        </label>
-        <input 
-         class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition" 
-         id="email" 
-         type="email"
-         placeholder="Enter your email address"
-        />
-       </div>
-     </div>
-     <div class="flex justify-center mt-6">
-       <button 
-        class="bg-black text-white rounded-lg py-3 px-6 hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-black"
-        type="submit">
-        Update Profile
-       </button>
-     </div>
-    </form>
-   </section>
-  </main>
-  <!-- Footer -->
-  <%- include("../partials/footer") %>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Onyx - Personal Information</title>
+    <link rel="stylesheet" href="tailwindcss/output.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="bg-gray-100">
+    <!-- nav -->
+    <%- include("../partials/nav") %>
+    <div class="h-10"></div>
+    <!-- Main Content -->
+    <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
+      <!-- Sidebar -->
+      <%- include("../partials/profileSidebar") %>
+      <!-- Personal Information Form -->
+      <section class="w-full md:w-3/4 bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-6 text-gray-800">
+          Personal Information
+        </h2>
+        <form id="profileForm" class="space-y-6">
+          <div class="flex flex-col space-y-4">
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 mb-2"
+                for="firstName"
+              >
+                First Name
+              </label>
+              <input
+                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                id="firstName"
+                type="text"
+                placeholder="Enter your first name"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 mb-2"
+                for="lastName"
+              >
+                Last Name
+              </label>
+              <input
+                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                id="lastName"
+                type="text"
+                placeholder="Enter your last name"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 mb-2"
+                for="email"
+              >
+                Email Address
+              </label>
+              <input
+                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                id="email"
+                type="email"
+                placeholder="Enter your email address"
+              />
+            </div>
+          </div>
+          <div class="flex justify-center mt-6">
+            <button
+              class="bg-black text-white rounded-lg py-3 px-6 hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              type="submit"
+            >
+              Update Profile
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+    <!-- Footer -->
+    <%- include("../partials/footer") %>
 
-  <script>
-    document.getElementById('profileForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const firstName = document.getElementById('firstName').value;
-      const lastName = document.getElementById('lastName').value;
-      const email = document.getElementById('email').value;
+    <script>
+      document
+        .getElementById("profileForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
 
-      // Validate fields
-      if (!firstName || !lastName || !email) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Required Fields',
-          text: 'Please fill in all the required fields'
+          const firstName = document.getElementById("firstName").value;
+          const lastName = document.getElementById("lastName").value;
+          const email = document.getElementById("email").value;
+
+          // Validate fields
+          if (!firstName || !lastName || !email) {
+            Swal.fire({
+              icon: "error",
+              title: "Required Fields",
+              text: "Please fill in all the required fields",
+            });
+            return;
+          }
+
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            Swal.fire({
+              icon: "error",
+              title: "Invalid Email",
+              text: "Please enter a valid email address",
+            });
+            return;
+          }
+
+          try {
+            // Show loading state
+
+            const formData = {
+              firstName,
+              lastName,
+              email,
+            };
+
+            if (response.ok) {
+              await Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: "Profile updated successfully",
+                timer: 1500,
+              });
+            } else {
+              const data = await response.json();
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: data.message || "Error updating profile",
+              });
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "An error occurred while updating your profile",
+            });
+          }
         });
-        return;
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Invalid Email',
-          text: 'Please enter a valid email address'
-        });
-        return;
-      }
-      
-      try {
-        // Show loading state
-        
-        const formData = {
-          firstName,
-          lastName,
-          email
-        };
-
-        if (response.ok) {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: 'Profile updated successfully',
-            timer: 1500
-          });
-        } else {
-          const data = await response.json();
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: data.message || 'Error updating profile'
-          });
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'An error occurred while updating your profile'
-        });
-      }
-    });
-  </script>
- </body>
+    </script>
+  </body>
 </html>

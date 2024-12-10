@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onyx - My Addresses</title>
+    <link rel="stylesheet" href="tailwindcss/output.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="bg-gray-100">
+    <!-- nav -->
+    <%- include("../partials/nav") %>
+    <div class="h-10"></div>
+    <!-- Main Content -->
+    <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
+      <!-- Sidebar -->
+      <%- include("../partials/profileSidebar") %>
+      <!-- Address Information -->
+      <section class="w-full md:w-3/4 bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-6 text-gray-800">My Addresses</h2>
+        <div class="flex justify-end mb-4">
+          <button 
+            onclick="openAddAddressModal()"
+            class="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors flex items-center space-x-2"
+          >
+            <i class="fas fa-plus"></i>
+            <span>Add New Address</span>
+          </button>
+        </div>
+        <div class="space-y-4">
+          
+        </div>
+      </section>
+    </main>
+
+    <!-- Address Modal -->
+    <div id="addressModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+      <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold" id="modalTitle">Add New Address</h3>
+            <button onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <form id="addressForm" class="space-y-4">
+            <input type="hidden" id="addressId" name="addressId">
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input type="text" id="fullName" name="fullName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
+              <input type="tel" id="mobile" name="mobile" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Address Line 1</label>
+              <input type="text" id="addressLine1" name="addressLine1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Address Line 2</label>
+              <input type="text" id="addressLine2" name="addressLine2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">City</label>
+                <input type="text" id="city" name="city" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">State</label>
+                <input type="text" id="state" name="state" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">PIN Code</label>
+              <input type="text" id="pincode" name="pincode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+              <button type="button" onclick="closeAddressModal()" class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button type="submit" class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
+                Save Address
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../partials/footer") %>
+
+    <script>
+      // Modal functions
+      function openAddAddressModal() {
+        document.getElementById('modalTitle').textContent = 'Add New Address';
+        document.getElementById('addressForm').reset();
+        document.getElementById('addressId').value = '';
+        document.getElementById('addressModal').classList.remove('hidden');
+      }
+
+      function closeAddressModal() {
+        document.getElementById('addressModal').classList.add('hidden');
+      }
+
+      // Form submission
+      document.getElementById('addressForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Add your form validation and submission logic here
+        
+        try {
+          // Example submission
+        //   const formData = new FormData(e.target);
+        //   const response = await fetch('/address', {
+        //     method: 'POST',
+        //     body: formData
+        //   });
+
+          if (response.ok) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success!',
+              text: 'Address saved successfully',
+              timer: 1500
+            }).then(() => {
+              window.location.reload();
+            });
+          } else {
+            throw new Error('Failed to save address');
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message
+          });
+        }
+      });
+
+      // Delete address function
+      async function deleteAddress(addressId) {
+        try {
+          const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+          });
+
+          if (result.isConfirmed) {
+            // Add your delete logic here
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to delete address'
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

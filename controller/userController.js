@@ -257,6 +257,10 @@ const getGoogleCallback = (req, res) => {
             }
 
             const existingUser = await userSchema.findOne({ email: profile.email });
+
+            const names = profile.displayName.split(' ');
+            const firstName = names[0];
+            const lastName = names.slice(1).join(' ')
             
             // If user exists, check if blocked before logging in
             if (existingUser) {
@@ -277,7 +281,8 @@ const getGoogleCallback = (req, res) => {
 
             // If user doesn't exist, create new account
             const newUser = new userSchema({
-                fullName: profile.displayName,
+                firstName: firstName,
+                lastName: lastName,
                 email: profile.email,
                 googleId: profile.id,
                 isVerified: true,

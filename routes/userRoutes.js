@@ -3,6 +3,7 @@ import userController from '../controller/userController.js';
 import productController from '../controller/userProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 import userProfileController from '../controller/userProfileController.js';
+import userAddressController from '../controller/userAddressController.js';
 
 const route = Router();
 
@@ -38,6 +39,8 @@ route.get('/auth/google/callback',
 );
 
 route.get('/profile', userProfileController.getProfile)
+
+route.get('/address', userAddressController.getAddress)
 
 export default route;
 
