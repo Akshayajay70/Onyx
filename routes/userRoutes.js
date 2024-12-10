@@ -2,6 +2,7 @@ import { Router } from 'express';
 import userController from '../controller/userController.js';
 import productController from '../controller/userProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
+import userProfileController from '../controller/userProfileController.js';
 
 const route = Router();
 
@@ -35,6 +36,8 @@ route.get('/auth/google',
 route.get('/auth/google/callback', 
     userController.getGoogleCallback
 );
+
+route.get('/profile', userProfileController.getProfile)
 
 export default route;
 
