@@ -12,18 +12,17 @@ const getSignUp = (req, res) => {
 
 const postSignUp = async (req, res) => {
     try {
-        const { fullName, email, password } = req.body;
+        const { firstName, lastName, email, password } = req.body;
         
-        const trimmedFullName = fullName.trim();
+        const trimmedFirstName = firstName.trim();
+        const trimmedLastName = lastName.trim();
 
         // Check if user exists
         const existingUser = await userSchema.findOne({ email });
         
-        // If user exists but is not verified, delete the old record
         if (existingUser && !existingUser.isVerified) {
             await userSchema.deleteOne({ _id: existingUser._id });
         } else if (existingUser) {
-            // If user exists and is verified, show appropriate message
             let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
             if (!existingUser.password) {
                 message = "This email is linked to a Google login. Please log in with Google.";
@@ -38,11 +37,12 @@ const postSignUp = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newUser = new userSchema({
-            fullName: trimmedFullName,
+            firstName: trimmedFirstName,
+            lastName: trimmedLastName,
             email,
             password: hashedPassword,
             otp,
-            otpExpiresAt: Date.now() + 120000, // 2 minutes
+            otpExpiresAt: Date.now() + 120000,
             otpAttempts: 0
         });
 

@@ -32,16 +32,28 @@
 
         <!-- Signup Form -->
         <form action="/signup" method="post" id="signup-form" class="space-y-4" novalidate>
-          <!-- Full Name Input -->
+          <!-- First Name Input -->
           <div>
             <input
               type="text"
-              name="fullName"
-              placeholder="Full Name"
-              id="fullName"
+              name="firstName"
+              placeholder="First Name"
+              id="firstName"
               class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
               minlength="3"
+              maxlength="50"
+            />
+          </div>
+
+          <!-- Last Name Input -->
+          <div>
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              id="lastName"
+              class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              minlength="1"
               maxlength="50"
             />
           </div>
@@ -54,7 +66,6 @@
               placeholder="Email"
               id="email"
               class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
             />
           </div>
 
@@ -66,9 +77,8 @@
               placeholder="Password"
               id="password"
               class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              minlength="6"
-              maxlength="20"
+              minlength="8"
+              maxlength="12"
             />
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
@@ -83,7 +93,8 @@
               placeholder="Confirm Password"
               id="confirmPassword"
               class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              minlength="8"
+              maxlength="12"
             />
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
@@ -120,33 +131,58 @@
         const form = document.getElementById('signup-form');
         const passwordToggles = document.querySelectorAll('.fa-eye');
 
-        // Toggle password visibility
-        passwordToggles.forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const input = this.closest('.relative').querySelector('input');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    this.classList.remove('fa-eye');
-                    this.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    this.classList.remove('fa-eye-slash');
-                    this.classList.add('fa-eye');
-                }
-            });
-        });
+        // Password validation function
+        const validatePassword = (password) => {
+            const minLength = 8;
+            const maxLength = 12;
+            
+            // Check length
+            if (password.length < minLength || password.length > maxLength) {
+                return {
+                    isValid: false,
+                    message: `Password must be between ${minLength} and ${maxLength} characters long`
+                };
+            }
+
+            // Check for uppercase letter
+            if (!/[A-Z]/.test(password)) {
+                return {
+                    isValid: false,
+                    message: 'Password must contain at least one uppercase letter'
+                };
+            }
+
+            // Check for lowercase letter
+            if (!/[a-z]/.test(password)) {
+                return {
+                    isValid: false,
+                    message: 'Password must contain at least one lowercase letter'
+                };
+            }
+
+            // Check for number
+            if (!/[0-9]/.test(password)) {
+                return {
+                    isValid: false,
+                    message: 'Password must contain at least one number'
+                };
+            }
+
+            return { isValid: true };
+        };
 
         // Form validation and submission
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const fullName = document.getElementById('fullName').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // Validation
-            if (!fullName || !email || !password || !confirmPassword) {
+            // Basic field validation
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Validation Error',
@@ -156,11 +192,20 @@
             }
 
             // Name validation
-            if (!/^[a-zA-Z\s]{3,50}$/.test(fullName)) {
+            if (!/^[a-zA-Z]{3,10}$/.test(firstName)) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Invalid Name',
-                    text: 'Name should contain only letters and spaces (3-50 characters)'
+                    title: 'Invalid First Name',
+                    text: 'First name should contain only letters (3-10 characters)'
+                });
+                return;
+            }
+
+            if (!/^[a-zA-Z]{1,10}$/.test(lastName)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Last Name',
+                    text: 'Last name should contain only letters (1-10 characters)'
                 });
                 return;
             }
@@ -175,12 +220,16 @@
                 return;
             }
 
+             // Confirm password
+             
+
             // Password validation
-            if (password.length < 6) {
+            const passwordValidation = validatePassword(password);
+            if (!passwordValidation.isValid) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Invalid Password',
-                    text: 'Password must be at least 6 characters long'
+                    text: 'Password doesn\'t meet requirements'
                 });
                 return;
             }
@@ -194,8 +243,39 @@
                 return;
             }
 
-            // If validation passes, submit the form
+            // If all validations pass, submit the form
             this.submit();
+        });
+
+        // Add password input event listener for real-time validation
+        const passwordInput = document.getElementById('confirmPassword');
+        const passwordRequirements = document.createElement('div');
+        passwordRequirements.className = 'text-xs text-gray-500 mt-1';
+        passwordRequirements.innerHTML = `
+            Password requirements:
+            <ul class="list-disc pl-4 mt-1">
+                <li>8-12 characters long</li>
+                <li>At least one uppercase letter</li>
+                <li>At least one lowercase letter</li>
+                <li>At least one number</li>
+            </ul>
+        `;
+        passwordInput.parentNode.appendChild(passwordRequirements);
+
+        // Password toggle functionality
+        passwordToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.closest('.relative').querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
         });
 
         // Show alert messages if they exist
