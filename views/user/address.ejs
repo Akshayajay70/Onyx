@@ -91,7 +91,7 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
-              <input type="tel" id="mobile" name="mobileNumber" pattern="[0-9]{10}"
+              <input type="tel" id="mobile" name="mobileNumber"
                 class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-black">
             </div>
 
@@ -199,6 +199,16 @@
         Object.keys(data).forEach(key => {
             data[key] = data[key].trim();
         });
+
+        if (!data.fullName || !data.mobileNumber || !data.addressLine1 || 
+        !data.city || !data.state || !data.pincode) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'All fields are required'
+        });
+        return;
+    }
 
         // Check for empty spaces
         if (!data.fullName.replace(/\s/g, '').length) {

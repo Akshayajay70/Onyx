@@ -21,10 +21,6 @@ const addAddress = async (req, res) => {
         }
 
         const { fullName, mobileNumber, addressLine1, addressLine2, city, state, pincode } = req.body;
-        
-        if (!fullName || !mobileNumber || !addressLine1 || !city || !state || !pincode) {
-            return res.status(400).json({ error: 'All required fields must be filled' });
-        }
 
         const address = new addressSchema({
             userId: req.session.user,
