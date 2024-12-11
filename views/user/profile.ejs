@@ -103,6 +103,25 @@
           const lastName = document.getElementById("lastName").value;
           const email = document.getElementById("email").value;
 
+          // Check for empty spaces
+          if (!firstName.trim()) {
+            Swal.fire({
+              icon: "error",
+              title: "Invalid First Name",
+              text: "First name cannot be just spaces",
+            });
+            return;
+          }
+
+          if (!lastName.trim()) {
+            Swal.fire({
+              icon: "error",
+              title: "Invalid Last Name",
+              text: "Last name cannot be just spaces",
+            });
+            return;
+          }
+
           // Validate fields (excluding email since it's read-only)
           if (!firstName || !lastName) {
             Swal.fire({
@@ -129,8 +148,8 @@
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                firstName,
-                lastName,
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
                 email
               }),
             });
