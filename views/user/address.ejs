@@ -35,7 +35,36 @@
           </button>
         </div>
         <div class="space-y-4">
-          
+          <% addresses.forEach(address => { %>
+            <div class="border rounded-lg p-4 relative hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-semibold"><%= address.fullName %></h4>
+                  <p class="text-gray-600"><%= address.mobileNumber %></p>
+                  <p class="text-gray-600">
+                    <%= address.addressLine1 %>,
+                    <% if (address.addressLine2) { %><%= address.addressLine2 %>,<% } %>
+                    <%= address.city %>,
+                    <%= address.state %> - <%= address.pincode %>
+                  </p>
+                </div>
+                <div class="flex gap-2">
+                  <button 
+                    onclick="editAddress('<%= address._id %>', <%= JSON.stringify(address) %>)"
+                    class="text-blue-500 hover:text-blue-700"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button 
+                    onclick="deleteAddress('<%= address._id %>')"
+                    class="text-red-500 hover:text-red-700"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }); %>
         </div>
       </section>
     </main>
@@ -56,12 +85,14 @@
             
             <div>
               <label class="block text-sm font-medium text-gray-700">Full Name</label>
-              <input type="text" id="fullName" name="fullName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+              <input type="text" id="fullName" name="fullName"
+                class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-black">
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
-              <input type="tel" id="mobile" name="mobile" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+              <input type="tel" id="mobile" name="mobileNumber" pattern="[0-9]{10}"
+                class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-black">
             </div>
 
             <div>
@@ -81,7 +112,45 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700">State</label>
-                <input type="text" id="state" name="state" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                <select id="state" name="state" 
+                    class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                    <option value="">Select State</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jharkhand">Jharkhand</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Mizoram">Mizoram</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Uttarakhand">Uttarakhand</option>
+                    <option value="West Bengal">West Bengal</option>
+                    <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                    <option value="Chandigarh">Chandigarh</option>
+                    <option value="Dadra and Nagar Haveli">Dadra and Nagar Haveli</option>
+                    <option value="Daman and Diu">Daman and Diu</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Lakshadweep">Lakshadweep</option>
+                    <option value="Puducherry">Puducherry</option>
+                </select>
               </div>
             </div>
 
@@ -122,34 +191,211 @@
       document.getElementById('addressForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Add your form validation and submission logic here
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        const addressId = data.addressId;
+        
+        // Trim all input values
+        Object.keys(data).forEach(key => {
+            data[key] = data[key].trim();
+        });
+
+        // Check for empty spaces
+        if (!data.fullName.replace(/\s/g, '').length) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Full name cannot be just spaces'
+            });
+            return;
+        }
+
+        // Capitalize first letter of each word function
+        const capitalizeWords = (str) => {
+            return str.toLowerCase().split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        };
+
+        // Validation for full name (letters only and max 15 characters)
+        if (!data.fullName) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter your full name'
+            });
+            return;
+        }
+
+        if (!/^[A-Za-z\s]+$/.test(data.fullName)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Full name should contain only letters'
+            });
+            return;
+        }
+
+        if (data.fullName.length > 15) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Full name should not exceed 15 characters'
+            });
+            return;
+        }
+
+        // Capitalize full name
+        data.fullName = capitalizeWords(data.fullName);
+
+        if (!data.mobileNumber) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter your mobile number'
+            });
+            return;
+        }
+
+        if (!/^[0-9]{10}$/.test(data.mobileNumber)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter a valid 10-digit mobile number'
+            });
+            return;
+        }
+
+        if (!data.addressLine1) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter your address'
+            });
+            return;
+        }
+
+        if (!data.addressLine1.replace(/\s/g, '').length) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Address cannot be just spaces'
+            });
+            return;
+        }
+
+        // Address length validation
+        if (data.addressLine1.length > 30) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Address should not exceed 30 characters'
+            });
+            return;
+        }
+
+        // Capitalize first letter of address
+        data.addressLine1 = data.addressLine1.charAt(0).toUpperCase() + data.addressLine1.slice(1);
+        if (data.addressLine2) {
+            data.addressLine2 = data.addressLine2.trim();
+            if (data.addressLine2.length > 0) {
+                data.addressLine2 = data.addressLine2.charAt(0).toUpperCase() + data.addressLine2.slice(1);
+            }
+        }
+
+        if (!data.city) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter your city'
+            });
+            return;
+        }
+
+        if (!data.city.replace(/\s/g, '').length) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'City cannot be just spaces'
+            });
+            return;
+        }
+
+        // City length validation
+        if (data.city.length > 15) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'City name should not exceed 15 characters'
+            });
+            return;
+        }
+
+        // Capitalize city
+        data.city = capitalizeWords(data.city);
+
+        if (!data.state) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please select a state'
+            });
+            return;
+        }
+
+        if (!data.pincode) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter your PIN code'
+            });
+            return;
+        }
+
+        if (!/^[0-9]{6}$/.test(data.pincode)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please enter a valid 6-digit PIN code'
+            });
+            return;
+        }
         
         try {
-          // Example submission
-        //   const formData = new FormData(e.target);
-        //   const response = await fetch('/address', {
-        //     method: 'POST',
-        //     body: formData
-        //   });
-
-          if (response.ok) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: 'Address saved successfully',
-              timer: 1500
-            }).then(() => {
-              window.location.reload();
+            const url = addressId ? `/address/${addressId}` : '/address/add';
+            const method = addressId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             });
-          } else {
-            throw new Error('Failed to save address');
-          }
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to save address');
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: result.message,
+                showConfirmButton: true,
+                timer: 3000
+            }).then(() => {
+                window.location.reload();
+            });
+            
+            closeAddressModal();
         } catch (error) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message
-          });
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
         }
       });
 
@@ -167,15 +413,51 @@
           });
 
           if (result.isConfirmed) {
-            // Add your delete logic here
+            const response = await fetch(`/address/${addressId}`, {
+              method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to delete address');
+            }
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Deleted!',
+              text: data.message,
+              showConfirmButton: true,
+              timer: 3000
+            }).then(() => {
+              window.location.reload();
+            });
           }
         } catch (error) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to delete address'
+            text: error.message
           });
         }
+      }
+
+      function editAddress(addressId, addressData) {
+        // Update modal title
+        document.getElementById('modalTitle').textContent = 'Edit Address';
+        
+        // Fill form with existing data
+        document.getElementById('addressId').value = addressId;
+        document.getElementById('fullName').value = addressData.fullName;
+        document.getElementById('mobile').value = addressData.mobileNumber;
+        document.getElementById('addressLine1').value = addressData.addressLine1;
+        document.getElementById('addressLine2').value = addressData.addressLine2 || '';
+        document.getElementById('city').value = addressData.city;
+        document.getElementById('state').value = addressData.state;
+        document.getElementById('pincode').value = addressData.pincode;
+        
+        // Show modal
+        document.getElementById('addressModal').classList.remove('hidden');
       }
     </script>
   </body>

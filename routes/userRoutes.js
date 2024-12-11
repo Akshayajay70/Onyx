@@ -39,5 +39,11 @@ route.post('/profile/update', userMiddlewares.checkSession, userProfileControlle
 
 route.get('/address', userMiddlewares.checkSession, userAddressController.getAddress);
 
+route.post('/address/add', userMiddlewares.checkSession, userAddressController.addAddress);
+
+route.delete('/address/:id', userMiddlewares.checkSession, userAddressController.deleteAddress);
+
+route.put('/address/:id', userMiddlewares.checkSession, userAddressController.editAddress);
+
 export default route;
 
