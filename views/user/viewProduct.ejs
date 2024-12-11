@@ -209,29 +209,61 @@
         try {
           const response = await fetch('/cart/add', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
               productId,
               quantity: 1
             })
           });
 
+          const data = await response.json();
+
           if (response.ok) {
             Swal.fire({
               icon: 'success',
               title: 'Added to Cart',
-              timer: 1500,
-              showConfirmButton: false
+              text: data.message,
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: true,
+              timer: 2000
             });
+
+            // Update cart count in navbar if you have one
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+              cartCountElement.textContent = data.cartCount;
+            }
           } else {
-            const data = await response.json();
-            throw new Error(data.message);
+            // If the error is about quantity limit, offer to go to cart
+            if (data.message.includes('Maximum limit')) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Quantity Limit Reached',
+                text: data.message,
+                showCancelButton: true,
+                confirmButtonText: 'Go to Cart',
+                cancelButtonText: 'Continue Shopping'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  window.location.href = '/cart';
+                }
+              });
+            } else {
+              throw new Error(data.message);
+            }
           }
         } catch (error) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'Failed to add to cart'
+            text: error.message || 'Failed to add to cart',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: true,
+            timer: 3000
           });
         }
       }
@@ -250,7 +282,7 @@
               icon: 'success',
               title: 'Added to Wishlist',
               timer: 1500,
-              showConfirmButton: false
+              showConfirmButton: true
             });
           } else {
             const data = await response.json();

@@ -4,7 +4,7 @@ import productController from '../controller/userProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 import userProfileController from '../controller/userProfileController.js';
 import userAddressController from '../controller/userAddressController.js';
-
+import userCartController from '../controller/userCartController.js';
 const route = Router();
 
 route.get('/signup', userMiddlewares.isLogin, userController.getSignUp);
@@ -44,6 +44,14 @@ route.post('/address/add', userMiddlewares.checkSession, userAddressController.a
 route.delete('/address/:id', userMiddlewares.checkSession, userAddressController.deleteAddress);
 
 route.put('/address/:id', userMiddlewares.checkSession, userAddressController.editAddress);
+
+route.get('/cart', userMiddlewares.checkSession, userCartController.getCart);
+
+route.post('/cart/add', userMiddlewares.checkSession, userCartController.addToCart);
+
+route.post('/cart/update-quantity', userMiddlewares.checkSession, userCartController.updateQuantity);
+
+route.delete('/cart/remove/:productId', userMiddlewares.checkSession, userCartController.removeFromCart);
 
 export default route;
 
