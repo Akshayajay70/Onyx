@@ -12,6 +12,7 @@
       referrerpolicy="no-referrer"
     />
     <title>Onyx Cart</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
 
   <body class="bg-gray-100">
@@ -293,76 +294,56 @@
       }
 
       async function removeFromCart(button, productId) {
-        try {
-            const response = await fetch(`/cart/remove/${productId}`, {
-                method: 'DELETE'
-            });
+        // Show confirmation dialog
+        const result = await Swal.fire({
+            title: 'Remove Item?',
+            text: 'Are you sure you want to remove this item from your cart?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it',
+            cancelButtonText: 'Cancel'
+        });
 
-            const data = await response.json();
+        // If user confirms deletion
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/cart/remove/${productId}`, {
+                    method: 'DELETE'
+                });
 
-            if (response.ok) {
-                // Remove the item from DOM with animation
-                const cartItem = button.closest('.flex.items-center.border-b');
-                cartItem.style.transition = 'all 0.3s ease';
-                cartItem.style.opacity = '0';
-                cartItem.style.height = '0';
-                
-                setTimeout(() => {
-                    cartItem.remove();
-                    
-                    // Update totals in checkout section
-                    document.getElementById('subtotal-amount').textContent = `₹${data.total}`;
-                    document.getElementById('total-amount').textContent = `₹${data.total}`;
-                    document.getElementById('items-count').textContent = 
-                        `Subtotal (${data.itemCount} items)`;
+                const data = await response.json();
 
-                    // If cart is empty, show empty cart message
-                    if (data.itemCount === 0) {
-                        const cartContainer = document.querySelector('.space-y-6');
-                        cartContainer.innerHTML = `
-                            <div class="text-center py-8">
-                                <i class="fas fa-shopping-cart text-4xl text-gray-400 mb-4"></i>
-                                <p class="text-gray-500">Your cart is empty</p>
-                                <a href="/shop" class="inline-block mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800">
-                                    Continue Shopping
-                                </a>
-                            </div>
-                        `;
-                        
-                        // Disable checkout button
-                        const checkoutButton = document.querySelector('button[disabled]');
-                        if (checkoutButton) {
-                            checkoutButton.classList.remove('bg-black', 'hover:bg-gray-800');
-                            checkoutButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                            checkoutButton.disabled = true;
-                            checkoutButton.textContent = 'Cart is Empty';
-                        }
-                    }
-                }, 300);
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Item Removed',
+                        text: data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
 
-                // Show success message
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Item Removed',
-                    text: data.message,
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Failed to remove item',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
-                    timer: 2000
+                    timer: 3000
                 });
-            } else {
-                throw new Error(data.message);
             }
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Failed to remove item',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
         }
       }
     </script>
