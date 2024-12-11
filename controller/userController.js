@@ -161,7 +161,7 @@ const postLogin = async (req, res) => {
         // Check if user exists
         if (!user) {
             return res.render('user/login', {
-                message: 'Invalid credentials',
+                message: "Your email is not registered. Please signup first.",
                 alertType: "error",
             });
         }

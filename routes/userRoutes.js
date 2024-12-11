@@ -29,18 +29,15 @@ route.get('/logout', userMiddlewares.checkSession, userController.getLogout);
 
 route.get('/product/:id', userMiddlewares.checkSession, productController.getProductDetails);
 
-route.get('/auth/google', 
-    userMiddlewares.restrictManualAccess, 
-    userController.getGoogle
-);
+route.get('/auth/google', userMiddlewares.restrictManualAccess, userController.getGoogle);
 
-route.get('/auth/google/callback', 
-    userController.getGoogleCallback
-);
+route.get('/auth/google/callback', userController.getGoogleCallback);
 
-route.get('/profile', userProfileController.getProfile)
+route.get('/profile', userMiddlewares.checkSession, userProfileController.getProfile);
 
-route.get('/address', userAddressController.getAddress)
+route.post('/profile/update', userMiddlewares.checkSession, userProfileController.updateProfile);
+
+route.get('/address', userMiddlewares.checkSession, userAddressController.getAddress);
 
 export default route;
 

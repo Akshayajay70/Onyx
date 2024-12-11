@@ -41,6 +41,8 @@
                 id="firstName"
                 type="text"
                 placeholder="Enter your first name"
+                name="firstName"
+                value="<%= user.firstName %>"
               />
             </div>
             <div>
@@ -55,6 +57,8 @@
                 id="lastName"
                 type="text"
                 placeholder="Enter your last name"
+                name="lastName"
+                value="<%= user.lastName %>"
               />
             </div>
             <div>
@@ -65,10 +69,13 @@
                 Email Address
               </label>
               <input
-                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                class="w-full border border-gray-300 rounded-lg p-3 bg-gray-100 cursor-not-allowed"
                 id="email"
                 type="email"
-                placeholder="Enter your email address"
+                name="email"
+                value="<%= user.email %>"
+                readonly
+                disabled
               />
             </div>
           </div>
@@ -96,8 +103,8 @@
           const lastName = document.getElementById("lastName").value;
           const email = document.getElementById("email").value;
 
-          // Validate fields
-          if (!firstName || !lastName || !email) {
+          // Validate fields (excluding email since it's read-only)
+          if (!firstName || !lastName) {
             Swal.fire({
               icon: "error",
               title: "Required Fields",
@@ -106,25 +113,27 @@
             return;
           }
 
-          // Validate email format
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(email)) {
-            Swal.fire({
-              icon: "error",
-              title: "Invalid Email",
-              text: "Please enter a valid email address",
-            });
-            return;
-          }
-
           try {
             // Show loading state
+            Swal.fire({
+              title: 'Updating Profile...',
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+              }
+            });
 
-            const formData = {
-              firstName,
-              lastName,
-              email,
-            };
+            const response = await fetch('/profile/update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                firstName,
+                lastName,
+                email
+              }),
+            });
 
             if (response.ok) {
               await Swal.fire({
@@ -133,6 +142,7 @@
                 text: "Profile updated successfully",
                 timer: 1500,
               });
+              window.location.reload();
             } else {
               const data = await response.json();
               Swal.fire({
@@ -149,7 +159,7 @@
               text: "An error occurred while updating your profile",
             });
           }
-        });
+         });
     </script>
   </body>
 </html>

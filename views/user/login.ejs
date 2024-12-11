@@ -142,7 +142,7 @@
                 icon: '<%= alertType === "error" ? "error" : "success" %>',
                 title: '<%= alertType === "error" ? "Error" : "Success" %>',
                 text: '<%= message %>',
-                timer: 3000,
+                timer: 5000,
                 timerProgressBar: true
             });
         <% } %>
@@ -158,7 +158,7 @@
                 icon: alertType || 'error',
                 title: alertType === 'success' ? 'Success' : 'Error',
                 text: message,
-                timer: 3000,
+                timer: 5000,
                 timerProgressBar: true
             });
             
