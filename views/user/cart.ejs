@@ -152,7 +152,7 @@
 
             <!-- Checkout Button -->
             <% if (cartItems && cartItems.length > 0) { %>
-              <button class="checkout-button w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-all duration-300">
+              <button onclick="location.href='/checkout'" class="checkout-button w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-all duration-300 ">
                 Proceed to Checkout
               </button>
             <% } else { %>

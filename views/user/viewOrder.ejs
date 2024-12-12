@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="tailwindcss/output.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+    <title>My Orders - Onyx</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+    <%- include("../partials/nav") %>
+
+    <div class="container mx-auto px-4 py-8 mt-28">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">My Orders</h1>
+
+        <% if (orders && orders.length > 0) { %>
+            <div class="space-y-6">
+                <% orders.forEach(order => { %>
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <!-- Order Header -->
+                        <div class="bg-gray-50 p-6 border-b">
+                            <div class="flex flex-wrap justify-between items-center gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Order ID</p>
+                                    <p class="font-medium">#<%= order._id %></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Order Date</p>
+                                    <p class="font-medium">
+                                        <%= new Date(order.orderDate).toLocaleDateString('en-US', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric'
+                                        }) %>
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Amount</p>
+                                    <p class="font-medium">₹<%= order.totalAmount %></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Status</p>
+                                    <span class="
+                                        inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        <%= order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                            order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                            order.orderStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                            'bg-yellow-100 text-yellow-800'
+                                        %>
+                                    ">
+                                        <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <% order.items.forEach(item => { %>
+                                    <div class="flex items-center gap-4">
+                                        <img 
+                                            src="<%= item.product.imageUrl[0] %>" 
+                                            alt="<%= item.product.productName %>"
+                                            class="w-20 h-20 object-cover rounded-lg"
+                                        >
+                                        <div class="flex-1">
+                                            <h3 class="font-medium"><%= item.product.productName %></h3>
+                                            <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
+                                            <p class="text-sm">₹<%= item.price %> each</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-medium">₹<%= item.subtotal %></p>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+
+                        <!-- Order Footer -->
+                        <div class="bg-gray-50 p-6 border-t">
+                            <div class="flex flex-wrap justify-between items-center gap-4">
+                                <!-- Shipping Address -->
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-500 mb-1">Shipping Address</p>
+                                    <p class="font-medium"><%= order.shippingAddress.fullName %></p>
+                                    <p class="text-sm text-gray-600">
+                                        <%= order.shippingAddress.streetAddress %><br>
+                                        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> <%= order.shippingAddress.pincode %><br>
+                                        Phone: <%= order.shippingAddress.phone %>
+                                    </p>
+                                </div>
+
+                                <!-- Payment Info -->
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500 mb-1">Payment Method</p>
+                                    <p class="font-medium">
+                                        <%= order.paymentMethod.toUpperCase() %>
+                                        <% if (order.paymentMethod === 'cod') { %>
+                                            <span class="text-sm text-gray-500">(Cash on Delivery)</span>
+                                        <% } %>
+                                    </p>
+                                    <p class="text-sm text-gray-500 mt-1">Payment Status</p>
+                                    <p class="font-medium <%= order.paymentStatus === 'completed' ? 'text-green-600' : 'text-yellow-600' %>">
+                                        <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                                    </p>
+                                </div>
+
+                                <!-- Cancel Button (show only for pending/processing orders) -->
+                                <% if (['pending', 'processing'].includes(order.orderStatus)) { %>
+                                    <button 
+                                        onclick="cancelOrder('<%= order._id %>')"
+                                        class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors"
+                                    >
+                                        Cancel Order
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center">
+                <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500 mb-4">You haven't placed any orders yet</p>
+                <a href="/shop" class="inline-block bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800">
+                    Start Shopping
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script>
+        async function cancelOrder(orderId) {
+            const result = await Swal.fire({
+                title: 'Cancel Order?',
+                text: 'Are you sure you want to cancel this order?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#000000',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, cancel it',
+                cancelButtonText: 'No, keep it'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/orders/${orderId}/cancel`, {
+                        method: 'POST'
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Order Cancelled',
+                            text: data.message,
+                            confirmButtonColor: '#000000'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to cancel order',
+                        confirmButtonColor: '#000000'
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

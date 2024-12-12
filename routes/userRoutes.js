@@ -5,6 +5,9 @@ import userMiddlewares from '../middlewares/userMiddlewares.js';
 import userProfileController from '../controller/userProfileController.js';
 import userAddressController from '../controller/userAddressController.js';
 import userCartController from '../controller/userCartController.js';
+import userCheckoutController from '../controller/userCheckoutController.js';
+import userOrderController from '../controller/userOrderController.js';
+
 const route = Router();
 
 route.get('/signup', userMiddlewares.isLogin, userController.getSignUp);
@@ -52,6 +55,15 @@ route.post('/cart/add', userMiddlewares.checkSession, userCartController.addToCa
 route.post('/cart/update-quantity', userMiddlewares.checkSession, userCartController.updateQuantity);
 
 route.delete('/cart/remove/:productId', userMiddlewares.checkSession, userCartController.removeFromCart);
+
+route.get('/checkout', userMiddlewares.checkSession, userCheckoutController.getCheckoutPage);
+
+route.post('/order/place-order', userMiddlewares.checkSession, userCheckoutController.placeOrder);
+
+route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders);
+
+route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
+
 
 export default route;
 
