@@ -246,7 +246,7 @@
               let filteredProducts = [...originalProducts];
 
               // Search filter
-              const searchTerm = searchInput.value.toLowerCase();
+              const searchTerm = searchInput.value.toLowerCase().trim();
               if (searchTerm) {
                   filteredProducts = filteredProducts.filter(product =>
                       product.productName.toLowerCase().includes(searchTerm) ||
@@ -257,26 +257,26 @@
               // Gender filter
               if (genderFilter.value) {
                   filteredProducts = filteredProducts.filter(product =>
-                      product.gender === genderFilter.value
+                      product.gender.toLowerCase() === genderFilter.value.toLowerCase()
                   );
               }
 
               // Color filter
               if (colorFilter.value) {
                   filteredProducts = filteredProducts.filter(product =>
-                      product.color === colorFilter.value
+                      product.color.toLowerCase() === colorFilter.value.toLowerCase()
                   );
               }
 
               // Price range filter
               const minPrice = Number(minPriceFilter.value);
               const maxPrice = Number(maxPriceFilter.value);
-              if (minPrice) {
+              if (minPrice > 0) {
                   filteredProducts = filteredProducts.filter(product =>
                       product.discountPrice >= minPrice
                   );
               }
-              if (maxPrice) {
+              if (maxPrice > 0) {
                   filteredProducts = filteredProducts.filter(product =>
                       product.discountPrice <= maxPrice
                   );
@@ -305,6 +305,9 @@
                   case 'newArrivals':
                       filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                       break;
+                  default:
+                      // Keep original order
+                      break;
               }
 
               renderProducts(filteredProducts);
@@ -312,13 +315,23 @@
 
           // Function to render products
           function renderProducts(productsToRender) {
+              if (productsToRender.length === 0) {
+                  productGrid.innerHTML = `
+                      <div class="col-span-full text-center py-8">
+                          <p class="text-gray-500">No products found matching your criteria</p>
+                      </div>
+                  `;
+                  return;
+              }
+
               productGrid.innerHTML = productsToRender.map(product => `
-                  <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <a href="/product/${product._id}" 
+                     class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
                       <div class="relative aspect-square overflow-hidden">
                           <img
                               src="${product.imageUrl[0]}"
                               alt="${product.productName}"
-                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               loading="lazy"
                           >
                           ${product.discountPrice < product.price ? `
@@ -327,30 +340,43 @@
                               </div>
                           ` : ''}
                       </div>
-                      <div class="p-4">
-                          <h3 class="text-gray-800 font-medium text-base mb-2 truncate">
+                      <div class="p-3">
+                          <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
                               ${product.productName}
-                          </h3>
-                          <p class="text-gray-600 text-sm mb-2">
-                              ${product.brand}
-                          </p>
-                          <div class="flex items-center justify-between">
+                          </h2>
+                          <div class="space-y-1">
                               <div class="flex items-center gap-2">
                                   ${product.discountPrice < product.price ? `
-                                      <span class="text-gray-900 font-semibold">₹${product.discountPrice}</span>
-                                      <span class="text-gray-500 text-sm line-through">₹${product.price}</span>
-                                  ` : `
-                                      <span class="text-gray-900 font-semibold">₹${product.price}</span>
-                                  `}
+                                      <span class="text-gray-500 line-through text-xs">₹${product.price}</span>
+                                  ` : ''}
+                                  <span class="text-base font-bold text-gray-900">₹${product.discountPrice}</span>
                               </div>
-                              ${product.stock > 0 ?
-                                  '<span class="text-green-600 text-sm">In Stock</span>' :
-                                  '<span class="text-red-600 text-sm">Out of Stock</span>'
-                              }
                           </div>
                       </div>
-                  </div>
+                  </a>
               `).join('');
+          }
+
+          // Populate color filter options
+          function populateFilterOptions() {
+              // Get unique colors
+              const colors = [...new Set(originalProducts.map(p => p.color))].sort();
+              
+              // Clear existing options except the first one (All)
+              while (colorFilter.options.length > 1) {
+                  colorFilter.remove(1);
+              }
+
+              // Add color options
+              colors.forEach(color => {
+                  if (color) { // Only add if color is not null/empty
+                      const option = new Option(
+                          color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(), 
+                          color.toLowerCase()
+                      );
+                      colorFilter.add(option);
+                  }
+              });
           }
 
           // Event listeners
@@ -358,12 +384,20 @@
           searchInput.addEventListener('keyup', (e) => {
               if (e.key === 'Enter') applyFilters();
           });
-          sortFilter.addEventListener('change', applyFilters);
-          genderFilter.addEventListener('change', applyFilters);
-          colorFilter.addEventListener('change', applyFilters);
-          minPriceFilter.addEventListener('change', applyFilters);
-          maxPriceFilter.addEventListener('change', applyFilters);
-          stockFilter.addEventListener('change', applyFilters);
+          
+          // Add input event listeners for immediate filtering
+          [sortFilter, genderFilter, colorFilter, stockFilter].forEach(filter => {
+              filter.addEventListener('change', applyFilters);
+          });
+
+          // Add debounced event listeners for price inputs
+          let priceTimeout;
+          [minPriceFilter, maxPriceFilter].forEach(input => {
+              input.addEventListener('input', () => {
+                  clearTimeout(priceTimeout);
+                  priceTimeout = setTimeout(applyFilters, 500);
+              });
+          });
 
           // Reset filters
           resetButton.addEventListener('click', () => {
@@ -376,16 +410,6 @@
               stockFilter.value = '';
               renderProducts(originalProducts);
           });
-
-          // Populate filter options from available products
-          function populateFilterOptions() {
-              const colors = [...new Set(originalProducts.map(p => p.color))];
-
-              colors.forEach(color => {
-                  const option = new Option(color, color);
-                  colorFilter.add(option);
-              });
-          }
 
           // Initialize
           populateFilterOptions();

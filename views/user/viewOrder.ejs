@@ -43,7 +43,7 @@
                                     <p class="font-medium">₹<%= order.totalAmount %></p>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-gray-500">Status</p>
+                                    <p class="text-sm text-gray-500">Order status</p>
                                     <span class="
                                         inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                         <%= order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
@@ -89,7 +89,8 @@
                                     <p class="text-sm text-gray-500 mb-1">Shipping Address</p>
                                     <p class="font-medium"><%= order.shippingAddress.fullName %></p>
                                     <p class="text-sm text-gray-600">
-                                        <%= order.shippingAddress.streetAddress %><br>
+                                        <%= order.shippingAddress.addressLine1 %><br>
+                                        <%= order.shippingAddress.addressLine2 %><br>
                                         <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> <%= order.shippingAddress.pincode %><br>
                                         Phone: <%= order.shippingAddress.phone %>
                                     </p>

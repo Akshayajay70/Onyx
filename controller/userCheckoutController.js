@@ -89,7 +89,7 @@ const userCheckoutController = {
                 price: item.price,
                 subtotal: item.quantity * item.price
             }));
-
+            
             // Calculate total
             const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
 
@@ -109,9 +109,9 @@ const userCheckoutController = {
                 userId,
                 items: orderItems,
                 totalAmount: total,
-                shippingAddress,
+                shippingAddress: shippingAddress,
                 paymentMethod,
-                paymentStatus: 'pending',
+                paymentStatus: 'completed',
                 orderStatus: 'pending',
                 orderDate: new Date()
             });

@@ -3,15 +3,45 @@ import orderSchema from '../model/orderModel.js';
 const userOrderController = {
     getOrders: async (req, res) => {
         try {
-            const orders = await orderSchema.find({ userId: req.session.userId })
+            const orders = await orderSchema.find({ userId: req.session.user })
                 .populate({
                     path: 'items.product',
-                    select: 'productName imageUrl'
+                    select: 'productName imageUrl price'
                 })
-                .sort({ orderDate: -1 }); // Most recent orders first
+                .sort({ orderDate: -1 });
+
+            const formattedOrders = orders.map(order => {
+                return {
+                    _id: order._id,
+                    orderDate: order.orderDate,
+                    totalAmount: order.totalAmount,
+                    orderStatus: order.orderStatus,
+                    paymentStatus: order.paymentStatus,
+                    paymentMethod: order.paymentMethod,
+                    shippingAddress: {
+                        fullName: order.shippingAddress.fullName,
+                        addressLine1: order.shippingAddress.addressLine1,
+                        addressLine2: order.shippingAddress.addressLine2,
+                        city: order.shippingAddress.city,
+                        state: order.shippingAddress.state,
+                        pincode: order.shippingAddress.pincode,
+                        phone: order.shippingAddress.mobileNumber
+                    },
+                    items: order.items.map(item => ({
+                        product: {
+                            _id: item.product._id,
+                            productName: item.product.productName,
+                            imageUrl: item.product.imageUrl
+                        },
+                        quantity: item.quantity,
+                        price: item.price,
+                        subtotal: item.subtotal
+                    }))
+                };
+            });
 
             res.render('user/viewOrder', {
-                orders,
+                orders: formattedOrders,
                 user: req.session.user
             });
         } catch (error) {
@@ -28,7 +58,7 @@ const userOrderController = {
             const orderId = req.params.orderId;
             const order = await orderSchema.findOne({ 
                 _id: orderId,
-                userId: req.session.userId
+                userId: req.session.user
             });
 
             if (!order) {
