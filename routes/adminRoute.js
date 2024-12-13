@@ -28,7 +28,7 @@ router.post('/category/add', adminMiddleware.checkSession, adminCategoryControll
 
 router.post('/category/edit', adminMiddleware.checkSession, adminCategoryController.editCategory);
 
-router.get('/category/delete', adminMiddleware.checkSession, adminCategoryController.deleteCategory);
+router.get('/category/toggle', adminMiddleware.checkSession, adminCategoryController.toggleCategory);
 
 // Product Routes
 

@@ -106,19 +106,31 @@ const editCategory = async (req, res) => {
     }
 };
 
-// GET: Delete Category
-const deleteCategory = async (req, res) => {
+// GET: Toggle Category
+const toggleCategory = async (req, res) => {
     try {
         const { id } = req.query;
-        await Category.findByIdAndDelete(id);
-        res.redirect('/admin/category');
+        
+        // Find and update the category
+        const category = await Category.findById(id);
+        if (!category) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
+
+        category.isActive = !category.isActive;
+        await category.save();
+
+        return res.status(200).json({ 
+            success: true, 
+            message: `Category ${category.isActive ? 'shown' : 'hidden'} successfully` 
+        });
     } catch (error) {
-        console.error('Error deleting category:', error);
-        res.status(500).send('Error deleting category.');
+        console.error('Error toggling category:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Error toggling category status' 
+        });
     }
 };
 
-
-
-
-export default { addCategory, getCategories, editCategory, deleteCategory }
+export default { addCategory, getCategories, editCategory, toggleCategory }

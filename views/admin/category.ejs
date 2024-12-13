@@ -9,6 +9,7 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body class="mybg-green text-white min-h-screen flex flex-col">
@@ -34,7 +35,12 @@
             class="bg-gray-700 p-4 rounded-lg flex items-center justify-between"
           >
             <div>
-              <h2 class="text-lg font-semibold"><%= category.name %></h2>
+              <h2 class="text-lg font-semibold <%= category.isActive ? 'text-white' : 'text-gray-400' %>">
+                <%= category.name %>
+                <span class="text-sm ml-2 <%= category.isActive ? 'text-green-500' : 'text-red-500' %>">
+                  (<%= category.isActive ? 'Active' : 'Hidden' %>)
+                </span>
+              </h2>
               <p class="text-sm text-gray-400"><%= category.description %></p>
             </div>
             <div class="flex space-x-4">
@@ -44,15 +50,15 @@
                 onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
                 class="text-green-500 hover:text-green-400"
               >
-                Edit
+                <i class="fas fa-edit"></i>
               </button>
 
-              <!-- Delete Button -->
+              <!-- Toggle Button -->
               <button
-                onclick="confirmDeleteCategory('<%= category._id %>')"
-                class="text-red-500 hover:text-red-400"
+                onclick="confirmToggleCategory('<%= category._id %>', <%= category.isActive %>)"
+                class="text-<%= category.isActive ? 'red' : 'green' %>-500 hover:text-<%= category.isActive ? 'red' : 'green' %>-400"
               >
-                Delete
+                <i class="fas fa-<%= category.isActive ? 'eye-slash' : 'eye' %>"></i>
               </button>
             </div>
           </div>
@@ -269,41 +275,46 @@
         });
       });
 
-      // Delete confirmation
-      function confirmDeleteCategory(categoryId) {
+      // Toggle confirmation
+      function confirmToggleCategory(categoryId, isActive) {
+        const action = isActive ? 'hide' : 'show';
+        const message = isActive ? 
+            "This category will be hidden from users. Continue?" : 
+            "This category will be visible to users. Continue?";
+
         Swal.fire({
-          title: 'Are you sure?',
-          text: "You won't be able to revert this!",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#EF4444',
-          cancelButtonColor: '#6B7280',
-          confirmButtonText: 'Yes, delete it!',
-          cancelButtonText: 'Cancel'
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Category?`,
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel'
         }).then(async (result) => {
-          if (result.isConfirmed) {
-            utils.toggleLoading(true);
-            try {
-              const response = await fetch(`/admin/category/delete?id=${categoryId}`);
-              if (!response.ok) await utils.handleApiError(response);
-              
-              await utils.showAlert({
-                title: 'Deleted!',
-                text: 'Category has been deleted.'
-              });
-              
-              window.location.reload();
-            } catch (error) {
-              await utils.showAlert({
-                title: 'Error!',
-                text: error.message,
-                icon: 'error',
-                confirmButtonColor: '#EF4444'
-              });
-            } finally {
-              utils.toggleLoading(false);
+            if (result.isConfirmed) {
+                utils.toggleLoading(true);
+                try {
+                    const response = await fetch(`/admin/category/toggle?id=${categoryId}`);
+                    if (!response.ok) await utils.handleApiError(response);
+                    
+                    await utils.showAlert({
+                        title: 'Success!',
+                        text: `Category ${action}n successfully.`
+                    });
+                    
+                    window.location.reload();
+                } catch (error) {
+                    await utils.showAlert({
+                        title: 'Error!',
+                        text: error.message,
+                        icon: 'error',
+                        confirmButtonColor: '#EF4444'
+                    });
+                } finally {
+                    utils.toggleLoading(false);
+                }
             }
-          }
         });
       }
 
