@@ -312,15 +312,43 @@
 
         // Show Modal for New Product
         addProductBtn.addEventListener('click', () => {
-          modalTitle.textContent = 'Add New Product';
+          // Reset form and clear any previous data
           productForm.reset();
           document.getElementById('productId').value = '';
+          modalTitle.textContent = 'Add New Product';
+          
+          // Clear image previews
+          document.querySelectorAll('.image-preview').forEach(preview => {
+            preview.innerHTML = `
+              <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+              <p class="text-sm text-gray-400">Click to upload</p>
+              <p class="text-xs text-gray-500 mt-1">Required image</p>
+            `;
+          });
+
+          // Reset character count
+          document.getElementById('variantCharCount').textContent = '0';
+          
+          // Show modal
           productModal.classList.remove('hidden');
         });
 
         // Hide Modal
         cancelModal.addEventListener('click', () => {
-          productModal.classList.add('hidden');
+          Swal.fire({
+            title: 'Are you sure?',
+            text: "Any unsaved changes will be lost!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#10B981',
+            cancelButtonColor: '#EF4444',
+            confirmButtonText: 'Yes, close it!'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              productModal.classList.add('hidden');
+              productForm.reset();
+            }
+          });
         });
 
         // Handle Image Upload and Preview
@@ -407,83 +435,181 @@
         productForm.addEventListener('submit', async function(e) {
           e.preventDefault();
           
-          // Reset error message
-          const errorMessageDiv = document.getElementById('formErrorMessage');
-          errorMessageDiv.classList.add('hidden');
-          errorMessageDiv.textContent = '';
+          // Validate all required fields
+          const requiredFields = {
+              'productName': 'Product Name',
+              'brand': 'Brand',
+              'gender': 'Gender',
+              'categoriesId': 'Category',
+              'color': 'Color',
+              'price': 'Price',
+              'discountPrice': 'Discount Price',
+              'stock': 'Stock',
+              'variantDescription': 'Description'
+          };
 
-          // Validate text inputs
-          const nameInput = document.getElementById('productName');
-          const brandInput = document.getElementById('brand');
-          const colorInput = document.getElementById('color');
-          
+          // Check for empty required fields
+          for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
+              const field = document.getElementById(fieldId);
+              if (!field.value.trim()) {
+                  await Swal.fire({
+                      icon: 'error',
+                      title: 'Required Field Missing',
+                      text: `${fieldName} is required`,
+                      confirmButtonColor: '#10B981'
+                  });
+                  field.focus();
+                  return false;
+              }
+          }
+
+          // Validate text fields for letters only
+          const letterOnlyFields = {
+              'productName': 'Product Name',
+              'brand': 'Brand',
+              'color': 'Color'
+          };
+
           const letterPattern = /^[A-Za-z\s]+$/;
-          let errors = [];
+          for (const [fieldId, fieldName] of Object.entries(letterOnlyFields)) {
+              const field = document.getElementById(fieldId);
+              if (!letterPattern.test(field.value.trim())) {
+                  await Swal.fire({
+                      icon: 'error',
+                      title: 'Invalid Input',
+                      text: `${fieldName} must contain only letters and spaces`,
+                      confirmButtonColor: '#10B981'
+                  });
+                  field.focus();
+                  return false;
+              }
+          }
 
-          if (!letterPattern.test(nameInput.value)) {
-            errors.push('Product Name must contain only letters and spaces');
-          }
-          
-          if (!letterPattern.test(brandInput.value)) {
-            errors.push('Brand must contain only letters and spaces');
-          }
-          
-          if (!letterPattern.test(colorInput.value)) {
-            errors.push('Color must contain only letters and spaces');
+          // Validate numeric fields
+          const numericFields = {
+              'price': { name: 'Price', min: 0 },
+              'discountPrice': { name: 'Discount Price', min: 0 },
+              'stock': { name: 'Stock', min: 0 }
+          };
+
+          for (const [fieldId, config] of Object.entries(numericFields)) {
+              const field = document.getElementById(fieldId);
+              const value = parseFloat(field.value);
+              
+              if (isNaN(value) || value < config.min) {
+                  await Swal.fire({
+                      icon: 'error',
+                      title: 'Invalid Input',
+                      text: `${config.name} must be a number greater than or equal to ${config.min}`,
+                      confirmButtonColor: '#10B981'
+                  });
+                  field.focus();
+                  return false;
+              }
           }
 
-          // Check if all 3 images are selected
+          // Validate discount price is less than regular price
+          const price = parseFloat(document.getElementById('price').value);
+          const discountPrice = parseFloat(document.getElementById('discountPrice').value);
+          if (discountPrice >= price) {
+              await Swal.fire({
+                  icon: 'error',
+                  title: 'Invalid Price',
+                  text: 'Discount price must be less than regular price',
+                  confirmButtonColor: '#10B981'
+              });
+              document.getElementById('discountPrice').focus();
+              return false;
+          }
+
+          // Validate description length
+          const description = document.getElementById('variantDescription').value.trim();
+          if (description.length < 10 || description.length > 25) {
+              await Swal.fire({
+                  icon: 'error',
+                  title: 'Invalid Description',
+                  text: 'Description must be between 10 and 25 characters',
+                  confirmButtonColor: '#10B981'
+              });
+              document.getElementById('variantDescription').focus();
+              return false;
+          }
+
+          // Validate image uploads
           const imageInputs = document.querySelectorAll('input[type="file"]');
           let imageCount = 0;
           imageInputs.forEach(input => {
-            if (input.files && input.files[0]) {
-              imageCount++;
-            }
+              if (input.files && input.files[0]) {
+                  imageCount++;
+              }
           });
 
-          if (imageCount !== 3) {
-            errors.push('Please upload exactly 3 images');
+          // Only check for required images on new product creation
+          const isEditing = document.getElementById('productId').value !== '';
+          if (!isEditing && imageCount !== 3) {
+              await Swal.fire({
+                  icon: 'error',
+                  title: 'Images Required',
+                  text: 'Please upload exactly 3 images',
+                  confirmButtonColor: '#10B981'
+              });
+              return false;
           }
 
-          // Check for any visible error messages from image validation
-          const imageErrors = document.querySelectorAll('.error-message:not(.hidden)');
-          if (imageErrors.length > 0) {
-            errors.push('Please fix all image errors before submitting');
-          }
-
-          // If there are any errors, display them and stop submission
-          if (errors.length > 0) {
-            errorMessageDiv.textContent = errors.join('\n');
-            errorMessageDiv.classList.remove('hidden');
-            return false;
-          }
-
-          // If validation passes, prepare form data and submit
+          // If all validation passes, show loading state and submit
           try {
-            const formData = new FormData(this);
-            const productId = document.getElementById('productId').value;
-            
-            const url = productId 
-              ? `/admin/product/edit/${productId}`
-              : '/admin/product/add';
+              Swal.fire({
+                  title: 'Processing...',
+                  text: 'Please wait while we save the product',
+                  allowOutsideClick: false,
+                  didOpen: () => {
+                      Swal.showLoading();
+                  }
+              });
 
-            const response = await fetch(url, {
-              method: 'POST',
-              body: formData
-            });
+              const formData = new FormData(this);
+              const productId = document.getElementById('productId').value;
+              const url = productId 
+                  ? `/admin/product/edit/${productId}`
+                  : '/admin/product/add';
 
-            if (response.ok) {
-              window.location.reload();
-            } else {
-              const data = await response.json();
-              errorMessageDiv.textContent = data.message || 'Error processing request';
-              errorMessageDiv.classList.remove('hidden');
-            }
+              const response = await fetch(url, {
+                  method: 'POST',
+                  body: formData
+              });
+
+              if (response.ok) {
+                  await Swal.fire({
+                      icon: 'success',
+                      title: 'Success!',
+                      text: productId ? 'Product updated successfully' : 'Product added successfully',
+                      confirmButtonColor: '#10B981',
+                      timer: 3000
+                  });
+                  window.location.reload();
+              } else {
+                  const data = await response.json();
+                  await Swal.fire({
+                      icon: 'error',
+                      title: 'Error',
+                      text: data.message || 'Error processing request',
+                      confirmButtonColor: '#10B981'
+                  });
+              }
           } catch (error) {
-            console.error('Error:', error);
-            errorMessageDiv.textContent = 'An error occurred while processing your request';
-            errorMessageDiv.classList.remove('hidden');
+              console.error('Error:', error);
+              await Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: 'An error occurred while processing your request',
+                  confirmButtonColor: '#10B981'
+              });
           }
+        });
+
+        // Remove the required attribute from form fields since we're handling validation with JavaScript
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.removeAttribute('required');
         });
 
         // Handle Product Edit
@@ -506,6 +632,8 @@
               document.getElementById('price').value = product.price;
               document.getElementById('discountPrice').value = product.discountPrice;
               document.getElementById('stock').value = product.stock;
+              document.getElementById('variantDescription').value = product.description;
+              variantCharCount.textContent = product.description.length;
 
               // Show existing images
               const previews = document.querySelectorAll('.image-preview');
@@ -522,7 +650,12 @@
               productModal.classList.remove('hidden');
             } catch (error) {
               console.error('Error parsing product data:', error);
-              alert('Error loading product data');
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading product data',
+                confirmButtonColor: '#10B981'
+              });
             }
           });
         });
@@ -615,7 +748,7 @@
                     text: `Product ${newStatus}d successfully`,
                     icon: 'success',
                     confirmButtonColor: '#10B981',
-                    timer: 1500
+                    timer: 3000
                   });
                   window.location.reload();
                 } else {
@@ -765,97 +898,58 @@
             variantCharCount.textContent = this.value.length;
         });
 
-        // Update the edit handler
-        document.querySelectorAll('.edit-product').forEach(button => {
-            button.addEventListener('click', () => {
-                try {
-                    const product = JSON.parse(button.getAttribute('data-product'));
-                    
-                    // ... existing field assignments ...
-                    if (product.description) {
-                        document.getElementById('variantDescription').value = product.description;
-                        variantCharCount.textContent = product.description.length;
-                    }
-                    
-                    // ... rest of edit handler ...
-                } catch (error) {
-                    console.error('Error parsing product data:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Error loading product data'
-                    });
-                }
-            });
-        });
-
-        // Add validation before form submission
-        productForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const variantDesc = document.getElementById('variantDescription').value.trim();
-            
-            if (variantDesc.length < 10 || variantDesc.length > 25) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Variant Description',
-                    text: 'Variant description must be between 10 and 25 characters'
-                });
-                return false;
-            }
-
-            // If validation passes, proceed with form submission
-            submitForm(this);
-        });
-
+        // Form submission handler (update the existing one)
         async function submitForm(form) {
-            try {
-                const formData = new FormData(form);
-                const productId = document.getElementById('productId').value;
-                
-                // Show loading state
-                Swal.fire({
-                    title: 'Processing...',
-                    text: 'Please wait while we save the product',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+          try {
+            const formData = new FormData(form);
+            const productId = document.getElementById('productId').value;
+            
+            // Show loading state
+            Swal.fire({
+              title: 'Processing...',
+              text: 'Please wait while we save the product',
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+              }
+            });
 
-                const url = productId 
-                    ? `/admin/product/edit/${productId}`
-                    : '/admin/product/add';
+            const url = productId 
+              ? `/admin/product/edit/${productId}`
+              : '/admin/product/add';
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
+            const response = await fetch(url, {
+              method: 'POST',
+              body: formData
+            });
 
-                if (response.ok) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: productId ? 'Product updated successfully' : 'Product added successfully',
-                        timer: 1500
-                    });
-                    window.location.reload();
-                } else {
-                    const data = await response.json();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Error processing request'
-                    });
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'An error occurred while processing your request'
-                });
+            if (response.ok) {
+              await Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: productId ? 'Product updated successfully' : 'Product added successfully',
+                confirmButtonColor: '#10B981',
+                timer: 3000
+              });
+              window.location.reload();
+            } else {
+              const data = await response.json();
+              await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Error processing request',
+                confirmButtonColor: '#10B981'
+              });
             }
+          } catch (error) {
+            console.error('Error:', error);
+            await Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'An error occurred while processing your request',
+              confirmButtonColor: '#10B981'
+            });
+          }
         }
 
         // Replace form validation alerts
