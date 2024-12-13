@@ -351,84 +351,129 @@
           });
         });
 
-        // Handle Image Upload and Preview
+        // Update image upload and validation handlers
         document.querySelectorAll('.product-image').forEach(input => {
-          input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-              // Validate file size
-              const maxSize = input.getAttribute('data-max-size') * 1024;
-              if (file.size > maxSize) {
-                alert('Image size must be less than 5MB');
-                input.value = '';
-                return;
-              }
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
-              currentImageInput = input;
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                cropperImage.src = e.target.result;
-                cropperModal.classList.remove('hidden');
-                
-                if (cropper) {
-                  cropper.destroy();
+                // Update file type validation to include WebP
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+
+                // Validate file size
+                if (file.size > maxSize) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'File Too Large',
+                        text: 'Image size must be less than 5MB',
+                        confirmButtonColor: '#10B981'
+                    });
+                    input.value = '';
+                    return;
                 }
+
+                // Validate file type
+                if (!validTypes.includes(file.type)) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid File Type',
+                        text: 'Please upload only JPG, JPEG, PNG, or WebP images',
+                        confirmButtonColor: '#10B981'
+                    });
+                    input.value = '';
+                    return;
+                }
+
+                currentImageInput = input;
+                const reader = new FileReader();
                 
-                cropper = new Cropper(cropperImage, {
-                  aspectRatio: 1,
-                  viewMode: 2,
-                  crop: function(event) {
-                    // Optional: Add crop event handling if needed
-                  }
-                });
-              };
-              reader.readAsDataURL(file);
-            }
-          });
-        });
-
-        // Cancel Crop
-        cancelCrop.addEventListener('click', () => {
-          cropperModal.classList.add('hidden');
-          currentImageInput.value = '';
-          if (cropper) {
-            cropper.destroy();
-            cropper = null;
-          }
-        });
-
-        // Crop Image
-        cropImage.addEventListener('click', async () => {
-          if (!cropper) return;
-
-          const canvas = cropper.getCroppedCanvas({
-            width: 800,  
-            height: 800,
-          });
-
-          // Show preview
-          const preview = currentImageInput.closest('.image-upload-container').querySelector('.image-preview');
-          preview.innerHTML = `<img src="${canvas.toDataURL()}" class="w-full h-full object-cover rounded">`;
-
-          // Convert canvas to Blob
-          canvas.toBlob(async (blob) => {
-            // Create a new File object from the blob
-            const croppedFile = new File([blob], 'cropped-image.jpg', {
-              type: 'image/jpeg',
-              lastModified: new Date().getTime()
+                reader.onload = (e) => {
+                    cropperImage.src = e.target.result;
+                    cropperModal.classList.remove('hidden');
+                    
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+                    
+                    cropper = new Cropper(cropperImage, {
+                        aspectRatio: 1,
+                        viewMode: 2,
+                        autoCropArea: 1,
+                        responsive: true,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                };
+                reader.readAsDataURL(file);
             });
+        });
 
-            // Create a new FileList-like object
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(croppedFile);
-            
-            // Update the file input with the cropped image
-            currentImageInput.files = dataTransfer.files;
-          }, 'image/jpeg', 0.9);
+        // Update the cropImage handler to support WebP
+        cropImage.addEventListener('click', async () => {
+            if (!cropper) return;
 
-          cropperModal.classList.add('hidden');
-          cropper.destroy();
-          cropper = null;
+            try {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 800,
+                    height: 800,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                });
+
+                const preview = currentImageInput.closest('.image-upload-container').querySelector('.image-preview');
+                
+                // Convert to WebP if supported, fallback to JPEG
+                const format = 'image/webp';
+                const quality = 0.9;
+
+                // Try WebP first
+                let blob = await new Promise(resolve => canvas.toBlob(resolve, format, quality));
+                
+                // Fallback to JPEG if WebP fails
+                if (!blob) {
+                    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+                }
+
+                // Create appropriate filename with extension
+                const extension = blob.type === 'image/webp' ? 'webp' : 'jpg';
+                const fileName = `cropped-image.${extension}`;
+                
+                // Create a File object
+                const croppedFile = new File([blob], fileName, {
+                    type: blob.type,
+                    lastModified: new Date().getTime()
+                });
+
+                // Create a new FileList-like object
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(croppedFile);
+                
+                // Update the file input
+                currentImageInput.files = dataTransfer.files;
+
+                // Update preview
+                preview.innerHTML = `<img src="${canvas.toDataURL(blob.type, quality)}" class="w-full h-full object-cover rounded">`;
+
+                // Close cropper modal
+                cropperModal.classList.add('hidden');
+                cropper.destroy();
+                cropper = null;
+
+            } catch (error) {
+                console.error('Cropping error:', error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to crop image',
+                    confirmButtonColor: '#10B981'
+                });
+            }
         });
 
         // Handle Form Submission
@@ -535,25 +580,50 @@
               return false;
           }
 
-          // Validate image uploads
-          const imageInputs = document.querySelectorAll('input[type="file"]');
-          let imageCount = 0;
-          imageInputs.forEach(input => {
-              if (input.files && input.files[0]) {
-                  imageCount++;
-              }
-          });
-
-          // Only check for required images on new product creation
+          // Image validation for new products
           const isEditing = document.getElementById('productId').value !== '';
-          if (!isEditing && imageCount !== 3) {
+          if (!isEditing) {
+            const imageInputs = document.querySelectorAll('input[type="file"]');
+            let imageCount = 0;
+            
+            for (let input of imageInputs) {
+              if (input.files && input.files[0]) {
+                imageCount++;
+                
+                // Validate file size
+                if (input.files[0].size > 5 * 1024 * 1024) {
+                  await Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'All images must be less than 5MB',
+                    confirmButtonColor: '#10B981'
+                  });
+                  return false;
+                }
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!validTypes.includes(input.files[0].type)) {
+                  await Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid File Type',
+                    text: 'Please upload only JPG, JPEG, PNG, or WebP images',
+                    confirmButtonColor: '#10B981'
+                  });
+                  return false;
+                }
+              }
+            }
+
+            if (imageCount !== 3) {
               await Swal.fire({
-                  icon: 'error',
-                  title: 'Images Required',
-                  text: 'Please upload exactly 3 images',
-                  confirmButtonColor: '#10B981'
+                icon: 'error',
+                title: 'Images Required',
+                text: 'Please upload exactly 3 images',
+                confirmButtonColor: '#10B981'
               });
               return false;
+            }
           }
 
           // If all validation passes, show loading state and submit
@@ -614,7 +684,7 @@
 
         // Handle Product Edit
         document.querySelectorAll('.edit-product').forEach(button => {
-          button.addEventListener('click', () => {
+          button.addEventListener('click', async () => {
             try {
               const product = JSON.parse(button.getAttribute('data-product'));
               console.log('Editing product:', product); // Debug log
@@ -633,27 +703,44 @@
               document.getElementById('discountPrice').value = product.discountPrice;
               document.getElementById('stock').value = product.stock;
               document.getElementById('variantDescription').value = product.description;
-              variantCharCount.textContent = product.description.length;
+              
+              // Update character count for description
+              const variantCharCount = document.getElementById('variantCharCount');
+              if (variantCharCount) {
+                  variantCharCount.textContent = product.description.length;
+              }
 
               // Show existing images
               const previews = document.querySelectorAll('.image-preview');
-              product.imageUrl.forEach((url, index) => {
-                if (previews[index]) {
-                  previews[index].innerHTML = `<img src="${url}" class="w-full h-32 object-cover rounded">`;
-                  // Make image upload optional for editing
-                  const fileInput = previews[index].closest('.image-upload-container').querySelector('input[type="file"]');
-                  fileInput.removeAttribute('required');
-                }
+              const imageInputs = document.querySelectorAll('.product-image');
+              
+              // Reset image inputs and make them optional for editing
+              imageInputs.forEach(input => {
+                  input.removeAttribute('required');
               });
+
+              // Display existing images in previews
+              if (product.imageUrl && Array.isArray(product.imageUrl)) {
+                  product.imageUrl.forEach((url, index) => {
+                      if (previews[index]) {
+                          previews[index].innerHTML = `
+                              <img src="${url}" class="w-full h-full object-cover rounded">
+                              <p class="text-xs text-gray-500 mt-1">Current image ${index + 1}</p>
+                              <p class="text-xs text-gray-500">Click to change (optional)</p>
+                          `;
+                      }
+                  });
+              }
 
               // Show modal
               productModal.classList.remove('hidden');
+
             } catch (error) {
               console.error('Error parsing product data:', error);
-              Swal.fire({
+              await Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Error loading product data',
+                text: 'Error loading product data. Please try again.',
                 confirmButtonColor: '#10B981'
               });
             }
@@ -961,6 +1048,46 @@
             confirmButtonColor: '#10B981'
           });
         }
+
+        // Update the validateImageFile helper function
+        function validateImageFile(file) {
+            // Validate file size (5MB)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Image size must be less than 5MB',
+                    confirmButtonColor: '#10B981'
+                });
+                return false;
+            }
+
+            // Update valid types to include WebP
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid File Type',
+                    text: 'Please upload only JPG, JPEG, PNG, or WebP images',
+                    confirmButtonColor: '#10B981'
+                });
+                return false;
+            }
+
+            return true;
+        }
+
+        // Update the image preview text to include WebP
+        document.querySelectorAll('.image-preview').forEach((preview, index) => {
+            preview.innerHTML = `
+                <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                <p class="text-sm text-gray-400">Click to upload</p>
+                <p class="text-xs text-gray-500 mt-1">Required image ${index + 1}</p>
+                <p class="text-xs text-gray-500">Square format, max 5MB</p>
+                <p class="text-xs text-gray-500">JPG, JPEG, PNG, or WebP</p>
+            `;
+        });
       });
     </script>
   </body>
