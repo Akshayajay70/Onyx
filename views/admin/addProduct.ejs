@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+</head>
+<body class="mybg-green">
+    <%- include('../partials/sidebar') %>
+
+    <div class="p-4 sm:ml-64">
+        <div class="mt-14">
+            <div class="bg-zinc-800 p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold text-gray-200 mb-6">Add New Product</h2>
+
+                <form id="productForm" action="/admin/product/add" method="POST" enctype="multipart/form-data">
+                    <!-- Product Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Basic Info -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Product Name</label>
+                                <input type="text" name="productName" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Brand</label>
+                                <input type="text" name="brand" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Gender</label>
+                                <select name="gender" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="unisex">Unisex</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Category</label>
+                                <select name="categoriesId" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Color</label>
+                                <input type="text" name="color" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Description</label>
+                                <textarea name="description" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    maxlength="25"></textarea>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span id="charCount">0</span>/25 characters
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200">Price</label>
+                                    <input type="number" name="price" required min="0"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-200">Discount Price</label>
+                                    <input type="number" name="discountPrice" required min="0"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-200">Stock</label>
+                                <input type="number" name="stock" required min="0"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload Section -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-200 mb-4">Product Images (3 required)</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <% for(let i = 0; i < 3; i++) { %>
+                                <div class="image-upload-container">
+                                    <input type="file" name="images" accept="image/*" required class="hidden product-image">
+                                    <div class="image-preview cursor-pointer h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <div class="text-center">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                            <p class="text-sm text-gray-500 mt-2">Click to upload image <%= i + 1 %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <a href="/admin/product" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-gray-200 hover:bg-gray-50">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
+                            Add Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropperModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+        <div class="bg-white rounded-lg p-6 w-[90%] md:w-[600px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <h3 class="text-lg font-semibold mb-4">Crop Image</h3>
+            <div class="mb-4">
+                <div id="cropperContainer" class="max-h-[400px] overflow-hidden">
+                    <img id="cropperImage" src="" alt="Image to crop">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelCrop" class="px-4 py-2 border border-gray-300 rounded-md text-gray-200 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button id="cropImage" class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
+                    Crop & Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productForm = document.getElementById('productForm');
+            const cropperModal = document.getElementById('cropperModal');
+            const cropperImage = document.getElementById('cropperImage');
+            const charCount = document.getElementById('charCount');
+            let cropper = null;
+            let currentFileInput = null;
+            let currentPreview = null;
+
+            // Description character count
+            document.querySelector('textarea[name="description"]').addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+
+            // Handle image uploads
+            document.querySelectorAll('.image-upload-container').forEach(container => {
+                const preview = container.querySelector('.image-preview');
+                const input = container.querySelector('input[type="file"]');
+
+                preview.addEventListener('click', () => input.click());
+
+                input.addEventListener('change', function(e) {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        currentFileInput = this;
+                        currentPreview = preview;
+
+                        reader.onload = function(e) {
+                            // Initialize cropper
+                            cropperImage.src = e.target.result;
+                            cropperModal.classList.remove('hidden');
+                            
+                            if (cropper) {
+                                cropper.destroy();
+                            }
+                            
+                            cropper = new Cropper(cropperImage, {
+                                aspectRatio: 1,
+                                viewMode: 2,
+                                dragMode: 'move',
+                                autoCropArea: 1,
+                                restore: false,
+                                guides: true,
+                                center: true,
+                                highlight: false,
+                                cropBoxMovable: true,
+                                cropBoxResizable: true,
+                                toggleDragModeOnDblclick: false,
+                            });
+                        };
+
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            });
+
+            // Handle cropper modal actions
+            document.getElementById('cancelCrop').addEventListener('click', () => {
+                cropperModal.classList.add('hidden');
+                currentFileInput.value = '';
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+            });
+
+            document.getElementById('cropImage').addEventListener('click', () => {
+                if (cropper) {
+                    const canvas = cropper.getCroppedCanvas({
+                        width: 600,
+                        height: 600
+                    });
+
+                    // Update preview with cropped image
+                    currentPreview.innerHTML = `<img src="${canvas.toDataURL()}" class="w-full h-full object-cover rounded">`;
+
+                    // Convert canvas to blob and update file input
+                    canvas.toBlob(blob => {
+                        const file = new File([blob], 'cropped_image.jpg', { type: 'image/jpeg' });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        currentFileInput.files = dataTransfer.files;
+                    }, 'image/jpeg');
+
+                    // Close modal and cleanup
+                    cropperModal.classList.add('hidden');
+                    cropper.destroy();
+                    cropper = null;
+                }
+            });
+
+            // Form submission
+            productForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Validate description length
+                const description = this.querySelector('textarea[name="description"]').value;
+                if (description.length < 10 || description.length > 25) {
+                    alert('Description must be between 10 and 25 characters');
+                    return;
+                }
+
+                // Validate price and discount price
+                const price = parseFloat(this.querySelector('input[name="price"]').value);
+                const discountPrice = parseFloat(this.querySelector('input[name="discountPrice"]').value);
+                if (discountPrice >= price) {
+                    alert('Discount price must be less than regular price');
+                    return;
+                }
+
+                // Validate image uploads
+                const imageInputs = this.querySelectorAll('input[type="file"]');
+                let allImagesUploaded = true;
+                imageInputs.forEach(input => {
+                    if (!input.files || !input.files[0]) {
+                        allImagesUploaded = false;
+                    }
+                });
+
+                if (!allImagesUploaded) {
+                    alert('Please upload all three product images');
+                    return;
+                }
+
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch('/admin/product/add', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        alert('Product added successfully');
+                        window.location.href = '/admin/product';
+                    } else {
+                        alert(result.message || 'Error adding product');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error adding product');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
