@@ -98,14 +98,19 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <select 
                                                 onchange="updateOrderStatus('<%= order._id %>', this.value)"
-                                                class="rounded-md border-gray-300 shadow-sm focus:ring-black focus:border-black text-sm"
+                                                class="rounded-md border-gray-300 shadow-sm focus:ring-black focus:border-black text-sm
+                                                    <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'bg-gray-100 cursor-not-allowed' : '' %>"
+                                                <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'disabled' : '' %>
                                             >
-                                                <option value="" disabled selected>Update Status</option>
-                                                
-                                                <option value="processing">Process</option>
-                                                <option value="shipped">Ship</option>
-                                                <option value="delivered">Deliver</option>
-                                                <option value="cancelled">Cancel</option>
+                                                <option value="" disabled selected>
+                                                    <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'No Actions Available' : 'Update Status' %>
+                                                </option>
+                                                <% if (order.orderStatus !== 'cancelled' && order.orderStatus !== 'delivered') { %>
+                                                    <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Process</option>
+                                                    <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Ship</option>
+                                                    <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Deliver</option>
+                                                    <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancel</option>
+                                                <% } %>
                                             </select>
                                         </td>
                                     </tr>
@@ -210,36 +215,70 @@
         }
     });
         async function updateOrderStatus(orderId, status) {
-            try {
-                const response = await fetch(`/admin/orders/${orderId}/status`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status })
-                });
+            // First show confirmation dialog
+            const result = await Swal.fire({
+                title: 'Update Order Status?',
+                html: `Are you sure you want to change the order status to <b>${status.charAt(0).toUpperCase() + status.slice(1)}</b>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#000000',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, update it!',
+                cancelButtonText: 'No, cancel',
+                reverseButtons: true
+            });
 
-                const data = await response.json();
-
-                if (response.ok) {
+            // If user confirms, proceed with the update
+            if (result.isConfirmed) {
+                try {
+                    // Show loading state
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Status Updated',
-                        text: data.message,
-                        confirmButtonColor: '#000000'
-                    }).then(() => {
-                        window.location.reload();
+                        title: 'Updating Status',
+                        text: 'Please wait...',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        }
                     });
-                } else {
-                    throw new Error(data.message);
+
+                    const response = await fetch(`/admin/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Status Updated',
+                            text: data.message,
+                            confirmButtonColor: '#000000'
+                        });
+                        
+                        // Reload page to show updated status
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to update order status',
+                        confirmButtonColor: '#000000'
+                    });
+                    
+                    // Reset select to previous value
+                    window.location.reload();
                 }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to update order status',
-                    confirmButtonColor: '#000000'
-                });
+            } else {
+                // If user cancels, reset select to previous value
+                window.location.reload();
             }
         }
     </script>
