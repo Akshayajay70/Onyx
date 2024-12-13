@@ -1,4 +1,5 @@
 import orderSchema from '../model/orderModel.js';
+import productSchema from '../model/productModel.js';
 
 const userOrderController = {
     getOrders: async (req, res) => {
@@ -10,35 +11,16 @@ const userOrderController = {
                 })
                 .sort({ orderDate: -1 });
 
-            const formattedOrders = orders.map(order => {
-                return {
-                    _id: order._id,
-                    orderDate: order.orderDate,
-                    totalAmount: order.totalAmount,
-                    orderStatus: order.orderStatus,
-                    paymentStatus: order.paymentStatus,
-                    paymentMethod: order.paymentMethod,
-                    shippingAddress: {
-                        fullName: order.shippingAddress.fullName,
-                        addressLine1: order.shippingAddress.addressLine1,
-                        addressLine2: order.shippingAddress.addressLine2,
-                        city: order.shippingAddress.city,
-                        state: order.shippingAddress.state,
-                        pincode: order.shippingAddress.pincode,
-                        phone: order.shippingAddress.mobileNumber
-                    },
-                    items: order.items.map(item => ({
-                        product: {
-                            _id: item.product._id,
-                            productName: item.product.productName,
-                            imageUrl: item.product.imageUrl
-                        },
-                        quantity: item.quantity,
-                        price: item.price,
-                        subtotal: item.subtotal
-                    }))
-                };
-            });
+            const formattedOrders = orders.map(order => ({
+                _id: order._id,
+                orderDate: order.orderDate,
+                totalAmount: order.totalAmount,
+                orderStatus: order.orderStatus,
+                paymentStatus: order.paymentStatus,
+                paymentMethod: order.paymentMethod,
+                shippingAddress: order.shippingAddress,
+                items: order.items
+            }));
 
             res.render('user/viewOrder', {
                 orders: formattedOrders,
@@ -56,6 +38,8 @@ const userOrderController = {
     cancelOrder: async (req, res) => {
         try {
             const orderId = req.params.orderId;
+            
+            // Find the order
             const order = await orderSchema.findOne({ 
                 _id: orderId,
                 userId: req.session.user
@@ -68,7 +52,7 @@ const userOrderController = {
                 });
             }
 
-            // Only allow cancellation if order is pending or processing
+            // Check if order can be cancelled
             if (!['pending', 'processing'].includes(order.orderStatus)) {
                 return res.status(400).json({
                     success: false,
@@ -76,8 +60,31 @@ const userOrderController = {
                 });
             }
 
+            // Update stock for each product
+            try {
+                for (const item of order.items) {
+                    console.log('Updating stock for product:', item.product);
+                    
+                    const product = await productSchema.findById(item.product);
+                    if (product) {
+                        product.stock += item.quantity;
+                        await product.save();
+                        console.log('Stock updated successfully for product:', item.product);
+                    }
+                }
+            } catch (stockError) {
+                console.error('Error updating stock:', stockError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to update product stock'
+                });
+            }
+
+            // Update order status
             order.orderStatus = 'cancelled';
+            order.paymentStatus = 'cancelled';
             await order.save();
+
 
             res.status(200).json({
                 success: true,
@@ -89,6 +96,26 @@ const userOrderController = {
                 success: false,
                 message: 'Failed to cancel order'
             });
+        }
+    },
+
+    updateOrderStatus: async (orderId, newStatus) => {
+        try {
+            const order = await orderSchema.findById(orderId);
+            if (!order) {
+                throw new Error('Order not found');
+            }
+
+            order.orderStatus = newStatus;
+            if (newStatus === 'delivered') {
+                order.paymentStatus = 'completed';
+            }
+
+            await order.save();
+            return true;
+        } catch (error) {
+            console.error('Update order status error:', error);
+            return false;
         }
     }
 };

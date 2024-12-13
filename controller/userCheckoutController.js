@@ -1,6 +1,7 @@
 import cartSchema from '../model/cartModel.js';
 import orderSchema from '../model/orderModel.js';
 import addressSchema from '../model/addressModel.js';
+import productSchema from '../model/productModel.js';
 
 const userCheckoutController = {
     getCheckoutPage: async (req, res) => {
@@ -20,8 +21,17 @@ const userCheckoutController = {
                 .populate({
                     path: 'items.productId',
                     model: 'Product',
-                    select: 'productName imageUrl price'
+                    select: 'productName imageUrl price stock'
                 });
+
+            // Check stock availability
+            const stockCheck = populatedCart.items.every(item => 
+                item.productId.stock >= item.quantity
+            );
+
+            if (!stockCheck) {
+                return res.redirect('/cart?error=stock');
+            }
 
             // Format cart items for the template
             const cartItems = populatedCart.items.map(item => ({
@@ -58,20 +68,7 @@ const userCheckoutController = {
             const { addressId, paymentMethod } = req.body;
             const userId = req.session.user;
 
-            // Validate address
-            const selectedAddress = await addressSchema.findOne({
-                _id: addressId,
-                userId: userId
-            });
-
-            if (!selectedAddress) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid address selected' 
-                });
-            }
-
-            // Get cart items
+            // Get cart with populated product details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
 
@@ -82,6 +79,35 @@ const userCheckoutController = {
                 });
             }
 
+            // Check stock availability and update stock
+            for (const item of cart.items) {
+                const product = await productSchema.findById(item.productId);
+                
+                if (!product || product.stock < item.quantity) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `Insufficient stock for ${product ? product.productName : 'a product'}`
+                    });
+                }
+
+                // Update product stock
+                product.stock -= item.quantity;
+                await product.save();
+            }
+
+            // Get shipping address
+            const address = await addressSchema.findOne({
+                _id: addressId,
+                userId: userId
+            });
+
+            if (!address) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid address' 
+                });
+            }
+
             // Create order items array
             const orderItems = cart.items.map(item => ({
                 product: item.productId._id,
@@ -89,30 +115,27 @@ const userCheckoutController = {
                 price: item.price,
                 subtotal: item.quantity * item.price
             }));
-            
+
             // Calculate total
             const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-
-            // Format shipping address
-            const shippingAddress = {
-                fullName: selectedAddress.fullName,
-                mobileNumber: selectedAddress.mobileNumber,
-                addressLine1: selectedAddress.addressLine1,
-                addressLine2: selectedAddress.addressLine2,
-                city: selectedAddress.city,
-                state: selectedAddress.state,
-                pincode: selectedAddress.pincode
-            };
 
             // Create new order
             const newOrder = new orderSchema({
                 userId,
                 items: orderItems,
                 totalAmount: total,
-                shippingAddress: shippingAddress,
+                shippingAddress: {
+                    fullName: address.fullName,
+                    phone: address.mobileNumber,
+                    addressLine1: address.addressLine1,
+                    addressLine2: address.addressLine2,
+                    city: address.city,
+                    state: address.state,
+                    pincode: address.pincode
+                },
                 paymentMethod,
-                paymentStatus: 'completed',
-                orderStatus: 'pending',
+                paymentStatus: 'pending',
+                orderStatus: 'processing',
                 orderDate: new Date()
             });
 

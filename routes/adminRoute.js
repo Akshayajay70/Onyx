@@ -3,7 +3,7 @@ import adminController from '../controller/adminController.js';
 import adminMiddleware from '../middlewares/adminMiddleware.js';
 import adminCategoryController from '../controller/adminCategoryController.js';
 import adminProductController from '../controller/adminProductController.js';
-
+import adminOrderController from '../controller/adminOrderController.js';
 const router = express.Router();
 
 router.get('/login', adminMiddleware.isLogin, adminController.getAdmin);
@@ -44,6 +44,11 @@ router.post('/product/delete/:id', adminMiddleware.checkSession, adminProductCon
 
 router.post('/product/toggle-status/:id', adminMiddleware.checkSession, adminProductController.toggleProductStatus);
 
+//Order Routes
+
+router.get('/orders', adminMiddleware.checkSession, adminOrderController.getOrders);
+
+router.post('/orders/:orderId/status', adminMiddleware.checkSession, adminOrderController.updateOrderStatus);
 
 
 
