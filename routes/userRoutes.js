@@ -69,6 +69,7 @@ route.get('/forgot-password', userMiddlewares.isLogin, userController.getForgotP
 route.post('/forgot-password/send-otp', userController.sendForgotPasswordOTP);
 
 route.post('/forgot-password/verify-otp', userController.verifyForgotPasswordOTP);
+
 route.post('/forgot-password/reset-password', userController.resetPassword);
 
 export default route;
