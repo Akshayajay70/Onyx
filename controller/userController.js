@@ -321,4 +321,101 @@ const getShop = async (req, res) => {
     }
 };
 
-export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop }
+const getForgotPassword = (req, res) => {
+    res.render('user/forgotPassword');
+};
+
+const sendForgotPasswordOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        // Find user
+        const user = await userSchema.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.password) {
+            return res.status(400).json({ 
+                message: 'This email is linked to Google login. Please login with Google.' 
+            });
+        }
+
+        // Generate and save OTP
+        const otp = generateOTP();
+        user.otp = otp;
+        user.otpExpiresAt = Date.now() + 120000; // 2 minutes
+        user.otpAttempts = 0;
+        await user.save();
+
+        // Send OTP email
+        await sendOTPEmail(email, otp);
+        
+        res.status(200).json({ message: 'OTP sent successfully' });
+    } catch (error) {
+        console.error('Send OTP error:', error);
+        res.status(500).json({ message: 'Failed to send OTP' });
+    }
+};
+
+const verifyForgotPasswordOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        const user = await userSchema.findOne({ 
+            email,
+            otp,
+            otpExpiresAt: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        // Increment attempts
+        user.otpAttempts += 1;
+        if (user.otpAttempts >= 3) {
+            await userSchema.findByIdAndUpdate(user._id, {
+                $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
+            });
+            return res.status(400).json({ message: 'Too many attempts. Please try again.' });
+        }
+        await user.save();
+
+        if (user.otp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        res.status(200).json({ message: 'OTP verified successfully' });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({ message: 'Failed to verify OTP' });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+        
+        const user = await userSchema.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+        
+        // Update password and remove OTP fields
+        await userSchema.findByIdAndUpdate(user._id, {
+            $set: { password: hashedPassword },
+            $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
+        });
+
+        res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Failed to reset password' });
+    }
+};
+
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop, getForgotPassword, sendForgotPasswordOTP, verifyForgotPasswordOTP, resetPassword }

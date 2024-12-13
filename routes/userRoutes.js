@@ -64,6 +64,12 @@ route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders
 
 route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
 
+route.get('/forgot-password', userMiddlewares.isLogin, userController.getForgotPassword);
+
+route.post('/forgot-password/send-otp', userController.sendForgotPasswordOTP);
+
+route.post('/forgot-password/verify-otp', userController.verifyForgotPasswordOTP);
+route.post('/forgot-password/reset-password', userController.resetPassword);
 
 export default route;
 
