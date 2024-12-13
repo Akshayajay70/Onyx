@@ -32,11 +32,16 @@ router.get('/category/toggle', adminMiddleware.checkSession, adminCategoryContro
 
 // Product Routes
 
-router.get('/product', adminMiddleware.checkSession, adminProductController.getProducts);
-router.get('/product/add', adminMiddleware.checkSession, adminProductController.getAddProduct);
+router.get('/product', adminMiddleware.checkSession, adminProductController.renderProductPage);
+
 router.post('/product/add', adminMiddleware.checkSession, adminProductController.addProduct);
-router.get('/product/edit/:id', adminMiddleware.checkSession, adminProductController.getEditProduct);
+
+router.get('/product/:id', adminMiddleware.checkSession, adminProductController.getProductDetails);
+
 router.post('/product/edit/:id', adminMiddleware.checkSession, adminProductController.updateProduct);
+
+router.post('/product/delete/:id', adminMiddleware.checkSession, adminProductController.deleteProduct);
+
 router.post('/product/toggle-status/:id', adminMiddleware.checkSession, adminProductController.toggleProductStatus);
 
 //Order Routes

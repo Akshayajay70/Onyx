@@ -243,47 +243,5 @@ const toggleProductStatus = async (req, res) => {
     }
 };
 
-// Get all products page
-const getProducts = async (req, res) => {
-    try {
-        const products = await Product.find()
-            .populate('categoriesId')
-            .sort({ createdAt: -1 });
 
-        res.render('admin/product', { products });
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-// Get add product page
-const getAddProduct = async (req, res) => {
-    try {
-        const categories = await Category.find({ isActive: true });
-        res.render('admin/addProduct', { categories });
-    } catch (error) {
-        console.error('Error loading add product page:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-// Get edit product page
-const getEditProduct = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id)
-            .populate('categoriesId');
-        const categories = await Category.find({ isActive: true });
-        
-        if (!product) {
-            return res.redirect('/admin/product');
-        }
-
-        res.render('admin/editProduct', { product, categories });
-    } catch (error) {
-        console.error('Error loading edit product page:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-export default { renderProductPage, addProduct, getProductDetails, updateProduct, deleteProduct, toggleProductStatus, getProducts, getAddProduct, getEditProduct }
+export default { renderProductPage, addProduct, getProductDetails, updateProduct, deleteProduct, toggleProductStatus }
