@@ -798,13 +798,7 @@
             errorMessage.classList.remove('hidden');
             return;
           }
-
-          if (file.size > maxSize) {
-            errorMessage.textContent = 'Image size must be less than 5MB';
-            errorMessage.classList.remove('hidden');
-            input.value = '';
-            return;
-          }
+          
 
           const img = new Image();
           const reader = new FileReader();
