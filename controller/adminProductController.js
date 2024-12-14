@@ -35,6 +35,23 @@ const addProduct = async (req, res) => {
         }
 
         try {
+            // Check if files were uploaded
+            if (!req.files || req.files.length !== 3) {
+                return res.status(400).json({ message: 'Please upload exactly 3 images' });
+            }
+
+            // Validate file types and sizes
+            for (const file of req.files) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    return res.status(400).json({ message: 'Each image must be less than 5MB' });
+                }
+
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!validTypes.includes(file.mimetype)) {
+                    return res.status(400).json({ message: 'Invalid file type. Only JPG, JPEG, PNG, and WebP are allowed' });
+                }
+            }
+
             const {
                 productName,
                 brand,
