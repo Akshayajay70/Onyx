@@ -105,9 +105,10 @@
                   </span>
                 </td>
                 <td class="py-3 px-4 space-x-3 flex">
-                  <button class="text-blue-500 hover:text-blue-300 transition edit-product" 
-                          data-product='<%- JSON.stringify(product) %>'>
-                    <i class="fas fa-edit"></i>
+                  <button class="edit-product"
+                          data-id="<%= product._id %>"
+                          type="button">
+                    Edit
                   </button>
                   <button class="text-red-500 hover:text-red-300 transition delete-product" 
                           data-id="<%= product._id %>">
@@ -366,16 +367,7 @@
             const maxSize = 5 * 1024 * 1024; // 5MB in bytes
 
             // Validate file size
-            if (file.size > maxSize) {
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'File Too Large',
-                    text: 'Image size must be less than 5MB',
-                    confirmButtonColor: '#10B981'
-                });
-                input.value = '';
-                return;
-            }
+            
 
             // Validate file type
             if (!validTypes.includes(file.type)) {
@@ -490,71 +482,100 @@
           }
         });
 
-        // Update form submission handler
+        // Form submission handler for edit
         document.getElementById('productForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             try {
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we process your request',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 const formData = new FormData(this);
                 const productId = document.getElementById('productId').value;
                 
-                // For edit mode, handle image updates correctly
+                // Validate required fields
+                const requiredFields = ['productName', 'brand', 'gender', 'categoriesId', 'color', 'description', 'price', 'discountPrice', 'stock'];
+                for (const field of requiredFields) {
+                    const value = formData.get(field);
+                    if (!value || value.trim() === '') {
+                        throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')} is required`);
+                    }
+                }
+
+                let url, processedFormData;
+                
                 if (productId) {
-                    const newFormData = new FormData();
-                    const updatedImageIndexes = [];
+                    // Edit mode
+                    url = `/admin/product/edit/${productId}`;
+                    processedFormData = new FormData();
                     
                     // Add all non-file fields
                     for (let [key, value] of formData.entries()) {
                         if (key !== 'images') {
-                            newFormData.append(key, value);
+                            processedFormData.append(key, value);
                         }
                     }
                     
                     // Handle image files
+                    const updatedImageIndexes = [];
                     const imageInputs = document.querySelectorAll('.product-image');
+                    
                     imageInputs.forEach((input, index) => {
                         if (input.files && input.files[0]) {
-                            newFormData.append('images', input.files[0]);
+                            processedFormData.append('images', input.files[0]);
                             updatedImageIndexes.push(index);
                         }
                     });
                     
-                    // Add the indexes of updated images
                     if (updatedImageIndexes.length > 0) {
-                        newFormData.append('imageIndexes', updatedImageIndexes.join(','));
-                    }
-                    
-                    // Show loading state
-                    Swal.fire({
-                        title: 'Processing...',
-                        text: 'Please wait while we update the product',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    const response = await fetch(`/admin/product/edit/${productId}`, {
-                        method: 'POST',
-                        body: newFormData
-                    });
-
-                    if (response.ok) {
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Product updated successfully',
-                            confirmButtonColor: '#10B981'
-                        });
-                        window.location.reload();
-                    } else {
-                        const data = await response.json();
-                        throw new Error(data.message || 'Error updating product');
+                        processedFormData.append('imageIndexes', updatedImageIndexes.join(','));
                     }
                 } else {
-                    // Handle new product submission (existing code)
-                    // ... your existing new product submission code ...
+                    // New product mode
+                    url = '/admin/product/add';
+                    processedFormData = formData;
+                    
+                    // Validate all images are present for new product
+                    const imageInputs = document.querySelectorAll('.product-image');
+                    let hasAllImages = true;
+                    
+                    imageInputs.forEach(input => {
+                        if (!input.files || !input.files[0]) {
+                            hasAllImages = false;
+                        }
+                    });
+                    
+                    if (!hasAllImages) {
+                        throw new Error('Please upload all 3 required images');
+                    }
                 }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: processedFormData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#10B981'
+                    });
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Error processing request');
+                }
+
             } catch (error) {
                 console.error('Error:', error);
                 await Swal.fire({
@@ -573,69 +594,82 @@
 
         // Handle Product Edit
         document.querySelectorAll('.edit-product').forEach(button => {
-          button.addEventListener('click', async () => {
-            try {
-              const product = JSON.parse(button.getAttribute('data-product'));
-              console.log('Editing product:', product); // Debug log
+            button.addEventListener('click', async () => {
+                try {
+                    // Get product ID from data attribute
+                    const productId = button.getAttribute('data-id');
+                    
+                    // Fetch product data from server
+                    const response = await fetch(`/admin/product/${productId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch product data');
+                    }
+                    
+                    const product = await response.json();
+                    console.log('Fetched product data:', product); // Debug log
 
-              // Update modal title
-              modalTitle.textContent = 'Edit Product';
-              
-              // Fill form fields
-              document.getElementById('productId').value = product._id;
-              document.getElementById('productName').value = product.productName;
-              document.getElementById('brand').value = product.brand;
-              document.getElementById('gender').value = product.gender;
-              document.getElementById('categoriesId').value = product.categoriesId._id;
-              document.getElementById('color').value = product.color;
-              document.getElementById('price').value = product.price;
-              document.getElementById('discountPrice').value = product.discountPrice;
-              document.getElementById('stock').value = product.stock;
-              document.getElementById('variantDescription').value = product.description;
-              
-              // Update character count for description
-              const variantCharCount = document.getElementById('variantCharCount');
-              if (variantCharCount) {
-                  variantCharCount.textContent = product.description.length;
-              }
+                    // Update modal title
+                    modalTitle.textContent = 'Edit Product';
+                    
+                    // Fill form fields
+                    document.getElementById('productId').value = product._id;
+                    document.getElementById('productName').value = product.productName || '';
+                    document.getElementById('brand').value = product.brand || '';
+                    document.getElementById('gender').value = product.gender || '';
+                    document.getElementById('categoriesId').value = product.categoriesId._id || '';
+                    document.getElementById('color').value = product.color || '';
+                    document.getElementById('price').value = product.price || '';
+                    document.getElementById('discountPrice').value = product.discountPrice || '';
+                    document.getElementById('stock').value = product.stock || '';
+                    document.getElementById('variantDescription').value = product.description || '';
+                    
+                    // Update character count for description
+                    const variantCharCount = document.getElementById('variantCharCount');
+                    if (variantCharCount) {
+                        variantCharCount.textContent = (product.description || '').length;
+                    }
 
-              // Show existing images
-              const previews = document.querySelectorAll('.image-preview');
-              const imageInputs = document.querySelectorAll('.product-image');
-              
-              // Reset image inputs and make them optional for editing
-              imageInputs.forEach(input => {
-                  input.removeAttribute('required');
-              });
+                    // Show existing images
+                    const previews = document.querySelectorAll('.image-preview');
+                    const imageInputs = document.querySelectorAll('.product-image');
+                    
+                    // Reset image inputs and make them optional for editing
+                    imageInputs.forEach(input => {
+                        input.removeAttribute('required');
+                        input.value = ''; // Clear any previous file selections
+                    });
 
-              // Display existing images in previews
-              if (product.imageUrl && Array.isArray(product.imageUrl)) {
-                  product.imageUrl.forEach((url, index) => {
-                      if (previews[index]) {
-                          previews[index].innerHTML = `
-                              <img src="${url}" class="w-full h-full object-cover rounded">
-                              <div class="mt-2">
-                                  <p class="text-xs text-gray-500">Current image ${index + 1}</p>
-                                  <p class="text-xs text-gray-500">Click to change (optional)</p>
-                              </div>
-                          `;
-                      }
-                  });
-              }
+                    // Display existing images in previews
+                    if (product.imageUrl && Array.isArray(product.imageUrl)) {
+                        product.imageUrl.forEach((url, index) => {
+                            if (previews[index]) {
+                                const previewContent = previews[index].querySelector('.preview-content');
+                                if (previewContent && url) {
+                                    previewContent.innerHTML = `
+                                        <img src="${url}" class="w-full h-full object-cover rounded">
+                                        <div class="mt-2">
+                                            <p class="text-xs text-gray-500">Current image ${index + 1}</p>
+                                            <p class="text-xs text-gray-500">Click to change (optional)</p>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        });
+                    }
 
-              // Show modal
-              productModal.classList.remove('hidden');
+                    // Show modal
+                    productModal.classList.remove('hidden');
 
-            } catch (error) {
-              console.error('Error parsing product data:', error);
-              await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error loading product data. Please try again.',
-                confirmButtonColor: '#10B981'
-              });
-            }
-          });
+                } catch (error) {
+                    console.error('Error loading product data:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error loading product data. Please try again.',
+                        confirmButtonColor: '#10B981'
+                    });
+                }
+            });
         });
 
         // Delete Product Handler
@@ -942,17 +976,7 @@
 
         // Add helper function for image validation
         function validateImageFile(file) {
-          // Validate file size (5MB)
-          const maxSize = 5 * 1024 * 1024;
-          if (file.size > maxSize) {
-            Swal.fire({
-              icon: 'error',
-              title: 'File Too Large',
-              text: 'Image size must be less than 5MB',
-              confirmButtonColor: '#10B981'
-            });
-            return false;
-          }
+          // Validate file size (5MB) 
 
           // Update valid types to include WebP
           const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
@@ -1099,6 +1123,16 @@
             });
           });
         });
+
+        // Add this helper function to safely parse JSON
+        function safeJSONParse(str) {
+            try {
+                return JSON.parse(str);
+            } catch (e) {
+                console.error('JSON Parse Error:', e);
+                return null;
+            }
+        }
       });
     </script>
   </body>
