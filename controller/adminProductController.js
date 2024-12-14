@@ -131,7 +131,7 @@ const updateProduct = async (req, res) => {
         }
 
         try {
-            const productId = req.params.id; // Get ID from params instead of body
+            const productId = req.params.id;
             const existingProduct = await Product.findById(productId);
             
             if (!existingProduct) {
@@ -155,18 +155,22 @@ const updateProduct = async (req, res) => {
                 return res.status(400).json({ message: 'Missing required fields' });
             }
 
-            // Handle image updates only if new images are uploaded
-            if (req.files && req.files.length > 0) {
-                // Delete old images
-                existingProduct.imageUrl.forEach(imagePath => {
-                    const fullPath = path.join(process.cwd(), 'public', imagePath);
-                    if (fs.existsSync(fullPath)) {
-                        fs.unlinkSync(fullPath);
-                    }
-                });
+            // Handle image updates
+            let updatedImageUrls = [...existingProduct.imageUrl]; // Copy existing image URLs
 
-                // Update with new image URLs
-                existingProduct.imageUrl = req.files.map(file => `/uploads/products/${file.filename}`);
+            // If new images are uploaded, process them
+            if (req.files && req.files.length > 0) {
+                req.files.forEach((file, index) => {
+                    // If there's an existing image at this index, delete it
+                    if (updatedImageUrls[index]) {
+                        const oldImagePath = path.join(process.cwd(), 'public', updatedImageUrls[index]);
+                        if (fs.existsSync(oldImagePath)) {
+                            fs.unlinkSync(oldImagePath);
+                        }
+                    }
+                    // Update the URL at this index
+                    updatedImageUrls[index] = `/uploads/products/${file.filename}`;
+                });
             }
 
             // Update other fields
@@ -180,6 +184,7 @@ const updateProduct = async (req, res) => {
             existingProduct.discountPrice = parseFloat(discountPrice);
             existingProduct.discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
             existingProduct.stock = parseInt(stock);
+            existingProduct.imageUrl = updatedImageUrls; // Update with new image URLs
 
             await existingProduct.save();
             res.status(200).json({ message: 'Product updated successfully' });

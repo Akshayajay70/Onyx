@@ -739,8 +739,10 @@
                       if (previews[index]) {
                           previews[index].innerHTML = `
                               <img src="${url}" class="w-full h-full object-cover rounded">
-                              <p class="text-xs text-gray-500 mt-1">Current image ${index + 1}</p>
-                              <p class="text-xs text-gray-500">Click to change (optional)</p>
+                              <div class="mt-2">
+                                  <p class="text-xs text-gray-500">Current image ${index + 1}</p>
+                                  <p class="text-xs text-gray-500">Click to change (optional)</p>
+                              </div>
                           `;
                       }
                   });
@@ -1160,8 +1162,10 @@
                   if (previews[index]) {
                     previews[index].innerHTML = `
                       <img src="${url}" class="w-full h-full object-cover rounded">
-                      <p class="text-xs text-gray-500 mt-2">Current image ${index + 1}</p>
-                      <p class="text-xs text-gray-500">Click to change (optional)</p>
+                      <div class="mt-2">
+                        <p class="text-xs text-gray-500">Current image ${index + 1}</p>
+                        <p class="text-xs text-gray-500">Click to change (optional)</p>
+                      </div>
                     `;
                   }
                 });
