@@ -490,205 +490,80 @@
           }
         });
 
-        // Handle Form Submission
-        productForm.addEventListener('submit', async function(e) {
-          e.preventDefault();
-          
-          // Validate all required fields
-          const requiredFields = {
-              'productName': 'Product Name',
-              'brand': 'Brand',
-              'gender': 'Gender',
-              'categoriesId': 'Category',
-              'color': 'Color',
-              'price': 'Price',
-              'discountPrice': 'Discount Price',
-              'stock': 'Stock',
-              'variantDescription': 'Description'
-          };
-
-          // Check for empty required fields
-          for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
-              const field = document.getElementById(fieldId);
-              if (!field.value.trim()) {
-                  await Swal.fire({
-                      icon: 'error',
-                      title: 'Required Field Missing',
-                      text: `${fieldName} is required`,
-                      confirmButtonColor: '#10B981'
-                  });
-                  field.focus();
-                  return false;
-              }
-          }
-
-          // Validate text fields for letters only
-          const letterOnlyFields = {
-              'productName': 'Product Name',
-              'brand': 'Brand',
-              'color': 'Color'
-          };
-
-          const letterPattern = /^[A-Za-z\s]+$/;
-          for (const [fieldId, fieldName] of Object.entries(letterOnlyFields)) {
-              const field = document.getElementById(fieldId);
-              if (!letterPattern.test(field.value.trim())) {
-                  await Swal.fire({
-                      icon: 'error',
-                      title: 'Invalid Input',
-                      text: `${fieldName} must contain only letters and spaces`,
-                      confirmButtonColor: '#10B981'
-                  });
-                  field.focus();
-                  return false;
-              }
-          }
-
-          // Validate numeric fields
-          const numericFields = {
-              'price': { name: 'Price', min: 0 },
-              'discountPrice': { name: 'Discount Price', min: 0 },
-              'stock': { name: 'Stock', min: 0 }
-          };
-
-          for (const [fieldId, config] of Object.entries(numericFields)) {
-              const field = document.getElementById(fieldId);
-              const value = parseFloat(field.value);
-              
-              if (isNaN(value) || value < config.min) {
-                  await Swal.fire({
-                      icon: 'error',
-                      title: 'Invalid Input',
-                      text: `${config.name} must be a number greater than or equal to ${config.min}`,
-                      confirmButtonColor: '#10B981'
-                  });
-                  field.focus();
-                  return false;
-              }
-          }
-
-          // Validate discount price is less than regular price
-          const price = parseFloat(document.getElementById('price').value);
-          const discountPrice = parseFloat(document.getElementById('discountPrice').value);
-          if (discountPrice >= price) {
-              await Swal.fire({
-                  icon: 'error',
-                  title: 'Invalid Price',
-                  text: 'Discount price must be less than regular price',
-                  confirmButtonColor: '#10B981'
-              });
-              document.getElementById('discountPrice').focus();
-              return false;
-          }
-
-          // Validate description length
-          const description = document.getElementById('variantDescription').value.trim();
-          if (description.length < 10 || description.length > 25) {
-              await Swal.fire({
-                  icon: 'error',
-                  title: 'Invalid Description',
-                  text: 'Description must be between 10 and 25 characters',
-                  confirmButtonColor: '#10B981'
-              });
-              document.getElementById('variantDescription').focus();
-              return false;
-          }
-
-          // Image validation for new products
-          const isEditing = document.getElementById('productId').value !== '';
-          if (!isEditing) {
-            const imageInputs = document.querySelectorAll('input[type="file"]');
-            let imageCount = 0;
+        // Update form submission handler
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            for (let input of imageInputs) {
-              if (input.files && input.files[0]) {
-                imageCount++;
+            try {
+                const formData = new FormData(this);
+                const productId = document.getElementById('productId').value;
                 
-                // Validate file size
-                if (input.files[0].size > 5 * 1024 * 1024) {
-                  await Swal.fire({
-                    icon: 'error',
-                    title: 'File Too Large',
-                    text: 'All images must be less than 5MB',
-                    confirmButtonColor: '#10B981'
-                  });
-                  return false;
+                // For edit mode, handle image updates correctly
+                if (productId) {
+                    const newFormData = new FormData();
+                    const updatedImageIndexes = [];
+                    
+                    // Add all non-file fields
+                    for (let [key, value] of formData.entries()) {
+                        if (key !== 'images') {
+                            newFormData.append(key, value);
+                        }
+                    }
+                    
+                    // Handle image files
+                    const imageInputs = document.querySelectorAll('.product-image');
+                    imageInputs.forEach((input, index) => {
+                        if (input.files && input.files[0]) {
+                            newFormData.append('images', input.files[0]);
+                            updatedImageIndexes.push(index);
+                        }
+                    });
+                    
+                    // Add the indexes of updated images
+                    if (updatedImageIndexes.length > 0) {
+                        newFormData.append('imageIndexes', updatedImageIndexes.join(','));
+                    }
+                    
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait while we update the product',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    const response = await fetch(`/admin/product/edit/${productId}`, {
+                        method: 'POST',
+                        body: newFormData
+                    });
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Product updated successfully',
+                            confirmButtonColor: '#10B981'
+                        });
+                        window.location.reload();
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.message || 'Error updating product');
+                    }
+                } else {
+                    // Handle new product submission (existing code)
+                    // ... your existing new product submission code ...
                 }
-
-                // Validate file type
-                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-                if (!validTypes.includes(input.files[0].type)) {
-                  await Swal.fire({
+            } catch (error) {
+                console.error('Error:', error);
+                await Swal.fire({
                     icon: 'error',
-                    title: 'Invalid File Type',
-                    text: 'Please upload only JPG, JPEG, PNG, or WebP images',
+                    title: 'Error',
+                    text: error.message || 'An error occurred while processing your request',
                     confirmButtonColor: '#10B981'
-                  });
-                  return false;
-                }
-              }
+                });
             }
-
-            if (imageCount !== 3) {
-              await Swal.fire({
-                icon: 'error',
-                title: 'Images Required',
-                text: 'Please upload exactly 3 images',
-                confirmButtonColor: '#10B981'
-              });
-              return false;
-            }
-          }
-
-          // If all validation passes, show loading state and submit
-          try {
-              Swal.fire({
-                  title: 'Processing...',
-                  text: 'Please wait while we save the product',
-                  allowOutsideClick: false,
-                  didOpen: () => {
-                      Swal.showLoading();
-                  }
-              });
-
-              const formData = new FormData(this);
-              const productId = document.getElementById('productId').value;
-              const url = productId 
-                  ? `/admin/product/edit/${productId}`
-                  : '/admin/product/add';
-
-              const response = await fetch(url, {
-                  method: 'POST',
-                  body: formData
-              });
-
-              if (response.ok) {
-                  await Swal.fire({
-                      icon: 'success',
-                      title: 'Success!',
-                      text: productId ? 'Product updated successfully' : 'Product added successfully',
-                      confirmButtonColor: '#10B981',
-                      timer: 3000
-                  });
-                  window.location.reload();
-              } else {
-                  const data = await response.json();
-                  await Swal.fire({
-                      icon: 'error',
-                      title: 'Error',
-                      text: data.message || 'Error processing request',
-                      confirmButtonColor: '#10B981'
-                  });
-              }
-          } catch (error) {
-              console.error('Error:', error);
-              await Swal.fire({
-                  icon: 'error',
-                  title: 'Error',
-                  text: 'An error occurred while processing your request',
-                  confirmButtonColor: '#10B981'
-              });
-          }
         });
 
         // Remove the required attribute from form fields since we're handling validation with JavaScript

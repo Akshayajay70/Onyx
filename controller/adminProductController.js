@@ -148,7 +148,8 @@ const updateProduct = async (req, res) => {
                 description,
                 price,
                 discountPrice,
-                stock
+                stock,
+                imageIndexes // New field to track which images are being updated
             } = req.body;
 
             if (!productName || !brand || !categoriesId || !price || !discountPrice) {
@@ -156,24 +157,29 @@ const updateProduct = async (req, res) => {
             }
 
             // Handle image updates
-            let updatedImageUrls = [...existingProduct.imageUrl]; // Copy existing image URLs
-
-            // If new images are uploaded, process them
+            let updatedImageUrls = [...existingProduct.imageUrl];
+            
+            // Process new images if any
             if (req.files && req.files.length > 0) {
-                req.files.forEach((file, index) => {
-                    // If there's an existing image at this index, delete it
-                    if (updatedImageUrls[index]) {
-                        const oldImagePath = path.join(process.cwd(), 'public', updatedImageUrls[index]);
-                        if (fs.existsSync(oldImagePath)) {
-                            fs.unlinkSync(oldImagePath);
+                const indexes = imageIndexes ? imageIndexes.split(',').map(Number) : [];
+                
+                req.files.forEach((file, i) => {
+                    const updateIndex = indexes[i];
+                    if (updateIndex >= 0 && updateIndex < 3) {
+                        // Delete old image if it exists
+                        if (updatedImageUrls[updateIndex]) {
+                            const oldImagePath = path.join(process.cwd(), 'public', updatedImageUrls[updateIndex]);
+                            if (fs.existsSync(oldImagePath)) {
+                                fs.unlinkSync(oldImagePath);
+                            }
                         }
+                        // Update with new image
+                        updatedImageUrls[updateIndex] = `/uploads/products/${file.filename}`;
                     }
-                    // Update the URL at this index
-                    updatedImageUrls[index] = `/uploads/products/${file.filename}`;
                 });
             }
 
-            // Update other fields
+            // Update product fields
             existingProduct.productName = productName;
             existingProduct.categoriesId = categoriesId;
             existingProduct.brand = brand;
@@ -184,7 +190,7 @@ const updateProduct = async (req, res) => {
             existingProduct.discountPrice = parseFloat(discountPrice);
             existingProduct.discountPercentage = ((price - discountPrice) / price * 100).toFixed(2);
             existingProduct.stock = parseInt(stock);
-            existingProduct.imageUrl = updatedImageUrls; // Update with new image URLs
+            existingProduct.imageUrl = updatedImageUrls;
 
             await existingProduct.save();
             res.status(200).json({ message: 'Product updated successfully' });
