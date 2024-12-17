@@ -4,6 +4,7 @@ import adminMiddleware from '../middlewares/adminMiddleware.js';
 import adminCategoryController from '../controller/adminCategoryController.js';
 import adminProductController from '../controller/adminProductController.js';
 import adminOrderController from '../controller/adminOrderController.js';
+import adminCouponController from '../controller/adminCouponController.js';
 const router = express.Router();
 
 router.get('/login', adminMiddleware.isLogin, adminController.getAdmin);
@@ -50,6 +51,17 @@ router.get('/orders', adminMiddleware.checkSession, adminOrderController.getOrde
 
 router.post('/orders/:orderId/status', adminMiddleware.checkSession, adminOrderController.updateOrderStatus);
 
+// Coupon Routes
+router.get('/coupon', adminMiddleware.checkSession, adminCouponController.getCoupons);
 
+router.post('/coupons/add', adminMiddleware.checkSession, adminCouponController.addCoupon);
+
+router.get('/coupons/:id', adminMiddleware.checkSession, adminCouponController.getCouponDetails);
+
+router.post('/coupons/edit/:id', adminMiddleware.checkSession, adminCouponController.updateCoupon);
+
+router.post('/coupons/delete/:id', adminMiddleware.checkSession, adminCouponController.deleteCoupon);
+
+router.post('/coupons/toggle-status/:id', adminMiddleware.checkSession, adminCouponController.toggleCouponStatus);
 
 export default router;
