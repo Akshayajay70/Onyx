@@ -124,22 +124,12 @@
             <!-- Coupon Section with Toggle -->
             <div class="mb-6">
               <button 
-                onclick="toggleCoupon()"
-                class="flex items-center justify-between w-full text-gray-600 hover:text-gray-800 transition-colors"
+                onclick="openCouponModal()"
+                class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2"
               >
-                <span>Have a coupon?</span>
-                <i class="fas fa-chevron-down transition-transform duration-300" id="couponIcon"></i>
+                <i class="fas fa-ticket-alt"></i>
+                Apply Coupon
               </button>
-              <div id="couponSection" class="hidden mt-4 space-y-2">
-                <input
-                  type="text"
-                  placeholder="Enter coupon code"
-                  class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black/20 text-sm"
-                />
-                <button class="w-full bg-gray-100 text-gray-800 p-2 rounded-lg hover:bg-gray-200 transition-colors text-sm">
-                  Apply Coupon
-                </button>
-              </div>
             </div>
 
             <!-- Total -->
@@ -176,17 +166,51 @@
     <!-- Footer -->
     <%- include('../partials/footer') %>
 
-    <script>
-      function toggleCoupon() {
-        const couponSection = document.getElementById('couponSection');
-        const couponIcon = document.getElementById('couponIcon');
-        
-        couponSection.classList.toggle('hidden');
-        couponIcon.style.transform = couponSection.classList.contains('hidden') 
-          ? 'rotate(0deg)' 
-          : 'rotate(180deg)';
-      }
+    <!-- Add the coupon modal -->
+    <div id="couponModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center p-6 border-b">
+            <h3 class="text-xl font-semibold text-gray-800">Apply Coupon</h3>
+            <button onclick="closeCouponModal()" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
+          <!-- Modal Body -->
+          <div class="p-6">
+            <!-- Coupon Input -->
+            <div class="mb-6">
+              <div class="flex gap-2">
+                <input 
+                  type="text" 
+                  id="couponCode"
+                  placeholder="Enter coupon code"
+                  class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black/20 uppercase"
+                >
+                <button 
+                  onclick="applyCoupon()"
+                  class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <!-- Available Coupons -->
+            <div>
+              <h4 class="text-sm font-medium text-gray-600 mb-3">Available Coupons</h4>
+              <div id="availableCoupons" class="space-y-3">
+                <!-- Coupons will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
       let updateTimeout;
       let isUpdating = false;
 
@@ -346,6 +370,155 @@
             }
         }
       }
+
+      // Coupon Modal Functions
+      function openCouponModal() {
+        document.getElementById('couponModal').classList.remove('hidden');
+        loadAvailableCoupons();
+      }
+
+      function closeCouponModal() {
+        document.getElementById('couponModal').classList.add('hidden');
+      }
+
+      async function loadAvailableCoupons() {
+        try {
+          const response = await fetch('/cart/available-coupons');
+          const coupons = await response.json();
+          
+          const couponsContainer = document.getElementById('availableCoupons');
+          
+          if (coupons.length === 0) {
+            couponsContainer.innerHTML = `
+              <div class="text-center text-gray-500 py-4">
+                No coupons available at the moment
+              </div>
+            `;
+            return;
+          }
+
+          couponsContainer.innerHTML = coupons.map(coupon => `
+            <div class="border rounded-lg p-4 ${coupon.isApplicable ? 'bg-gray-50' : 'bg-gray-100 opacity-75'}">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-800">${coupon.code}</span>
+                    ${coupon.isApplicable ? 
+                      '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Applicable</span>' : 
+                      '<span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Not Applicable</span>'
+                    }
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1">${coupon.description || ''}</p>
+                  <div class="text-xs text-gray-500 mt-2">
+                    <div>Min. Purchase: ₹${coupon.minimumPurchase}</div>
+                    <div>Max. Discount: ${coupon.maximumDiscount ? `₹${coupon.maximumDiscount}` : 'No limit'}</div>
+                    <div>Valid till: ${new Date(coupon.expiryDate).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                ${coupon.isApplicable ? `
+                  <button 
+                    onclick="applyCouponCode('${coupon.code}')"
+                    class="bg-black text-white px-3 py-1 rounded text-sm hover:bg-gray-800 transition-colors"
+                  >
+                    Apply
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+        } catch (error) {
+          console.error('Error loading coupons:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to load available coupons'
+          });
+        }
+      }
+
+      async function applyCouponCode(code) {
+        await applyCoupon(code);
+      }
+
+      async function applyCoupon(code = null) {
+        try {
+          const couponCode = code || document.getElementById('couponCode').value.trim();
+          
+          if (!couponCode) {
+            throw new Error('Please enter a coupon code');
+          }
+
+          const response = await fetch('/cart/apply-coupon', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code: couponCode })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+
+          // Update cart totals
+          document.getElementById('subtotal-amount').textContent = `₹${data.subtotal}`;
+          document.getElementById('total-amount').textContent = `₹${data.total}`;
+          
+          if (document.getElementById('total')) {
+            document.getElementById('total').textContent = `Total: ₹${data.total}`;
+          }
+
+          // Add or update discount display
+          const discountDisplay = document.createElement('div');
+          discountDisplay.className = 'flex justify-between text-green-600';
+          discountDisplay.innerHTML = `
+            <span>Discount (${couponCode})</span>
+            <span>-₹${data.discount}</span>
+          `;
+
+          const shippingElement = document.querySelector('.space-y-4.mb-6 div:last-child');
+          if (shippingElement) {
+            // Remove existing discount element if any
+            const existingDiscount = document.querySelector('.text-green-600');
+            if (existingDiscount) {
+              existingDiscount.remove();
+            }
+            shippingElement.parentNode.insertBefore(discountDisplay, shippingElement);
+          }
+
+          // Close modal and show success message
+          closeCouponModal();
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: data.message,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+        } catch (error) {
+          console.error('Error applying coupon:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Failed to apply coupon',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+        }
+      }
+
+      // Close modal when clicking outside
+      document.getElementById('couponModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeCouponModal();
+        }
+      });
     </script>
 
     <style>
