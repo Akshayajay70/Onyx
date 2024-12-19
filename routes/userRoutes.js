@@ -72,9 +72,5 @@ route.post('/forgot-password/verify-otp', userController.verifyForgotPasswordOTP
 
 route.post('/forgot-password/reset-password', userController.resetPassword);
 
-route.get('/cart/available-coupons', userMiddlewares.checkSession, userCartController.getAvailableCoupons);
-
-route.post('/cart/apply-coupon', userMiddlewares.checkSession, userCartController.applyCoupon);
-
 export default route;
 
