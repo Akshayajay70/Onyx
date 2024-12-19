@@ -76,5 +76,7 @@ route.post('/checkout/apply-coupon', userMiddlewares.checkSession, userCheckoutC
 
 route.post('/checkout/remove-coupon', userMiddlewares.checkSession, userCheckoutController.removeCoupon);
 
+route.get('/checkout/available-coupons', userMiddlewares.checkSession, userCheckoutController.getAvailableCoupons);
+
 export default route;
 

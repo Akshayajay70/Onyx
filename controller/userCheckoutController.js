@@ -123,6 +123,7 @@ const userCheckoutController = {
             let discount = 0;
             let appliedCoupon = null;
 
+            // Handle coupon before creating order
             if (couponCode) {
                 appliedCoupon = await Coupon.findOne({ code: couponCode });
                 if (appliedCoupon) {
@@ -130,14 +131,6 @@ const userCheckoutController = {
                     if (appliedCoupon.maximumDiscount) {
                         discount = Math.min(discount, appliedCoupon.maximumDiscount);
                     }
-
-                    // Update coupon usage
-                    appliedCoupon.usedCouponCount += 1;
-                    appliedCoupon.usedBy.push({
-                        userId,
-                        orderId: newOrder._id
-                    });
-                    await appliedCoupon.save();
                 }
             }
 
@@ -164,6 +157,16 @@ const userCheckoutController = {
             });
 
             await newOrder.save();
+
+            // Update coupon usage after order is created
+            if (appliedCoupon) {
+                appliedCoupon.usedCouponCount += 1;
+                appliedCoupon.usedBy.push({
+                    userId,
+                    orderId: newOrder._id
+                });
+                await appliedCoupon.save();
+            }
 
             // Clear cart
             await cartSchema.findOneAndUpdate(
@@ -276,6 +279,61 @@ const userCheckoutController = {
             res.status(500).json({ 
                 success: false, 
                 message: 'Error removing coupon' 
+            });
+        }
+    },
+
+    getAvailableCoupons: async (req, res) => {
+        try {
+            const userId = req.session.user;
+
+            // Get all coupons
+            const coupons = await Coupon.find({
+                $or: [
+                    { isActive: true },
+                    { 
+                        expiryDate: { $gte: new Date() },
+                        startDate: { $lte: new Date() }
+                    }
+                ]
+            }).select('-usedBy');
+
+            // Get user's cart total for minimum purchase validation
+            const cart = await cartSchema.findOne({ userId })
+                .populate('items.productId');
+
+            const cartTotal = cart.items.reduce(
+                (sum, item) => sum + (item.quantity * item.price), 
+                0
+            );
+
+            // Add validation info to each coupon
+            const processedCoupons = await Promise.all(coupons.map(async (coupon) => {
+                const userUsageCount = await Coupon.countDocuments({
+                    code: coupon.code,
+                    'usedBy.userId': userId
+                });
+
+                return {
+                    ...coupon.toObject(),
+                    isApplicable: 
+                        coupon.isActive &&
+                        cartTotal >= coupon.minimumPurchase &&
+                        (!coupon.totalCoupon || coupon.usedCouponCount < coupon.totalCoupon) &&
+                        userUsageCount < coupon.userUsageLimit
+                };
+            }));
+
+            res.json({
+                success: true,
+                coupons: processedCoupons
+            });
+
+        } catch (error) {
+            console.error('Get available coupons error:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error fetching available coupons' 
             });
         }
     }

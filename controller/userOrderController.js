@@ -63,13 +63,11 @@ const userOrderController = {
             // Update stock for each product
             try {
                 for (const item of order.items) {
-                    console.log('Updating stock for product:', item.product);
                     
                     const product = await productSchema.findById(item.product);
                     if (product) {
                         product.stock += item.quantity;
                         await product.save();
-                        console.log('Stock updated successfully for product:', item.product);
                     }
                 }
             } catch (stockError) {
