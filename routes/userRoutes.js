@@ -72,5 +72,9 @@ route.post('/forgot-password/verify-otp', userController.verifyForgotPasswordOTP
 
 route.post('/forgot-password/reset-password', userController.resetPassword);
 
+route.post('/checkout/apply-coupon', userMiddlewares.checkSession, userCheckoutController.applyCoupon);
+
+route.post('/checkout/remove-coupon', userMiddlewares.checkSession, userCheckoutController.removeCoupon);
+
 export default route;
 

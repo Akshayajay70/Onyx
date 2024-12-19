@@ -111,11 +111,35 @@
                         <% }); %>
                     </div>
 
+                    <!-- Add this before the Price Breakdown section -->
+                    <div class="mb-6 space-y-4">
+                        <h3 class="font-medium text-gray-800">Apply Coupon</h3>
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="couponCode" 
+                                placeholder="Enter coupon code"
+                                class="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-black focus:outline-none"
+                            >
+                            <button 
+                                onclick="applyCoupon()"
+                                class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                            >
+                                Apply
+                            </button>
+                        </div>
+                        <div id="couponMessage" class="text-sm"></div>
+                    </div>
+
                     <!-- Price Breakdown -->
                     <div class="space-y-3 border-t pt-4">
                         <div class="flex justify-between text-gray-600">
                             <span>Subtotal</span>
                             <span>₹<%= total %></span>
+                        </div>
+                        <div id="discountRow" class="flex justify-between text-gray-600 hidden">
+                            <span>Discount</span>
+                            <span class="text-green-500">-₹<span id="discountAmount">0</span></span>
                         </div>
                         <div class="flex justify-between text-gray-600">
                             <span>Shipping</span>
@@ -123,7 +147,7 @@
                         </div>
                         <div class="flex justify-between font-bold text-lg border-t pt-3">
                             <span>Total</span>
-                            <span>₹<%= total %></span>
+                            <span>₹<span id="finalTotal"><%= total %></span></span>
                         </div>
                     </div>
 
@@ -150,6 +174,81 @@
     <%- include('../partials/footer') %>
 
     <script>
+        let appliedCoupon = null;
+        let currentDiscount = 0;
+
+        async function applyCoupon() {
+            const couponCode = document.getElementById('couponCode').value;
+            const messageDiv = document.getElementById('couponMessage');
+            
+            if (!couponCode) {
+                messageDiv.innerHTML = '<p class="text-red-500">Please enter a coupon code</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/checkout/apply-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code: couponCode })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageDiv.innerHTML = `<p class="text-green-500">${data.message}</p>`;
+                    appliedCoupon = data.couponCode;
+                    currentDiscount = data.discount;
+                    
+                    // Update UI
+                    document.getElementById('discountRow').classList.remove('hidden');
+                    document.getElementById('discountAmount').textContent = currentDiscount;
+                    document.getElementById('finalTotal').textContent = <%= total %> - currentDiscount;
+                    
+                    // Disable input and change button
+                    document.getElementById('couponCode').disabled = true;
+                    const applyButton = document.querySelector('button');
+                    applyButton.textContent = 'Remove';
+                    applyButton.onclick = removeCoupon;
+                } else {
+                    messageDiv.innerHTML = `<p class="text-red-500">${data.message}</p>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<p class="text-red-500">Error applying coupon</p>';
+            }
+        }
+
+        async function removeCoupon() {
+            try {
+                const response = await fetch('/checkout/remove-coupon', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Reset everything
+                    document.getElementById('couponCode').value = '';
+                    document.getElementById('couponCode').disabled = false;
+                    document.getElementById('couponMessage').innerHTML = '';
+                    document.getElementById('discountRow').classList.add('hidden');
+                    document.getElementById('finalTotal').textContent = <%= total %>;
+                    
+                    const applyButton = document.querySelector('button');
+                    applyButton.textContent = 'Apply';
+                    applyButton.onclick = applyCoupon;
+                    
+                    appliedCoupon = null;
+                    currentDiscount = 0;
+                }
+            } catch (error) {
+                document.getElementById('couponMessage').innerHTML = 
+                    '<p class="text-red-500">Error removing coupon</p>';
+            }
+        }
+
         async function placeOrder() {
             const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
             
@@ -185,7 +284,8 @@
                     },
                     body: JSON.stringify({
                         addressId: selectedAddress.value,
-                        paymentMethod: 'cod'
+                        paymentMethod: 'cod',
+                        couponCode: appliedCoupon
                     })
                 });
 

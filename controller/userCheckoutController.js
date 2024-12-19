@@ -2,6 +2,7 @@ import cartSchema from '../model/cartModel.js';
 import orderSchema from '../model/orderModel.js';
 import addressSchema from '../model/addressModel.js';
 import productSchema from '../model/productModel.js';
+import Coupon from '../model/couponModel.js';
 
 const userCheckoutController = {
     getCheckoutPage: async (req, res) => {
@@ -65,7 +66,7 @@ const userCheckoutController = {
 
     placeOrder: async (req, res) => {
         try {
-            const { addressId, paymentMethod } = req.body;
+            const { addressId, paymentMethod, couponCode } = req.body;
             const userId = req.session.user;
 
             // Get cart with populated product details
@@ -119,11 +120,32 @@ const userCheckoutController = {
             // Calculate total
             const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
 
+            let discount = 0;
+            let appliedCoupon = null;
+
+            if (couponCode) {
+                appliedCoupon = await Coupon.findOne({ code: couponCode });
+                if (appliedCoupon) {
+                    discount = (total * appliedCoupon.discountPercentage) / 100;
+                    if (appliedCoupon.maximumDiscount) {
+                        discount = Math.min(discount, appliedCoupon.maximumDiscount);
+                    }
+
+                    // Update coupon usage
+                    appliedCoupon.usedCouponCount += 1;
+                    appliedCoupon.usedBy.push({
+                        userId,
+                        orderId: newOrder._id
+                    });
+                    await appliedCoupon.save();
+                }
+            }
+
             // Create new order
             const newOrder = new orderSchema({
                 userId,
                 items: orderItems,
-                totalAmount: total,
+                totalAmount: total - discount,
                 shippingAddress: {
                     fullName: address.fullName,
                     phone: address.mobileNumber,
@@ -136,7 +158,9 @@ const userCheckoutController = {
                 paymentMethod,
                 paymentStatus: 'pending',
                 orderStatus: 'processing',
-                orderDate: new Date()
+                orderDate: new Date(),
+                couponCode: appliedCoupon?.code,
+                discount: discount,
             });
 
             await newOrder.save();
@@ -158,6 +182,100 @@ const userCheckoutController = {
             res.status(500).json({ 
                 success: false, 
                 message: 'Failed to place order' 
+            });
+        }
+    },
+
+    applyCoupon: async (req, res) => {
+        try {
+            const { code } = req.body;
+            const userId = req.session.user;
+
+            // Find the coupon
+            const coupon = await Coupon.findOne({ 
+                code: code.toUpperCase(),
+                isActive: true,
+                startDate: { $lte: new Date() },
+                expiryDate: { $gte: new Date() }
+            });
+
+            if (!coupon) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid or expired coupon code' 
+                });
+            }
+
+            // Check if coupon limit is reached
+            if (coupon.totalCoupon && coupon.usedCouponCount >= coupon.totalCoupon) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Coupon limit has been reached' 
+                });
+            }
+
+            // Check user usage limit
+            const userUsageCount = coupon.usedBy.filter(
+                usage => usage.userId.toString() === userId.toString()
+            ).length;
+
+            if (userUsageCount >= coupon.userUsageLimit) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'You have already used this coupon' 
+                });
+            }
+
+            // Get cart total
+            const cart = await cartSchema.findOne({ userId })
+                .populate('items.productId');
+
+            const cartTotal = cart.items.reduce(
+                (sum, item) => sum + (item.quantity * item.price), 
+                0
+            );
+
+            // Check minimum purchase requirement
+            if (cartTotal < coupon.minimumPurchase) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Minimum purchase of ₹${coupon.minimumPurchase} required` 
+                });
+            }
+
+            // Calculate discount
+            let discount = (cartTotal * coupon.discountPercentage) / 100;
+            if (coupon.maximumDiscount) {
+                discount = Math.min(discount, coupon.maximumDiscount);
+            }
+
+            res.json({
+                success: true,
+                discount,
+                couponCode: coupon.code,
+                message: 'Coupon applied successfully'
+            });
+
+        } catch (error) {
+            console.error('Apply coupon error:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error applying coupon' 
+            });
+        }
+    },
+
+    removeCoupon: async (req, res) => {
+        try {
+            res.json({
+                success: true,
+                message: 'Coupon removed successfully'
+            });
+        } catch (error) {
+            console.error('Remove coupon error:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Error removing coupon' 
             });
         }
     }
