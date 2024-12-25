@@ -194,19 +194,10 @@
 
                 <!-- Modal Body -->
                 <div class="overflow-y-auto p-4 space-y-4" style="max-height: calc(80vh - 120px);">
-                    <!-- Active Coupons Section -->
+                    <!-- Available Coupons Section -->
                     <div id="activeCoupons" class="space-y-3">
-                        <h4 class="font-medium text-gray-800">Active Coupons</h4>
                         <div id="activeCouponsList" class="space-y-3">
                             <!-- Active coupons will be inserted here -->
-                        </div>
-                    </div>
-
-                    <!-- Inactive Coupons Section -->
-                    <div id="inactiveCoupons" class="space-y-3 mt-6">
-                        <h4 class="font-medium text-gray-400">Inactive Coupons</h4>
-                        <div id="inactiveCouponsList" class="space-y-3">
-                            <!-- Inactive coupons will be inserted here -->
                         </div>
                     </div>
                 </div>
@@ -254,38 +245,19 @@
 
         function renderCoupons(coupons) {
             const activeCouponsList = document.getElementById('activeCouponsList');
-            const inactiveCouponsList = document.getElementById('inactiveCouponsList');
-            
             activeCouponsList.innerHTML = '';
-            inactiveCouponsList.innerHTML = '';
 
             coupons.forEach(coupon => {
-                const isApplicable = coupon.isActive && 
-                                    coupon.minimumPurchase <= cartTotal &&
-                                    new Date(coupon.startDate) <= new Date() &&
-                                    new Date(coupon.expiryDate) >= new Date();
-
+                const isApplicable = coupon.isApplicable;
                 const couponElement = createCouponElement(coupon, isApplicable);
-                
-                if (isApplicable) {
-                    activeCouponsList.appendChild(couponElement);
-                } else {
-                    inactiveCouponsList.appendChild(couponElement);
-                }
+                activeCouponsList.appendChild(couponElement);
             });
 
-            // Show "No coupons" message if sections are empty
+            // Show "No coupons" message if section is empty
             if (!activeCouponsList.children.length) {
                 activeCouponsList.innerHTML = `
                     <div class="text-gray-500 text-center py-3">
-                        No active coupons available
-                    </div>
-                `;
-            }
-            if (!inactiveCouponsList.children.length) {
-                inactiveCouponsList.innerHTML = `
-                    <div class="text-gray-500 text-center py-3">
-                        No inactive coupons
+                        No coupons available
                     </div>
                 `;
             }
@@ -334,10 +306,8 @@
         }
 
         function getCouponInactiveReason(coupon) {
-            if (!coupon.isActive) return 'Inactive';
-            if (new Date(coupon.startDate) > new Date()) return 'Not started yet';
-            if (new Date(coupon.expiryDate) < new Date()) return 'Expired';
             if (coupon.minimumPurchase > cartTotal) return `Min. purchase ₹${coupon.minimumPurchase}`;
+            if (coupon.totalCoupon && coupon.usedCouponCount >= coupon.totalCoupon) return 'Coupon limit reached';
             return 'Not applicable';
         }
 

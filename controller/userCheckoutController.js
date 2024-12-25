@@ -287,15 +287,11 @@ const userCheckoutController = {
         try {
             const userId = req.session.user;
 
-            // Get all coupons
+            // Get only active coupons within valid date range
             const coupons = await Coupon.find({
-                $or: [
-                    { isActive: true },
-                    { 
-                        expiryDate: { $gte: new Date() },
-                        startDate: { $lte: new Date() }
-                    }
-                ]
+                isActive: true,
+                startDate: { $lte: new Date() },
+                expiryDate: { $gte: new Date() }
             }).select('-usedBy');
 
             // Get user's cart total for minimum purchase validation
@@ -317,7 +313,6 @@ const userCheckoutController = {
                 return {
                     ...coupon.toObject(),
                     isApplicable: 
-                        coupon.isActive &&
                         cartTotal >= coupon.minimumPurchase &&
                         (!coupon.totalCoupon || coupon.usedCouponCount < coupon.totalCoupon) &&
                         userUsageCount < coupon.userUsageLimit
