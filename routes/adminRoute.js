@@ -5,6 +5,8 @@ import adminCategoryController from '../controller/adminCategoryController.js';
 import adminProductController from '../controller/adminProductController.js';
 import adminOrderController from '../controller/adminOrderController.js';
 import adminCouponController from '../controller/adminCouponController.js';
+import reportController from '../controller/admin/reportController.js';
+
 const router = express.Router();
 
 router.get('/login', adminMiddleware.isLogin, adminController.getAdmin);
@@ -63,5 +65,13 @@ router.post('/coupons/edit/:id', adminMiddleware.checkSession, adminCouponContro
 router.post('/coupons/delete/:id', adminMiddleware.checkSession, adminCouponController.deleteCoupon);
 
 router.post('/coupons/toggle-status/:id', adminMiddleware.checkSession, adminCouponController.toggleCouponStatus);
+
+// Report Routes
+
+router.get('/sales-report', adminMiddleware.checkSession, reportController.getSalesReport);
+
+router.get('/sales-report/download-excel', adminMiddleware.checkSession, reportController.downloadExcel);
+
+router.get('/sales-report/download-pdf', adminMiddleware.checkSession, reportController.downloadPDF); 
 
 export default router;
