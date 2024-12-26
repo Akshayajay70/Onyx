@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wallet - Onyx</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+    <%- include("../partials/nav") %>
+
+    <div class="container mx-auto px-4 py-8 mt-28">
+        <div class="max-w-4xl mx-auto">
+            <!-- Wallet Balance Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Wallet Balance</h2>
+                        <p class="text-3xl font-bold text-green-600 mt-2">₹<%= wallet.balance.toFixed(2) %></p>
+                    </div>
+                    <button 
+                        onclick="addFunds()"
+                        class="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors"
+                    >
+                        Add Funds
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Transaction History</h3>
+                
+                <% if (transactions.length === 0) { %>
+                    <div class="text-center text-gray-500 py-8">
+                        <p>No transactions yet</p>
+                    </div>
+                <% } else { %>
+                    <div class="space-y-4">
+                        <% transactions.forEach(transaction => { %>
+                            <div class="flex justify-between items-center p-4 border rounded-lg">
+                                <div>
+                                    <p class="font-medium"><%= transaction.description %></p>
+                                    <p class="text-sm text-gray-500">
+                                        <%= new Date(transaction.date).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
+                                        <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    </p>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function addFunds() {
+        const { value: amount } = await Swal.fire({
+            title: 'Add Funds to Wallet',
+            input: 'number',
+            inputLabel: 'Enter amount (₹)',
+            inputPlaceholder: 'Enter amount',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value || value <= 0) {
+                    return 'Please enter a valid amount';
+                }
+            }
+        });
+
+        if (amount) {
+            try {
+                const response = await fetch('/wallet/add-funds', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount) })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Funds Added',
+                        text: data.message,
+                        confirmButtonColor: '#000000'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Failed to add funds',
+                    confirmButtonColor: '#000000'
+                });
+            }
+        }
+    }
+    </script>
+</body>
+</html> 

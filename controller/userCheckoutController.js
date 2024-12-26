@@ -344,8 +344,6 @@ const userCheckoutController = {
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
 
-            console.log('Cart found:', cart); // Debug log
-
             if (!cart || cart.items.length === 0) {
                 return res.status(400).json({
                     success: false,
@@ -358,8 +356,6 @@ const userCheckoutController = {
             cart.items.forEach(item => {
                 totalAmount += (item.productId.price * item.quantity);
             });
-
-            console.log('Calculated total amount:', totalAmount); // Debug log
 
             // Apply coupon discount if any
             if (cart.couponDiscount) {
@@ -377,17 +373,12 @@ const userCheckoutController = {
 
             // Convert to paise and ensure it's an integer
             const amountInPaise = Math.round(totalAmount * 100);
-
-            console.log('Amount in paise:', amountInPaise); // Debug log
-
             // Create Razorpay order
             const options = {
                 amount: amountInPaise,
                 currency: "INR",
                 receipt: `ord_${Date.now().toString().slice(-8)}`
             };
-
-            console.log('Razorpay order options:', options); // Debug log
 
             const razorpayOrder = await razorpay.orders.create(options);
 

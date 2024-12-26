@@ -8,7 +8,7 @@ import userCartController from '../controller/userCartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
 import userOrderController from '../controller/userOrderController.js';
 import wishlistController from '../controller/user/wishlistController.js';
-import checkoutController from '../controller/userCheckoutController.js';
+import walletController from '../controller/user/walletController.js';
 
 const route = Router();
 
@@ -90,9 +90,13 @@ route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishli
 
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
-route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, checkoutController.createRazorpayOrder);
+route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, userCheckoutController.createRazorpayOrder);
 
-route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutController.verifyPayment);
+route.post('/checkout/verify-payment', userMiddlewares.checkSession, userCheckoutController.verifyPayment);
+
+route.get('/wallet', userMiddlewares.checkSession, walletController.getWallet);
+
+route.post('/wallet/add-funds', userMiddlewares.checkSession, walletController.addFunds);
 
 export default route;
 
