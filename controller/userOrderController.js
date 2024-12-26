@@ -4,46 +4,25 @@ import productSchema from '../model/productModel.js';
 const userOrderController = {
     getOrders: async (req, res) => {
         try {
-            const orders = await orderSchema.find({ userId: req.session.user })
-                .populate({
-                    path: 'items.product',
-                    select: 'productName imageUrl price'
-                })
-                .sort({ orderDate: -1 });
+            const userId = req.session.user;
+            const orders = await orderSchema.find({ userId })
+                .sort({ createdAt: -1 })
+                .populate('items.product');
 
-            const formattedOrders = orders.map(order => ({
-                _id: order._id,
-                orderDate: order.orderDate,
-                totalAmount: order.totalAmount,
-                orderStatus: order.orderStatus,
-                paymentStatus: order.paymentStatus,
-                paymentMethod: order.paymentMethod,
-                shippingAddress: order.shippingAddress,
-                items: order.items
-            }));
-
-            res.render('user/viewOrder', {
-                orders: formattedOrders,
-                user: req.session.user
-            });
+            res.render('user/viewOrder', { orders });
         } catch (error) {
             console.error('Get orders error:', error);
-            res.status(500).render('error', {
-                message: 'Error loading orders',
-                user: req.session.user
-            });
+            res.status(500).render('error', { message: 'Error fetching orders' });
         }
     },
 
     cancelOrder: async (req, res) => {
         try {
-            const orderId = req.params.orderId;
-            
-            // Find the order
-            const order = await orderSchema.findOne({ 
-                _id: orderId,
-                userId: req.session.user
-            });
+            const { orderId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId });
 
             if (!order) {
                 return res.status(404).json({
@@ -60,60 +39,109 @@ const userOrderController = {
                 });
             }
 
-            // Update stock for each product
-            try {
-                for (const item of order.items) {
-                    
-                    const product = await productSchema.findById(item.product);
-                    if (product) {
-                        product.stock += item.quantity;
-                        await product.save();
-                    }
-                }
-            } catch (stockError) {
-                console.error('Error updating stock:', stockError);
-                return res.status(500).json({
-                    success: false,
-                    message: 'Failed to update product stock'
-                });
+            // Update order status and history
+            order.orderStatus = 'cancelled';
+            order.cancellationReason = reason;
+            order.statusHistory.push({
+                status: 'cancelled',
+                date: new Date(),
+                comment: reason
+            });
+
+            // Restore product stock
+            for (const item of order.items) {
+                await productSchema.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { stock: item.quantity } }
+                );
             }
 
-            // Update order status
-            order.orderStatus = 'cancelled';
-            order.paymentStatus = 'cancelled';
             await order.save();
 
+            // If payment was made, initiate refund process here
+            if (order.paymentMethod === 'online' && order.paymentStatus === 'completed') {
+                // Implement refund logic
+            }
 
-            res.status(200).json({
+            res.json({
                 success: true,
                 message: 'Order cancelled successfully'
             });
+
         } catch (error) {
             console.error('Cancel order error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Failed to cancel order'
+                message: 'Error cancelling order'
             });
         }
     },
 
-    updateOrderStatus: async (orderId, newStatus) => {
+    requestReturn: async (req, res) => {
         try {
-            const order = await orderSchema.findById(orderId);
+            const { orderId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId });
+
             if (!order) {
-                throw new Error('Order not found');
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
             }
 
-            order.orderStatus = newStatus;
-            if (newStatus === 'delivered') {
-                order.paymentStatus = 'completed';
+            // Check if order can be returned
+            if (order.orderStatus !== 'delivered') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Only delivered orders can be returned'
+                });
             }
+
+            // Initialize status history if it doesn't exist
+            if (!order.statusHistory) {
+                order.statusHistory = [];
+            }
+
+            // Find the most recent delivery status
+            const deliveryStatus = order.statusHistory.find(h => h.status === 'delivered') || {
+                date: order.updatedAt // fallback to order update time if no delivery status found
+            };
+
+            // Check return window (7 days)
+            const returnWindow = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+            if (Date.now() - deliveryStatus.date.getTime() > returnWindow) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return window has expired (7 days from delivery)'
+                });
+            }
+
+            // Update order status and history
+            order.orderStatus = 'returned';
+            order.returnReason = reason;
+            order.returnRequestDate = new Date();
+            order.statusHistory.push({
+                status: 'returned',
+                date: new Date(),
+                comment: reason
+            });
 
             await order.save();
-            return true;
+
+            res.json({
+                success: true,
+                message: 'Return request submitted successfully'
+            });
+
         } catch (error) {
-            console.error('Update order status error:', error);
-            return false;
+            console.error('Return request error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error submitting return request'
+            });
         }
     }
 };

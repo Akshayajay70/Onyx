@@ -10,6 +10,7 @@
     />
     <title>Checkout - Onyx</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
@@ -65,24 +66,16 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">Payment Method</h2>
                     
                     <div class="space-y-4">
-                        <div class="border rounded-lg p-4 hover:border-black transition-colors">
-                            <label class="flex items-center gap-4 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="paymentMethod" 
-                                    value="cod" 
-                                    checked
-                                >
-                                <div>
-                                    <p class="font-medium">Cash on Delivery</p>
-                                    <p class="text-gray-500 text-sm">Pay when you receive your order</p>
-                                </div>
+                        <h3 class="font-medium text-gray-800">Payment Method</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="cod" checked>
+                                <span>Cash on Delivery</span>
                             </label>
-                        </div>
-                        
-                        <!-- Placeholder for future payment methods -->
-                        <div class="border border-dashed rounded-lg p-4 bg-gray-50">
-                            <p class="text-gray-400 text-center">More payment options coming soon</p>
+                            <label class="flex items-center gap-3">
+                                <input type="radio" name="paymentMethod" value="online">
+                                <span>Online Payment (Card/UPI/Netbanking)</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -406,84 +399,100 @@
         }
 
         async function placeOrder() {
-            const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
-            
-            if (!selectedAddress) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Address Required',
-                    text: 'Please select a delivery address',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                return;
-            }
-
             try {
-                // Show loading state
-                Swal.fire({
-                    title: 'Processing Order',
-                    text: 'Please wait...',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    willOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+                const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+                if (!selectedAddress) {
+                    throw new Error('Please select a delivery address');
+                }
 
-                const response = await fetch('/order/place-order', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        addressId: selectedAddress.value,
-                        paymentMethod: 'cod',
-                        couponCode: appliedCoupon
-                    })
-                });
+                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Close loading state
-                    Swal.close();
-
-                    // Show success message
-                    const result = await Swal.fire({
-                        icon: 'success',
-                        title: 'Order Placed Successfully!',
-                        html: `
-                            <div class="text-center">
-                                <p class="mb-2">Thank you for your purchase!</p>
-                                <p class="text-sm text-gray-600">Order ID: #${data.orderId}</p>
-                            </div>
-                        `,
-                        confirmButtonText: 'View Order',
-                        confirmButtonColor: '#000000',
-                        showCancelButton: true,
-                        cancelButtonText: 'Continue Shopping',
-                        cancelButtonColor: '#718096'
+                if (paymentMethod === 'cod') {
+                    // Existing COD order placement logic
+                } else {
+                    // Create Razorpay order
+                    const response = await fetch('/checkout/create-razorpay-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            addressId: selectedAddress.value
+                        })
                     });
 
-                    // Handle user choice
-                    if (result.isConfirmed) {
-                        // Redirect to orders page
-                        window.location.href = '/orders';
-                    } else {
-                        // Redirect to shop page
-                        window.location.href = '/shop';
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.message);
                     }
-                } else {
-                    throw new Error(data.message);
+
+                    // Initialize Razorpay
+                    const options = {
+                        key: data.key,
+                        amount: data.order.amount,
+                        currency: "INR",
+                        name: "Onyx",
+                        description: "Order Payment",
+                        order_id: data.order.id,
+                        handler: async function (response) {
+                            try {
+                                // Verify payment
+                                const verifyResponse = await fetch('/checkout/verify-payment', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    })
+                                });
+
+                                const verifyData = await verifyResponse.json();
+                                if (verifyData.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Order Placed Successfully!',
+                                        text: 'Your payment has been processed',
+                                        confirmButtonText: 'View Order',
+                                        confirmButtonColor: '#000000'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            window.location.href = `/order/${verifyData.orderId}`;
+                                        }
+                                    });
+                                } else {
+                                    throw new Error(verifyData.message);
+                                }
+                            } catch (error) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Payment Verification Failed',
+                                    text: error.message,
+                                    confirmButtonColor: '#000000'
+                                });
+                            }
+                        },
+                        prefill: {
+                            name: "<%= user.name %>",
+                            email: "<%= user.email %>",
+                            contact: "<%= user.phone %>"
+                        },
+                        theme: {
+                            color: "#000000"
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: error.message || 'Failed to place order',
+                    text: error.message,
                     confirmButtonColor: '#000000'
                 });
             }

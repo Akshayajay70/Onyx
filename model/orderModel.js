@@ -41,18 +41,42 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['cod'], 
+        enum: ['cod', 'online', 'razorpay'],
         required: true
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'completed', 'failed','cancelled'],
+        enum: ['pending', 'completed', 'failed', 'refunded'],
         default: 'pending'
     },
     orderStatus: {
         type: String,
-        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'],
         default: 'pending'
+    },
+    statusHistory: [{
+        status: {
+            type: String,
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']
+        },
+        date: {
+            type: Date,
+            default: Date.now
+        },
+        comment: String
+    }],
+    cancellationReason: {
+        type: String
+    },
+    returnReason: {
+        type: String
+    },
+    returnRequestDate: {
+        type: Date
+    },
+    isReturnAccepted: {
+        type: Boolean,
+        default: false
     },
     orderDate: {
         type: Date,

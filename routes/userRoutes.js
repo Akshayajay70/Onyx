@@ -8,6 +8,7 @@ import userCartController from '../controller/userCartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
 import userOrderController from '../controller/userOrderController.js';
 import wishlistController from '../controller/user/wishlistController.js';
+import checkoutController from '../controller/userCheckoutController.js';
 
 const route = Router();
 
@@ -65,6 +66,8 @@ route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders
 
 route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
 
+route.post('/orders/:orderId/return', userMiddlewares.checkSession, userOrderController.requestReturn);
+
 route.get('/forgot-password', userMiddlewares.isLogin, userController.getForgotPassword);
 
 route.post('/forgot-password/send-otp', userController.sendForgotPasswordOTP);
@@ -87,6 +90,9 @@ route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishli
 
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
+route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, checkoutController.createRazorpayOrder);
+
+route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutController.verifyPayment);
 
 export default route;
 
