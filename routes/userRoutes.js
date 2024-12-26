@@ -7,6 +7,7 @@ import userAddressController from '../controller/userAddressController.js';
 import userCartController from '../controller/userCartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
 import userOrderController from '../controller/userOrderController.js';
+import wishlistController from '../controller/user/wishlistController.js';
 
 const route = Router();
 
@@ -77,6 +78,15 @@ route.post('/checkout/apply-coupon', userMiddlewares.checkSession, userCheckoutC
 route.post('/checkout/remove-coupon', userMiddlewares.checkSession, userCheckoutController.removeCoupon);
 
 route.get('/checkout/available-coupons', userMiddlewares.checkSession, userCheckoutController.getAvailableCoupons);
+
+route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);
+
+route.post('/wishlist/add', userMiddlewares.checkSession, wishlistController.addToWishlist);
+
+route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishlistController.removeFromWishlist);
+
+route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
+
 
 export default route;
 
