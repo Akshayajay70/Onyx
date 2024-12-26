@@ -5,6 +5,7 @@ import productSchema from '../model/productModel.js';
 import Coupon from '../model/couponModel.js';
 import razorpay from '../config/razorpay.js';
 import crypto from 'crypto';
+import Wallet from '../model/walletModel.js';
 
 const userCheckoutController = {
     getCheckoutPage: async (req, res) => {
@@ -51,11 +52,21 @@ const userCheckoutController = {
             // Calculate total
             const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
 
+            let wallet = await Wallet.findOne({ userId: req.session.user });
+            if (!wallet) {
+                wallet = await Wallet.create({ 
+                    userId: req.session.user,
+                    balance: 0,
+                    transactions: []
+                });
+            }
+
             res.render('user/checkout', {
                 addresses,
                 cartItems,
                 total,
-                user: req.session.user
+                user: req.session.user,
+                wallet
             });
         } catch (error) {
             console.error('Checkout page error:', error);
@@ -492,6 +503,91 @@ const userCheckoutController = {
             res.status(500).json({
                 success: false,
                 message: 'Error verifying payment'
+            });
+        }
+    },
+
+    walletPayment: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            const { addressId } = req.body;
+
+            // Get cart details with populated products
+            const cart = await cartSchema.findOne({ userId })
+                .populate('items.productId');
+
+            if (!cart || cart.items.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cart is empty'
+                });
+            }
+
+            // Calculate total amount from cart items
+            const totalAmount = cart.items.reduce((total, item) => {
+                return total + (item.productId.price * item.quantity);
+            }, 0);
+
+            // Get wallet
+            const wallet = await Wallet.findOne({ userId });
+            if (!wallet || wallet.balance < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Insufficient wallet balance'
+                });
+            }
+
+            // Create order with calculated total amount
+            const order = await orderSchema.create({
+                userId,
+                items: cart.items.map(item => ({
+                    product: item.productId._id,
+                    quantity: item.quantity,
+                    price: item.productId.price,
+                    subtotal: item.quantity * item.productId.price
+                })),
+                totalAmount: totalAmount, // Set the calculated total amount
+                shippingAddress: addressId,
+                paymentMethod: 'wallet',
+                paymentStatus: 'completed',
+                orderStatus: 'pending',
+                statusHistory: [{
+                    status: 'pending',
+                    date: new Date(),
+                    comment: 'Order placed using wallet payment'
+                }]
+            });
+
+            // Update wallet balance
+            wallet.balance -= totalAmount;
+            wallet.transactions.push({
+                type: 'debit',
+                amount: totalAmount,
+                description: `Payment for order #${order._id}`,
+                orderId: order._id,
+                date: new Date()
+            });
+            await wallet.save();
+
+            // Clear cart
+            await cartSchema.findByIdAndUpdate(cart._id, {
+                items: [],
+                totalAmount: 0,
+                couponCode: null,
+                couponDiscount: 0
+            });
+
+            res.json({
+                success: true,
+                message: 'Order placed successfully',
+                orderId: order._id
+            });
+
+        } catch (error) {
+            console.error('Wallet payment error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error processing wallet payment'
             });
         }
     }

@@ -60,7 +60,7 @@ route.delete('/cart/remove/:productId', userMiddlewares.checkSession, userCartCo
 
 route.get('/checkout', userMiddlewares.checkSession, userCheckoutController.getCheckoutPage);
 
-route.post('/order/place-order', userMiddlewares.checkSession, userCheckoutController.placeOrder);
+route.post('/checkout/place-order', userMiddlewares.checkSession, userCheckoutController.placeOrder);
 
 route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders);
 
@@ -97,6 +97,8 @@ route.post('/checkout/verify-payment', userMiddlewares.checkSession, userCheckou
 route.get('/wallet', userMiddlewares.checkSession, walletController.getWallet);
 
 route.post('/wallet/add-funds', userMiddlewares.checkSession, walletController.addFunds);
+
+route.post('/checkout/wallet-payment', userMiddlewares.checkSession, userCheckoutController.walletPayment);
 
 export default route;
 

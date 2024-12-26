@@ -40,9 +40,15 @@
                 <% } else { %>
                     <div class="space-y-4">
                         <% transactions.forEach(transaction => { %>
-                            <div class="flex justify-between items-center p-4 border rounded-lg">
+                            <div class="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                                 <div>
                                     <p class="font-medium"><%= transaction.description %></p>
+                                    <% if (transaction.orderId) { %>
+                                        <a href="/order/<%= transaction.orderId %>" 
+                                           class="text-sm text-blue-600 hover:underline">
+                                            View Order Details
+                                        </a>
+                                    <% } %>
                                     <p class="text-sm text-gray-500">
                                         <%= new Date(transaction.date).toLocaleDateString('en-US', {
                                             year: 'numeric',
@@ -56,6 +62,9 @@
                                 <div class="text-right">
                                     <p class="font-bold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
                                         <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        Balance: ₹<%= (transaction.balanceAfter || 0).toFixed(2) %>
                                     </p>
                                 </div>
                             </div>

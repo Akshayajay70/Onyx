@@ -1,5 +1,6 @@
 import orderSchema from '../model/orderModel.js';
 import productSchema from '../model/productModel.js';
+import Wallet from '../model/walletModel.js';
 
 const userOrderController = {
     getOrders: async (req, res) => {
@@ -19,7 +20,6 @@ const userOrderController = {
     cancelOrder: async (req, res) => {
         try {
             const { orderId } = req.params;
-            const { reason } = req.body;
             const userId = req.session.user;
 
             const order = await orderSchema.findOne({ _id: orderId, userId });
@@ -31,7 +31,6 @@ const userOrderController = {
                 });
             }
 
-            // Check if order can be cancelled
             if (!['pending', 'processing'].includes(order.orderStatus)) {
                 return res.status(400).json({
                     success: false,
@@ -39,29 +38,38 @@ const userOrderController = {
                 });
             }
 
-            // Update order status and history
+            // Update order status
             order.orderStatus = 'cancelled';
-            order.cancellationReason = reason;
             order.statusHistory.push({
                 status: 'cancelled',
                 date: new Date(),
-                comment: reason
+                comment: 'Order cancelled by user'
             });
 
-            // Restore product stock
-            for (const item of order.items) {
-                await productSchema.findByIdAndUpdate(
-                    item.product,
-                    { $inc: { stock: item.quantity } }
-                );
+            // Process refund if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && order.paymentStatus === 'completed') {
+                // Find or create wallet
+                let wallet = await Wallet.findOne({ userId });
+                if (!wallet) {
+                    wallet = await Wallet.create({ userId, balance: 0 });
+                }
+
+                // Add refund to wallet
+                wallet.balance += order.totalAmount;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: order.totalAmount,
+                    description: `Refund for cancelled order #${order._id}`,
+                    orderId: order._id,
+                    date: new Date()
+                });
+
+                await wallet.save();
+                
+                order.paymentStatus = 'refunded';
             }
 
             await order.save();
-
-            // If payment was made, initiate refund process here
-            if (order.paymentMethod === 'online' && order.paymentStatus === 'completed') {
-                // Implement refund logic
-            }
 
             res.json({
                 success: true,
@@ -92,7 +100,6 @@ const userOrderController = {
                 });
             }
 
-            // Check if order can be returned
             if (order.orderStatus !== 'delivered') {
                 return res.status(400).json({
                     success: false,
@@ -100,47 +107,58 @@ const userOrderController = {
                 });
             }
 
-            // Initialize status history if it doesn't exist
-            if (!order.statusHistory) {
-                order.statusHistory = [];
-            }
-
-            // Find the most recent delivery status
-            const deliveryStatus = order.statusHistory.find(h => h.status === 'delivered') || {
-                date: order.updatedAt // fallback to order update time if no delivery status found
-            };
-
-            // Check return window (7 days)
-            const returnWindow = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-            if (Date.now() - deliveryStatus.date.getTime() > returnWindow) {
+            // Check return window (e.g., 7 days)
+            const deliveryDate = order.statusHistory.find(h => h.status === 'delivered')?.date;
+            if (!deliveryDate || Date.now() - new Date(deliveryDate) > 7 * 24 * 60 * 60 * 1000) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Return window has expired (7 days from delivery)'
+                    message: 'Return window has expired'
                 });
             }
 
-            // Update order status and history
+            // Update order status
             order.orderStatus = 'returned';
-            order.returnReason = reason;
-            order.returnRequestDate = new Date();
             order.statusHistory.push({
                 status: 'returned',
                 date: new Date(),
-                comment: reason
+                comment: reason || 'Return requested by user'
             });
+
+            // Process refund if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && order.paymentStatus === 'completed') {
+                // Find or create wallet
+                let wallet = await Wallet.findOne({ userId });
+                if (!wallet) {
+                    wallet = await Wallet.create({ userId, balance: 0 });
+                }
+
+                // Add refund to wallet
+                wallet.balance += order.totalAmount;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: order.totalAmount,
+                    description: `Refund for returned order #${order._id}`,
+                    orderId: order._id,
+                    date: new Date()
+                });
+
+                await wallet.save();
+                
+                order.paymentStatus = 'refunded';
+            }
 
             await order.save();
 
             res.json({
                 success: true,
-                message: 'Return request submitted successfully'
+                message: 'Return request processed successfully'
             });
 
         } catch (error) {
             console.error('Return request error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error submitting return request'
+                message: 'Error processing return request'
             });
         }
     }

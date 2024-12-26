@@ -68,13 +68,44 @@
                     <div class="space-y-4">
                         <h3 class="font-medium text-gray-800">Payment Method</h3>
                         <div class="space-y-3">
-                            <label class="flex items-center gap-3">
-                                <input type="radio" name="paymentMethod" value="cod" checked>
-                                <span>Cash on Delivery</span>
+                            <!-- Wallet Payment Option -->
+                            <label class="flex items-center gap-3 p-3 border rounded-lg <%= wallet.balance >= total ? 'hover:bg-gray-50' : 'opacity-60' %>">
+                                <input type="radio" name="paymentMethod" value="wallet" 
+                                       <%= wallet.balance >= total ? '' : 'disabled' %>>
+                                <div class="flex flex-col">
+                                    <span class="flex items-center gap-2">
+                                        <i class="fas fa-wallet"></i> Pay using Wallet
+                                        <% if (wallet.balance >= total) { %>
+                                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                                Sufficient Balance
+                                            </span>
+                                        <% } %>
+                                    </span>
+                                    <span class="text-sm text-gray-500">
+                                        Available: ₹<%= wallet.balance.toFixed(2) %>
+                                    </span>
+                                </div>
                             </label>
-                            <label class="flex items-center gap-3">
+
+                            <!-- Other payment methods -->
+                            <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                                <input type="radio" name="paymentMethod" value="cod" checked>
+                                <div class="flex flex-col">
+                                    <span class="flex items-center gap-2">
+                                        <i class="fas fa-money-bill"></i> Cash on Delivery
+                                    </span>
+                                    <span class="text-sm text-gray-500">Pay when you receive the order</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
                                 <input type="radio" name="paymentMethod" value="online">
-                                <span>Online Payment (Card/UPI/Netbanking)</span>
+                                <div class="flex flex-col">
+                                    <span class="flex items-center gap-2">
+                                        <i class="fas fa-credit-card"></i> Online Payment
+                                    </span>
+                                    <span class="text-sm text-gray-500">Pay using Card/UPI/Netbanking</span>
+                                </div>
                             </label>
                         </div>
                     </div>
@@ -195,6 +226,27 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Add this section for wallet balance display -->
+    <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+        <div class="flex justify-between items-center">
+            <div>
+                <h3 class="font-medium text-gray-800">Wallet Balance</h3>
+                <p class="text-2xl font-bold <%= wallet.balance >= total ? 'text-green-600' : 'text-gray-600' %>">
+                    ₹<%= wallet.balance.toFixed(2) %>
+                </p>
+            </div>
+            <% if (wallet.balance < total) { %>
+                <div class="text-right">
+                    <p class="text-sm text-red-600 mb-2">Insufficient balance</p>
+                    <button onclick="addFunds()" 
+                            class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm">
+                        Add Funds
+                    </button>
+                </div>
+            <% } %>
         </div>
     </div>
 
@@ -407,9 +459,65 @@
 
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
-                if (paymentMethod === 'cod') {
-                    // Existing COD order placement logic
-                } else {
+                if (paymentMethod === 'wallet') {
+                    // Handle wallet payment
+                    const response = await fetch('/checkout/wallet-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            addressId: selectedAddress.value
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Order Placed Successfully!',
+                            text: 'Payment completed using wallet balance',
+                            confirmButtonText: 'View Order',
+                            confirmButtonColor: '#000000'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = `/order/${data.orderId}`;
+                            } else {
+                                window.location.href = '/orders';
+                            }
+                        });
+                    } else {
+                        throw new Error(data.message || 'Payment failed');
+                    }
+                } else if (paymentMethod === 'cod') {
+                    // Existing COD logic
+                    const response = await fetch('/checkout/place-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            addressId: selectedAddress.value,
+                            paymentMethod: 'cod'
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Order Placed Successfully!',
+                            confirmButtonText: 'View Order',
+                            confirmButtonColor: '#000000'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = `/order/${data.orderId}`;
+                            }
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } else if (paymentMethod === 'online') {
                     // Create Razorpay order
                     const response = await fetch('/checkout/create-razorpay-order', {
                         method: 'POST',
@@ -436,7 +544,6 @@
                         order_id: data.order.id,
                         handler: async function (response) {
                             try {
-                                // Verify payment
                                 const verifyResponse = await fetch('/checkout/verify-payment', {
                                     method: 'POST',
                                     headers: {
@@ -454,7 +561,7 @@
                                     Swal.fire({
                                         icon: 'success',
                                         title: 'Order Placed Successfully!',
-                                        text: 'Your payment has been processed',
+                                        text: 'Payment completed',
                                         confirmButtonText: 'View Order',
                                         confirmButtonColor: '#000000'
                                     }).then((result) => {
@@ -468,7 +575,109 @@
                             } catch (error) {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'Payment Verification Failed',
+                                    title: 'Payment Failed',
+                                    text: error.message,
+                                    confirmButtonColor: '#000000'
+                                });
+                            }
+                        },
+                        prefill: {
+                            name: "<%= user.name %>",
+                            email: "<%= user.email %>",
+                            contact: "<%= user.phone %>"
+                        },
+                        theme: {
+                            color: "#000000"
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonColor: '#000000'
+                });
+            }
+        }
+
+        async function addFunds() {
+            const amountNeeded = <%= total - wallet.balance %>;
+            
+            const { value: amount } = await Swal.fire({
+                title: 'Add Funds to Wallet',
+                input: 'number',
+                inputLabel: `Amount needed: ₹${amountNeeded.toFixed(2)}`,
+                inputValue: Math.ceil(amountNeeded),
+                inputPlaceholder: 'Enter amount',
+                showCancelButton: true,
+                confirmButtonColor: '#000000',
+                inputValidator: (value) => {
+                    if (!value || value <= 0) {
+                        return 'Please enter a valid amount';
+                    }
+                    if (value < amountNeeded) {
+                        return 'Amount is less than required';
+                    }
+                }
+            });
+
+            if (amount) {
+                try {
+                    const response = await fetch('/wallet/add-funds', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ amount: parseFloat(amount) })
+                    });
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.message);
+                    }
+
+                    const options = {
+                        key: data.key,
+                        amount: data.order.amount,
+                        currency: "INR",
+                        name: "Onyx Wallet",
+                        description: "Wallet Recharge",
+                        order_id: data.order.id,
+                        handler: async function (response) {
+                            try {
+                                const verifyResponse = await fetch('/wallet/verify-recharge', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    })
+                                });
+
+                                const verifyData = await verifyResponse.json();
+                                if (verifyData.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Funds Added Successfully!',
+                                        text: 'Your wallet has been recharged',
+                                        confirmButtonColor: '#000000'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    throw new Error(verifyData.message);
+                                }
+                            } catch (error) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Recharge Failed',
                                     text: error.message,
                                     confirmButtonColor: '#000000'
                                 });
@@ -487,14 +696,14 @@
                     const rzp = new Razorpay(options);
                     rzp.open();
 
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to add funds',
+                        confirmButtonColor: '#000000'
+                    });
                 }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#000000'
-                });
             }
         }
     </script>
