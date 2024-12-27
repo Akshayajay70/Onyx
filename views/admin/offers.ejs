@@ -47,7 +47,8 @@
                                 </p>
                             </div>
                             <div class="flex space-x-2">
-                                <button onclick="editOffer('<%= JSON.stringify(offer) %>')" 
+                                <button onclick="editOffer(this)" 
+                                        data-offer="<%- encodeURIComponent(JSON.stringify(offer)) %>"
                                         class="text-blue-500 hover:text-blue-700">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -64,94 +65,127 @@
     </div>
 
     <!-- Offer Modal -->
-    <div id="offerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96">
-            <h2 id="modalTitle" class="text-xl font-bold mb-4">Add New Offer</h2>
-            <form id="offerForm" onsubmit="handleOfferSubmit(event)">
-                <input type="hidden" id="offerId">
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Offer Name</label>
-                    <input type="text" id="offerName" required
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+    <div id="offerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto">
+            <!-- Modal Header -->
+            <div class="py-4 px-6 border-b border-gray-200">
+                <h2 id="modalTitle" class="text-xl font-semibold text-gray-800"></h2>
+            </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Apply To</label>
-                    <select id="offerType" required onchange="handleTypeChange()"
-                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Select Type</option>
-                        <option value="category">Category</option>
-                        <option value="product">Product</option>
-                    </select>
-                </div>
-
-                <!-- Dynamic Selection Div -->
-                <div id="selectionDiv" class="mb-4 hidden">
-                    <label class="block text-sm font-medium mb-1">Select <span id="selectionType"></span></label>
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="offerForm" onsubmit="handleOfferSubmit(event)">
+                    <input type="hidden" id="offerId">
                     
-                    <!-- Category Selection -->
-                    <div id="categorySelection" class="hidden">
-                        <select id="categorySelect" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select Category</option>
+                    <!-- Offer Name -->
+                    <div class="mb-4">
+                        <label for="offerName" class="block text-sm font-medium text-gray-700 mb-1">
+                            Offer Name
+                        </label>
+                        <input type="text" id="offerName" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Offer Type -->
+                    <div class="mb-4">
+                        <label for="offerType" class="block text-sm font-medium text-gray-700 mb-1">
+                            Apply To
+                        </label>
+                        <select id="offerType" required onchange="handleTypeChange()"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Type</option>
+                            <option value="category">Category</option>
+                            <option value="product">Products</option>
                         </select>
                     </div>
 
-                    <!-- Product Selection -->
-                    <div id="productSelection" class="hidden">
-                        <div class="border rounded p-2">
-                            <div class="mb-2">
-                                <input type="text" id="productSearch" 
-                                       placeholder="Search products..." 
-                                       class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="max-h-60 overflow-y-auto">
-                                <div id="productList" class="space-y-2">
-                                    <!-- Products will be populated here -->
+                    <!-- Dynamic Selection -->
+                    <div id="selectionDiv" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Select <span id="selectionType"></span>
+                        </label>
+                        
+                        <!-- Category Selection -->
+                        <div id="categorySelection" class="hidden">
+                            <select id="categorySelect" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+
+                        <!-- Product Selection -->
+                        <div id="productSelection" class="hidden">
+                            <div class="border border-gray-300 rounded-md shadow-sm">
+                                <!-- Search Box -->
+                                <div class="p-3 border-b border-gray-200">
+                                    <input type="text" id="productSearch" 
+                                           placeholder="Search products..." 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                 </div>
-                            </div>
-                            <div class="mt-2 pt-2 border-t">
-                                <div class="flex justify-between text-sm text-gray-600">
-                                    <span>Selected: <span id="selectedCount">0</span></span>
-                                    <button type="button" onclick="toggleAllProducts()" 
-                                            class="text-blue-500 hover:text-blue-700">
-                                        Select All
-                                    </button>
+                                
+                                <!-- Product List -->
+                                <div class="max-h-48 overflow-y-auto p-3">
+                                    <div id="productList" class="space-y-2">
+                                        <!-- Products populated here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Selection Counter -->
+                                <div class="p-3 border-t border-gray-200 bg-gray-50 rounded-b-md">
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="text-gray-600">
+                                            Selected: <span id="selectedCount" class="font-medium">0</span>
+                                        </span>
+                                        <button type="button" onclick="toggleAllProducts()" 
+                                                class="text-blue-600 hover:text-blue-800 font-medium">
+                                            Select All
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Discount (%)</label>
-                    <input type="number" id="discount" required min="0" max="100"
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+                    <!-- Discount -->
+                    <div class="mb-4">
+                        <label for="discount" class="block text-sm font-medium text-gray-700 mb-1">
+                            Discount (%)
+                        </label>
+                        <input type="number" id="discount" required min="0" max="100"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Start Date</label>
-                    <input type="date" id="startDate" required
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+                    <!-- Date Range -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date
+                            </label>
+                            <input type="date" id="startDate" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
+                                End Date
+                            </label>
+                            <input type="date" id="endDate" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">End Date</label>
-                    <input type="date" id="endDate" required
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeOfferModal()"
-                            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
-                        Cancel
-                    </button>
-                    <button type="submit" id="submitButton"
-                            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                        Save Offer
-                    </button>
-                </div>
-            </form>
+                    <!-- Modal Footer -->
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeOfferModal()"
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitButton"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Save Offer
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -342,28 +376,37 @@
             document.getElementById('selectionDiv').classList.add('hidden');
         }
 
-        function editOffer(offerData) {
+        function editOffer(button) {
             try {
-                const offer = JSON.parse(offerData);
+                const offer = JSON.parse(decodeURIComponent(button.dataset.offer));
+                console.log('Editing offer:', offer); // Debug log
+
                 document.getElementById('modalTitle').textContent = 'Edit Offer';
                 document.getElementById('offerId').value = offer._id;
                 document.getElementById('offerName').value = offer.name;
                 
-                // Determine offer type and set select value
+                // Set offer type
                 const type = offer.categoryId ? 'category' : 'product';
                 document.getElementById('offerType').value = type;
                 
-                // Trigger type change to setup proper UI
+                // Setup UI based on type
                 handleTypeChange();
 
-                // Set selections after UI is updated
+                // Wait for UI to update before setting values
                 setTimeout(() => {
                     if (type === 'category') {
-                        document.getElementById('categorySelect').value = offer.categoryId._id;
+                        const categoryId = offer.categoryId._id || offer.categoryId;
+                        document.getElementById('categorySelect').value = categoryId;
                     } else {
-                        // Handle multiple product selections
+                        // Clear existing selections
+                        document.querySelectorAll('#productList input[type="checkbox"]').forEach(cb => {
+                            cb.checked = false;
+                        });
+
+                        // Set product selections
                         offer.productIds.forEach(product => {
-                            const checkbox = document.querySelector(`#product_${product._id}`);
+                            const productId = product._id || product;
+                            const checkbox = document.querySelector(`#product_${productId}`);
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
@@ -371,15 +414,16 @@
                         updateSelectedCount();
                     }
 
-                    // Set other form fields
+                    // Set other fields
                     document.getElementById('discount').value = offer.discount;
                     document.getElementById('startDate').value = new Date(offer.startDate).toISOString().split('T')[0];
                     document.getElementById('endDate').value = new Date(offer.endDate).toISOString().split('T')[0];
-                }, 100); // Small delay to ensure UI is updated
+                }, 100);
 
+                // Show modal
                 document.getElementById('offerModal').classList.remove('hidden');
             } catch (error) {
-                console.error('Error parsing offer data:', error);
+                console.error('Edit offer error:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
