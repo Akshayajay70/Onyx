@@ -79,11 +79,7 @@
                 </td>
                 <td class="py-3 px-4">
                   <div class="text-sm">
-                    <div class="font-medium">₹<%= product.discountPrice %></div>
-                    <div class="text-gray-500">
-                      <span class="text-green-500">-<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%</span>
-                      <span class="line-through">₹<%= product.price %></span>
-                    </div>
+                    <div class="font-medium">₹<%= product.price %></div>
                   </div>
                 </td>
                 <td class="py-3 px-4">
@@ -109,10 +105,6 @@
                           data-id="<%= product._id %>"
                           type="button">
                     Edit
-                  </button>
-                  <button class="text-red-500 hover:text-red-300 transition delete-product" 
-                          data-id="<%= product._id %>">
-                    <i class="fas fa-trash"></i>
                   </button>
                   <button class="toggle-status <%= product.isActive ? 'text-gray-500' : 'text-green-500' %>" 
                           data-id="<%= product._id %>" 
@@ -196,13 +188,7 @@
 
             <div>
               <label class="block text-gray-400 mb-1">Price (₹)</label>
-              <input type="number" name="price" id="price" min="0" step="0.01" required
-                     class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
-            </div>
-
-            <div>
-              <label class="block text-gray-400 mb-1">Discount Price (₹)</label>
-              <input type="number" name="discountPrice" id="discountPrice" min="0" step="0.01" required
+              <input type="number" name="price" id="price" min="0" step="1" required
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
             </div>
 
@@ -501,7 +487,7 @@
                 const productId = document.getElementById('productId').value;
                 
                 // Validate required fields
-                const requiredFields = ['productName', 'brand', 'gender', 'categoriesId', 'color', 'description', 'price', 'discountPrice', 'stock'];
+                const requiredFields = ['productName', 'brand', 'gender', 'categoriesId', 'color', 'description', 'price', 'stock'];
                 for (const field of requiredFields) {
                     const value = formData.get(field);
                     if (!value || value.trim() === '') {
@@ -619,7 +605,6 @@
                     document.getElementById('categoriesId').value = product.categoriesId._id || '';
                     document.getElementById('color').value = product.color || '';
                     document.getElementById('price').value = product.price || '';
-                    document.getElementById('discountPrice').value = product.discountPrice || '';
                     document.getElementById('stock').value = product.stock || '';
                     document.getElementById('variantDescription').value = product.description || '';
                     

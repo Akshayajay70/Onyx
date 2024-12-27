@@ -1,8 +1,8 @@
-import Product from '../model/productModel.js';
-import Category from '../model/categoryModel.js';
+import Product from '../../model/productModel.js';
+import Category from '../../model/categoryModel.js';
 import path from 'path';
 import fs from 'fs';
-import upload from '../utils/multer.js'
+import upload from '../../utils/multer.js'
 
 // Render Product Management Page
 const renderProductPage = async (req, res) => {
@@ -72,12 +72,11 @@ const addProduct = async (req, res) => {
                 color,
                 description,
                 price,
-                discountPrice,
                 stock
             } = req.body;
 
             // Additional validation
-            if (!productName || !brand || !categoriesId || !price || !discountPrice || !stock) {
+            if (!productName || !brand || !categoriesId || !price || !stock) {
                 return res.status(400).json({ message: 'All fields are required' });
             }
 
@@ -92,8 +91,6 @@ const addProduct = async (req, res) => {
                 color: color.trim(),
                 description: description.trim(),
                 price: parseFloat(price),
-                discountPrice: parseFloat(discountPrice),
-                discountPercentage: ((price - discountPrice) / price * 100).toFixed(2),
                 stock: parseInt(stock),
                 imageUrl: imageUrls,
                 isActive: true
@@ -142,7 +139,6 @@ const getProductDetails = async (req, res) => {
             color: product.color,
             description: product.description,
             price: product.price,
-            discountPrice: product.discountPrice,
             stock: product.stock,
             imageUrl: product.imageUrl || [],
             isActive: product.isActive
@@ -180,13 +176,12 @@ const updateProduct = async (req, res) => {
                 color,
                 description,
                 price,
-                discountPrice,
                 stock,
                 imageIndexes
             } = req.body;
 
             // Validate required fields
-            if (!productName || !brand || !categoriesId || !price || !discountPrice || !stock) {
+            if (!productName || !brand || !categoriesId || !price || !stock) {
                 return res.status(400).json({ message: 'All required fields must be filled' });
             }
 
@@ -225,8 +220,6 @@ const updateProduct = async (req, res) => {
                 color: color.trim(),
                 description: description.trim(),
                 price: parseFloat(price),
-                discountPrice: parseFloat(discountPrice),
-                discountPercentage: ((parseFloat(price) - parseFloat(discountPrice)) / parseFloat(price) * 100).toFixed(2),
                 stock: parseInt(stock),
                 imageUrl: updatedImageUrls
             };

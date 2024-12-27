@@ -41,17 +41,6 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    discountPrice: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    discountPercentage: {
-        type: Number,
-        required: true,
-        min: 0,
-        max: 100
-    },
     rating: {
         type: Number,
         default: 0,
@@ -65,7 +54,6 @@ const productSchema = new mongoose.Schema({
     },
     imageUrl: [String],
     
-    // Add offer-related fields
     offer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Offer'

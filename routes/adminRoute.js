@@ -2,7 +2,7 @@ import express from 'express';
 import adminController from '../controller/adminController.js';
 import adminMiddleware from '../middlewares/adminMiddleware.js';
 import adminCategoryController from '../controller/adminCategoryController.js';
-import adminProductController from '../controller/adminProductController.js';
+import adminProductController from '../controller/admin/productController.js';
 import adminOrderController from '../controller/adminOrderController.js';
 import adminCouponController from '../controller/adminCouponController.js';
 import reportController from '../controller/admin/reportController.js';
