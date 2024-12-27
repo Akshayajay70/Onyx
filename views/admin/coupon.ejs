@@ -95,7 +95,7 @@
               <input type="text" 
                      name="code" 
                      id="code" 
-                     required
+                     
                      class="uppercase w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
                      placeholder="e.g., SUMMER2024">
               <p class="text-xs text-gray-500 mt-1">Only uppercase letters and numbers allowed</p>
@@ -116,7 +116,7 @@
                 <input type="number" 
                        name="discountPercentage" 
                        id="discountPercentage" 
-                       required
+                       
                        min="0"
                        max="100"
                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
@@ -148,7 +148,7 @@
                 <input type="datetime-local" 
                        name="startDate" 
                        id="startDate" 
-                       required
+                       
                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
               </div>
 
@@ -157,7 +157,7 @@
                 <input type="datetime-local" 
                        name="expiryDate" 
                        id="expiryDate" 
-                       required
+                       
                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
               </div>
 
@@ -178,7 +178,7 @@
                        id="userUsageLimit" 
                        min="1"
                        value="1"
-                       required
+                       
                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
               </div>
             </div>
@@ -224,56 +224,134 @@
         couponForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           
-          const formData = new FormData(couponForm);
-          const couponId = formData.get('couponId');
-          
-          // Convert form data to JSON
-          const data = {
-            code: formData.get('code'),
-            description: formData.get('description'),
-            discountPercentage: Number(formData.get('discountPercentage')),
-            minimumPurchase: Number(formData.get('minimumPurchase')),
-            maximumDiscount: Number(formData.get('maximumDiscount')),
-            startDate: formData.get('startDate'),
-            expiryDate: formData.get('expiryDate'),
-            totalCoupon: Number(formData.get('totalCoupon')),
-            userUsageLimit: Number(formData.get('userUsageLimit'))
+          // Get form values
+          const code = document.getElementById('code').value.trim();
+          const description = document.getElementById('description').value.trim();
+          const discountPercentage = parseInt(document.getElementById('discountPercentage').value);
+          const minimumPurchase = parseInt(document.getElementById('minimumPurchase').value);
+          const maximumDiscount = parseInt(document.getElementById('maximumDiscount').value);
+          const startDate = document.getElementById('startDate').value;
+          const expiryDate = document.getElementById('expiryDate').value;
+          const totalCoupon = parseInt(document.getElementById('totalCoupon').value);
+          const userUsageLimit = parseInt(document.getElementById('userUsageLimit').value);
+
+          // Validation checks
+          if (!code) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Please enter a coupon code',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (code.length < 3 || code.length > 10) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Coupon code must be between 3 and 10 characters long',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (!discountPercentage || discountPercentage < 1 || discountPercentage > 90) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Discount percentage must be between 1 and 90',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (!startDate) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Please select a start date',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (!expiryDate) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Please select an expiry date',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          const start = new Date(startDate);
+          const expiry = new Date(expiryDate);
+          const currentDate = new Date();
+
+          if (start <= currentDate) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Start date cannot be in the past',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (expiry <= start) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Expiry date must be after start date',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          // Prepare form data
+          const formData = {
+              code,
+              description: description || undefined,
+              discountPercentage,
+              minimumPurchase: minimumPurchase || 0,
+              maximumDiscount: maximumDiscount || 0,
+              startDate,
+              expiryDate,
+              totalCoupon: totalCoupon || 0,
+              userUsageLimit: userUsageLimit || 1
           };
 
           try {
-            const url = couponId 
-              ? `/admin/coupons/edit/${couponId}`
-              : '/admin/coupons/add';
+              const url = document.getElementById('couponId').value
+                  ? `/admin/coupons/edit/${document.getElementById('couponId').value}`
+                  : '/admin/coupons/add';
 
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(data)
-            });
+              const response = await fetch(url, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(formData)
+              });
 
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Something went wrong');
-            }
+              const data = await response.json();
 
-            await Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: couponId ? 'Coupon updated successfully' : 'Coupon added successfully',
-              confirmButtonColor: '#10B981'
-            });
+              if (!response.ok) {
+                  throw new Error(data.message || 'Failed to save coupon');
+              }
 
-            window.location.reload();
+              await Swal.fire({
+                  icon: 'success',
+                  title: 'Success!',
+                  text: document.getElementById('couponId').value 
+                      ? 'Coupon updated successfully' 
+                      : 'Coupon added successfully',
+                  confirmButtonColor: '#10B981'
+              });
+
+              window.location.reload();
           } catch (error) {
-            console.error('Error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: error.message || 'An error occurred while processing your request',
-              confirmButtonColor: '#10B981'
-            });
+              Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: error.message,
+                  confirmButtonColor: '#10B981'
+              });
           }
         });
 
