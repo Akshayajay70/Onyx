@@ -7,304 +7,423 @@
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="mybg-green">
     <%- include('../partials/sidebar') %>
 
     <div class="p-4 sm:ml-64">
         <div class="p-4 mt-14">
-            <!-- Breadcrumb -->
-            <nav class="flex mb-8" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="/admin/dashboard" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
-                            <i class="fas fa-home mr-2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                            <span class="text-gray-500">Offers</span>
+            <!-- Header and Add Button -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-semibold text-white">Manage Offers</h1>
+                <button onclick="openOfferModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Add New Offer
+                </button>
+            </div>
+
+            <!-- Offers List -->
+            <div class="grid gap-4">
+                <% offers.forEach(offer => { %>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-semibold"><%= offer.name %></h3>
+                                <p class="text-gray-600">
+                                    <% if (offer.categoryId) { %>
+                                        Category: <%= offer.categoryId.name %>
+                                    <% } else { %>
+                                        Products: 
+                                        <% offer.productIds.forEach((product, index) => { %>
+                                            <%= product.productName %><%= index < offer.productIds.length - 1 ? ', ' : '' %>
+                                        <% }) %>
+                                    <% } %>
+                                </p>
+                                <p class="text-gray-600">Discount: <%= offer.discount %>%</p>
+                                <p class="text-gray-600">
+                                    Valid: <%= new Date(offer.startDate).toLocaleDateString() %> - 
+                                    <%= new Date(offer.endDate).toLocaleDateString() %>
+                                </p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="editOffer('<%= JSON.stringify(offer) %>')" 
+                                        class="text-blue-500 hover:text-blue-700">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteOffer('<%= offer._id %>')"
+                                        class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                    </li>
-                </ol>
-            </nav>
-
-            <!-- Main Content -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Manage Offers</h2>
-                    <button onclick="openAddOfferModal()" 
-                            class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Add New Offer
-                    </button>
-                </div>
-
-                <!-- Offers Table -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Name
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Type
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Applicable To
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Discount
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Duration
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <% offers.forEach(offer => { %>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            <%= offer.name %>
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            <%= offer.description %>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            <%= offer.type === 'product' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' %>">
-                                            <%= offer.type.charAt(0).toUpperCase() + offer.type.slice(1) %>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <%= offer.applicableTo.name %>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <%= offer.discount %>%
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <%= offer.startDate.toLocaleDateString() %> to
-                                        <%= offer.endDate.toLocaleDateString() %>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            <%= offer.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                offer.status === 'expired' ? 'bg-red-100 text-red-800' :
-                                                'bg-yellow-100 text-yellow-800' %>">
-                                            <%= offer.status.charAt(0).toUpperCase() + offer.status.slice(1) %>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button onclick="editOffer('<%= offer._id %>')" 
-                                                class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="deleteOffer('<%= offer._id %>')" 
-                                                class="text-red-600 hover:text-red-900">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        </tbody>
-                    </table>
-                </div>
+                    </div>
+                <% }); %>
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Offer Modal -->
-    <div id="offerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4" id="modalTitle">Add New Offer</h3>
-                <form id="offerForm" onsubmit="handleOfferSubmit(event)">
-                    <input type="hidden" id="offerId">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Offer Name</label>
-                            <input type="text" id="offerName" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Offer Type</label>
-                            <select id="offerType" required onchange="updateApplicableItems()"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                                <option value="">Select Type</option>
-                                <option value="product">Product Offer</option>
-                                <option value="category">Category Offer</option>
-                            </select>
-                        </div>
+    <!-- Offer Modal -->
+    <div id="offerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h2 id="modalTitle" class="text-xl font-bold mb-4">Add New Offer</h2>
+            <form id="offerForm" onsubmit="handleOfferSubmit(event)">
+                <input type="hidden" id="offerId">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Offer Name</label>
+                    <input type="text" id="offerName" required
+                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Applicable To</label>
-                            <select id="applicableTo" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                                <option value="">Select Item</option>
-                            </select>
-                        </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Apply To</label>
+                    <select id="offerType" required onchange="handleTypeChange()"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Type</option>
+                        <option value="category">Category</option>
+                        <option value="product">Product</option>
+                    </select>
+                </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Discount Percentage</label>
-                            <input type="number" id="discount" required min="0" max="100"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                            <input type="date" id="startDate" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">End Date</label>
-                            <input type="date" id="endDate" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea id="description"
-                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"></textarea>
-                        </div>
+                <!-- Dynamic Selection Div -->
+                <div id="selectionDiv" class="mb-4 hidden">
+                    <label class="block text-sm font-medium mb-1">Select <span id="selectionType"></span></label>
+                    
+                    <!-- Category Selection -->
+                    <div id="categorySelection" class="hidden">
+                        <select id="categorySelect" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Category</option>
+                        </select>
                     </div>
 
-                    <div class="mt-5 flex justify-end gap-3">
-                        <button type="button" onclick="closeOfferModal()"
-                                class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
-                            Save Offer
-                        </button>
+                    <!-- Product Selection -->
+                    <div id="productSelection" class="hidden">
+                        <div class="border rounded p-2">
+                            <div class="mb-2">
+                                <input type="text" id="productSearch" 
+                                       placeholder="Search products..." 
+                                       class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="max-h-60 overflow-y-auto">
+                                <div id="productList" class="space-y-2">
+                                    <!-- Products will be populated here -->
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-t">
+                                <div class="flex justify-between text-sm text-gray-600">
+                                    <span>Selected: <span id="selectedCount">0</span></span>
+                                    <button type="button" onclick="toggleAllProducts()" 
+                                            class="text-blue-500 hover:text-blue-700">
+                                        Select All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Discount (%)</label>
+                    <input type="number" id="discount" required min="0" max="100"
+                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Start Date</label>
+                    <input type="date" id="startDate" required
+                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">End Date</label>
+                    <input type="date" id="endDate" required
+                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeOfferModal()"
+                            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitButton"
+                            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Save Offer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
+        let isSubmitting = false;
         const products = <%- JSON.stringify(products) %>;
         const categories = <%- JSON.stringify(categories) %>;
 
-        function updateApplicableItems() {
+        function handleTypeChange() {
             const type = document.getElementById('offerType').value;
-            const applicableSelect = document.getElementById('applicableTo');
-            applicableSelect.innerHTML = '<option value="">Select Item</option>';
+            const selectionDiv = document.getElementById('selectionDiv');
+            const categorySelection = document.getElementById('categorySelection');
+            const productSelection = document.getElementById('productSelection');
+            const selectionType = document.getElementById('selectionType');
+            
+            if (!type) {
+                selectionDiv.classList.add('hidden');
+                return;
+            }
 
-            const items = type === 'product' ? products : categories;
-            items.forEach(item => {
+            selectionDiv.classList.remove('hidden');
+            selectionType.textContent = type === 'category' ? 'Category' : 'Products';
+            
+            if (type === 'category') {
+                categorySelection.classList.remove('hidden');
+                productSelection.classList.add('hidden');
+                populateCategories();
+            } else {
+                categorySelection.classList.add('hidden');
+                productSelection.classList.remove('hidden');
+                populateProducts();
+            }
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '<option value="">Select Category</option>';
+            
+            categories.forEach(category => {
                 const option = document.createElement('option');
-                option.value = item._id;
-                option.textContent = item.name;
-                applicableSelect.appendChild(option);
+                option.value = category._id;
+                option.textContent = category.name;
+                select.appendChild(option);
             });
         }
 
-        function openAddOfferModal() {
+        function populateProducts() {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center p-2 hover:bg-gray-50 rounded';
+                div.innerHTML = `
+                    <input type="checkbox" 
+                           id="product_${product._id}" 
+                           value="${product._id}"
+                           class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500"
+                           onchange="updateSelectedCount()">
+                    <label for="product_${product._id}" class="flex-1 cursor-pointer">
+                        <div class="font-medium">${product.productName}</div>
+                        <div class="text-sm text-gray-500">${product.brand}</div>
+                    </label>
+                `;
+                productList.appendChild(div);
+            });
+
+            // Initialize search functionality
+            document.getElementById('productSearch').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const items = productList.getElementsByTagName('div');
+                
+                Array.from(items).forEach(item => {
+                    const productName = item.querySelector('label').textContent.toLowerCase();
+                    item.style.display = productName.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('#productList input[type="checkbox"]:checked').length;
+            document.getElementById('selectedCount').textContent = selectedCount;
+        }
+
+        function toggleAllProducts() {
+            const checkboxes = document.querySelectorAll('#productList input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+            });
+            updateSelectedCount();
+        }
+
+        async function handleOfferSubmit(event) {
+            event.preventDefault();
+            if (isSubmitting) return;
+
+            const type = document.getElementById('offerType').value;
+            let itemIds = [];
+
+            if (type === 'category') {
+                const categoryId = document.getElementById('categorySelect').value;
+                if (!categoryId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Please select a category'
+                    });
+                    return;
+                }
+                itemIds = [categoryId];
+            } else {
+                const selectedProducts = document.querySelectorAll('#productList input[type="checkbox"]:checked');
+                itemIds = Array.from(selectedProducts).map(cb => cb.value);
+                if (itemIds.length === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Please select at least one product'
+                    });
+                    return;
+                }
+            }
+
+            try {
+                isSubmitting = true;
+                const submitButton = document.getElementById('submitButton');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                const offerId = document.getElementById('offerId').value;
+                const formData = {
+                    name: document.getElementById('offerName').value.trim(),
+                    type,
+                    itemIds,
+                    discount: document.getElementById('discount').value,
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value
+                };
+
+                const url = offerId ? `/admin/offers/${offerId}` : '/admin/offers';
+                const method = offerId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message
+                    }).then(() => window.location.reload());
+                } else {
+                    throw new Error(data.message);
+                }
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: error.message
+                });
+            } finally {
+                isSubmitting = false;
+                const submitButton = document.getElementById('submitButton');
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Save Offer';
+            }
+        }
+
+        function openOfferModal() {
             document.getElementById('modalTitle').textContent = 'Add New Offer';
             document.getElementById('offerForm').reset();
             document.getElementById('offerId').value = '';
+            document.getElementById('selectionDiv').classList.add('hidden');
             document.getElementById('offerModal').classList.remove('hidden');
         }
 
         function closeOfferModal() {
             document.getElementById('offerModal').classList.add('hidden');
+            document.getElementById('offerForm').reset();
+            document.getElementById('selectionDiv').classList.add('hidden');
         }
 
-        async function handleOfferSubmit(event) {
-            event.preventDefault();
-            
-            const offerId = document.getElementById('offerId').value;
-            const formData = {
-                name: document.getElementById('offerName').value,
-                type: document.getElementById('offerType').value,
-                applicableTo: document.getElementById('applicableTo').value,
-                discount: document.getElementById('discount').value,
-                startDate: document.getElementById('startDate').value,
-                endDate: document.getElementById('endDate').value,
-                description: document.getElementById('description').value
-            };
-
+        function editOffer(offerData) {
             try {
-                const url = offerId ? 
-                    `/admin/offers/${offerId}` : 
-                    '/admin/offers';
+                const offer = JSON.parse(offerData);
+                document.getElementById('modalTitle').textContent = 'Edit Offer';
+                document.getElementById('offerId').value = offer._id;
+                document.getElementById('offerName').value = offer.name;
                 
-                const response = await fetch(url, {
-                    method: offerId ? 'PUT' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
+                // Determine offer type and set select value
+                const type = offer.categoryId ? 'category' : 'product';
+                document.getElementById('offerType').value = type;
                 
-                if (data.success) {
-                    closeOfferModal();
-                    window.location.reload();
-                } else {
-                    throw new Error(data.message);
-                }
-            } catch (error) {
-                alert(error.message);
-            }
-        }
+                // Trigger type change to setup proper UI
+                handleTypeChange();
 
-        async function editOffer(offerId) {
-            try {
-                const response = await fetch(`/admin/offers/${offerId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const offer = data.offer;
-                    document.getElementById('modalTitle').textContent = 'Edit Offer';
-                    document.getElementById('offerId').value = offer._id;
-                    document.getElementById('offerName').value = offer.name;
-                    document.getElementById('offerType').value = offer.type;
-                    updateApplicableItems();
-                    document.getElementById('applicableTo').value = offer.applicableTo;
-                    document.getElementById('discount').value = offer.discount;
-                    document.getElementById('startDate').value = offer.startDate.split('T')[0];
-                    document.getElementById('endDate').value = offer.endDate.split('T')[0];
-                    document.getElementById('description').value = offer.description;
-                    
-                    document.getElementById('offerModal').classList.remove('hidden');
-                }
-            } catch (error) {
-                alert('Error loading offer details');
-            }
-        }
-
-        async function deleteOffer(offerId) {
-            if (confirm('Are you sure you want to delete this offer?')) {
-                try {
-                    const response = await fetch(`/admin/offers/${offerId}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        window.location.reload();
+                // Set selections after UI is updated
+                setTimeout(() => {
+                    if (type === 'category') {
+                        document.getElementById('categorySelect').value = offer.categoryId._id;
                     } else {
-                        throw new Error(data.message);
+                        // Handle multiple product selections
+                        offer.productIds.forEach(product => {
+                            const checkbox = document.querySelector(`#product_${product._id}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                        updateSelectedCount();
                     }
-                } catch (error) {
-                    alert('Error deleting offer');
-                }
+
+                    // Set other form fields
+                    document.getElementById('discount').value = offer.discount;
+                    document.getElementById('startDate').value = new Date(offer.startDate).toISOString().split('T')[0];
+                    document.getElementById('endDate').value = new Date(offer.endDate).toISOString().split('T')[0];
+                }, 100); // Small delay to ensure UI is updated
+
+                document.getElementById('offerModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error parsing offer data:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load offer details'
+                });
             }
+        }
+
+        function deleteOffer(offerId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, delete it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/admin/offers/${offerId}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: data.message
+                            }).then(() => window.location.reload());
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: error.message
+                        });
+                    }
+                }
+            });
         }
     </script>
 </body>

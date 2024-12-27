@@ -6,23 +6,20 @@ const offerSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    type: {
-        type: String,
-        enum: ['product', 'category'],
-        required: true
-    },
     discount: {
         type: Number,
         required: true,
         min: 0,
         max: 100
     },
-    applicableTo: {
+    categoryId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        // Reference will be either to Product or Category based on type
-        refPath: 'type'
+        ref: 'Category'
     },
+    productIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
     startDate: {
         type: Date,
         required: true
@@ -35,10 +32,17 @@ const offerSchema = new mongoose.Schema({
         type: String,
         enum: ['active', 'inactive', 'expired'],
         default: 'active'
-    },
+    }
 }, {
     timestamps: true
 });
 
+// Virtual to determine if it's a category or product offer
+offerSchema.virtual('offerType').get(function() {
+    return this.categoryId ? 'category' : 'product';
+});
+
+offerSchema.set('toJSON', { virtuals: true });
+offerSchema.set('toObject', { virtuals: true });
 
 export default mongoose.model('Offer', offerSchema); 

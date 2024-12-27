@@ -1,17 +1,19 @@
 import Offer from '../../model/offerModel.js';
 import Product from '../../model/productModel.js';
 import Category from '../../model/categoryModel.js';
+import mongoose from 'mongoose';
 
 const offerController = {
     // Get all offers
     getOffers: async (req, res) => {
         try {
             const offers = await Offer.find()
-                .populate('applicableTo')
+                .populate('productIds')
+                .populate('categoryId')
                 .sort('-createdAt');
 
-            const products = await Product.find({ status: 'active' });
-            const categories = await Category.find({ status: 'active' });
+            const products = await Product.find({ isActive: true });
+            const categories = await Category.find({ isActive: true });
 
             res.render('admin/offers', {
                 offers,
@@ -20,7 +22,7 @@ const offerController = {
             });
         } catch (error) {
             console.error('Get offers error:', error);
-            res.status(500).render('error', { message: 'Error loading offers' });
+            res.status(500).json({ message: 'Error loading offers' });
         }
     },
 
@@ -30,54 +32,52 @@ const offerController = {
             const {
                 name,
                 type,
+                itemIds,
                 discount,
-                applicableTo,
                 startDate,
-                endDate,
-                description
+                endDate
             } = req.body;
 
-            // Validate dates
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            
-            if (start >= end) {
+            // Validate required fields
+            if (!name || !type || !itemIds || !discount || !startDate || !endDate) {
                 return res.status(400).json({
                     success: false,
-                    message: 'End date must be after start date'
+                    message: 'All fields are required'
                 });
             }
 
-            // Check for existing offers on same product/category
-            const existingOffer = await Offer.findOne({
-                type,
-                applicableTo,
-                status: 'active',
-                $or: [
-                    {
-                        startDate: { $lte: end },
-                        endDate: { $gte: start }
-                    }
-                ]
-            });
-
-            if (existingOffer) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'An active offer already exists for this item during the selected period'
-                });
-            }
-
-            const offer = await Offer.create({
+            // Create offer data
+            const offerData = {
                 name,
-                type,
-                discount,
-                applicableTo,
-                startDate: start,
-                endDate: end,
-                description,
+                discount: Number(discount),
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
                 status: 'active'
-            });
+            };
+
+            // Set either categoryId or productIds based on type
+            if (type === 'category') {
+                offerData.categoryId = itemIds[0]; // Single category ID
+                offerData.productIds = []; // Empty product array
+            } else {
+                offerData.productIds = itemIds; // Array of product IDs
+                offerData.categoryId = null; // No category
+            }
+
+            // Create single offer
+            const offer = await Offer.create(offerData);
+
+            // Update products if it's a product offer
+            if (type === 'product') {
+                await Product.updateMany(
+                    { _id: { $in: itemIds } },
+                    {
+                        offer: offer._id,
+                        offerApplied: true,
+                        offerType: 'product'
+                    }
+                );
+            }
 
             res.json({
                 success: true,
@@ -89,7 +89,36 @@ const offerController = {
             console.error('Create offer error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error creating offer'
+                message: error.message || 'Error creating offer'
+            });
+        }
+    },
+
+    // Get single offer
+    getOffer: async (req, res) => {
+        try {
+            const { offerId } = req.params;
+            const offer = await Offer.findById(offerId)
+                .populate('productIds')
+                .populate('categoryId');
+
+            if (!offer) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Offer not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                offer
+            });
+
+        } catch (error) {
+            console.error('Get offer error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error fetching offer details'
             });
         }
     },
@@ -100,42 +129,79 @@ const offerController = {
             const { offerId } = req.params;
             const {
                 name,
+                type,
+                itemIds,
                 discount,
                 startDate,
-                endDate,
-                status,
-                description
+                endDate
             } = req.body;
 
-            const offer = await Offer.findById(offerId);
-            if (!offer) {
+            const existingOffer = await Offer.findById(offerId);
+            if (!existingOffer) {
                 return res.status(404).json({
                     success: false,
                     message: 'Offer not found'
                 });
             }
 
-            // Update fields
-            offer.name = name;
-            offer.discount = discount;
-            offer.startDate = new Date(startDate);
-            offer.endDate = new Date(endDate);
-            offer.status = status;
-            offer.description = description;
+            // Remove offer reference from old products
+            if (existingOffer.productIds.length > 0) {
+                await Product.updateMany(
+                    { _id: { $in: existingOffer.productIds } },
+                    {
+                        offer: null,
+                        offerApplied: false,
+                        offerType: null
+                    }
+                );
+            }
 
-            await offer.save();
+            // Update offer data
+            const updateData = {
+                name,
+                discount: Number(discount),
+                startDate: new Date(startDate),
+                endDate: new Date(endDate)
+            };
+
+            // Update either categoryId or productIds based on type
+            if (type === 'category') {
+                updateData.categoryId = itemIds[0];
+                updateData.productIds = [];
+            } else {
+                updateData.productIds = itemIds;
+                updateData.categoryId = null;
+            }
+
+            const updatedOffer = await Offer.findByIdAndUpdate(
+                offerId,
+                updateData,
+                { new: true }
+            );
+
+            // Update new products if it's a product offer
+            if (type === 'product') {
+                await Product.updateMany(
+                    { _id: { $in: itemIds } },
+                    {
+                        offer: updatedOffer._id,
+                        offerApplied: true,
+                        offerType: 'product'
+                    }
+                );
+            }
 
             res.json({
                 success: true,
                 message: 'Offer updated successfully',
-                offer
+                offer: updatedOffer
             });
 
         } catch (error) {
             console.error('Update offer error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error updating offer'
+                message: error.message || 'Error updating offer'
             });
         }
     },
@@ -144,7 +210,28 @@ const offerController = {
     deleteOffer: async (req, res) => {
         try {
             const { offerId } = req.params;
-            await Offer.findByIdAndDelete(offerId);
+            const offer = await Offer.findById(offerId);
+
+            if (!offer) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Offer not found'
+                });
+            }
+
+            // Remove offer reference from products
+            if (offer.productIds.length > 0) {
+                await Product.updateMany(
+                    { _id: { $in: offer.productIds } },
+                    {
+                        offer: null,
+                        offerApplied: false,
+                        offerType: null
+                    }
+                );
+            }
+
+            await offer.deleteOne();
 
             res.json({
                 success: true,
