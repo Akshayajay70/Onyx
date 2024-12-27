@@ -91,8 +91,19 @@
             <!-- Pricing -->
             <div class="flex items-center space-x-4 my-4">
               <p class="text-lg font-bold text-gray-800"></p>
-              <p class="text-gray-500 line-through">₹<%= product.price.toLocaleString() %></p>
-              <p class="text-green-600 font-semibold">% off</p>
+              <div class="space-y-2">
+                <div class="flex items-baseline gap-4">
+                  <% if (product.discountPrice < product.originalPrice) { %>
+                    <span class="text-3xl font-bold text-gray-900">₹<%= product.discountPrice %></span>
+                    <span class="text-xl text-gray-500 line-through">₹<%= product.originalPrice %></span>
+                    <span class="text-green-600 font-medium">
+                      -<%= Math.round((product.originalPrice - product.discountPrice) / product.originalPrice * 100) %>%
+                    </span>
+                  <% } else { %>
+                    <span class="text-3xl font-bold text-gray-900">₹<%= product.originalPrice %></span>
+                  <% } %>
+                </div>
+              </div>
             </div>
 
             <!-- Rating -->
