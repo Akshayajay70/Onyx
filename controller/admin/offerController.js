@@ -46,25 +46,86 @@ const offerController = {
                 });
             }
 
+            // Validate dates
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const now = new Date();
+
+            if (start < now) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Start date cannot be in the past'
+                });
+            }
+
+            if (end <= start) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'End date must be after start date'
+                });
+            }
+
+            // Check for existing offers with date overlap
+            let existingOffers;
+            if (type === 'product') {
+                existingOffers = await Offer.find({
+                    productIds: { $in: itemIds },
+                    $or: [
+                        {
+                            startDate: { $lte: end },
+                            endDate: { $gte: start }
+                        }
+                    ]
+                }).populate('productIds');
+
+                if (existingOffers.length > 0) {
+                    const products = await Product.find({ _id: { $in: itemIds } });
+                    const conflictingProducts = products.filter(product => 
+                        existingOffers.some(offer => 
+                            offer.productIds.some(p => p._id.toString() === product._id.toString())
+                        )
+                    );
+
+                    return res.status(400).json({
+                        success: false,
+                        message: `Following products already have offers for this period: ${conflictingProducts.map(p => p.productName).join(', ')}`
+                    });
+                }
+            } else if (type === 'category') {
+                existingOffers = await Offer.find({
+                    categoryId: itemIds[0],
+                    $or: [
+                        {
+                            startDate: { $lte: end },
+                            endDate: { $gte: start }
+                        }
+                    ]
+                }).populate('categoryId');
+
+                if (existingOffers.length > 0) {
+                    const category = await Category.findById(itemIds[0]);
+                    return res.status(400).json({
+                        success: false,
+                        message: `Category '${category.name}' already has an offer for this period`
+                    });
+                }
+            }
+
             // Create offer data
             const offerData = {
                 name,
                 discount: Number(discount),
-                startDate: new Date(startDate),
-                endDate: new Date(endDate),
+                startDate: start,
+                endDate: end,
                 status: 'active'
             };
 
-            // Set either categoryId or productIds based on type
             if (type === 'category') {
-                offerData.categoryId = itemIds[0]; // Single category ID
-                offerData.productIds = []; // Empty product array
+                offerData.categoryId = itemIds[0];
             } else {
-                offerData.productIds = itemIds; // Array of product IDs
-                offerData.categoryId = null; // No category
+                offerData.productIds = itemIds;
             }
 
-            // Create single offer
             const offer = await Offer.create(offerData);
 
             // Update products if it's a product offer
@@ -136,6 +197,73 @@ const offerController = {
                 endDate
             } = req.body;
 
+            // Validate dates
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const now = new Date();
+
+            if (start < now) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Start date cannot be in the past'
+                });
+            }
+
+            if (end <= start) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'End date must be after start date'
+                });
+            }
+
+            // Check for existing offers with date overlap
+            let existingOffers;
+            if (type === 'product') {
+                existingOffers = await Offer.find({
+                    _id: { $ne: offerId },
+                    productIds: { $in: itemIds },
+                    $or: [
+                        {
+                            startDate: { $lte: end },
+                            endDate: { $gte: start }
+                        }
+                    ]
+                }).populate('productIds');
+
+                if (existingOffers.length > 0) {
+                    const products = await Product.find({ _id: { $in: itemIds } });
+                    const conflictingProducts = products.filter(product => 
+                        existingOffers.some(offer => 
+                            offer.productIds.some(p => p._id.toString() === product._id.toString())
+                        )
+                    );
+
+                    return res.status(400).json({
+                        success: false,
+                        message: `Following products already have offers for this period: ${conflictingProducts.map(p => p.productName).join(', ')}`
+                    });
+                }
+            } else if (type === 'category') {
+                existingOffers = await Offer.find({
+                    _id: { $ne: offerId },
+                    categoryId: itemIds[0],
+                    $or: [
+                        {
+                            startDate: { $lte: end },
+                            endDate: { $gte: start }
+                        }
+                    ]
+                }).populate('categoryId');
+
+                if (existingOffers.length > 0) {
+                    const category = await Category.findById(itemIds[0]);
+                    return res.status(400).json({
+                        success: false,
+                        message: `Category '${category.name}' already has an offer for this period`
+                    });
+                }
+            }
+
             const existingOffer = await Offer.findById(offerId);
             if (!existingOffer) {
                 return res.status(404).json({
@@ -160,8 +288,8 @@ const offerController = {
             const updateData = {
                 name,
                 discount: Number(discount),
-                startDate: new Date(startDate),
-                endDate: new Date(endDate)
+                startDate: start,
+                endDate: end
             };
 
             // Update either categoryId or productIds based on type
