@@ -36,20 +36,9 @@ const offerSchema = new mongoose.Schema({
         enum: ['active', 'inactive', 'expired'],
         default: 'active'
     },
-    description: {
-        type: String,
-        trim: true
-    }
 }, {
     timestamps: true
 });
 
-// Virtual for checking if offer is currently active
-offerSchema.virtual('isActive').get(function() {
-    const now = new Date();
-    return this.status === 'active' && 
-           now >= this.startDate && 
-           now <= this.endDate;
-});
 
 export default mongoose.model('Offer', offerSchema); 

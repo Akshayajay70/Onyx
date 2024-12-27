@@ -90,9 +90,9 @@
 
             <!-- Pricing -->
             <div class="flex items-center space-x-4 my-4">
-              <p class="text-lg font-bold text-gray-800">₹<%= product.discountPrice.toLocaleString() %></p>
+              <p class="text-lg font-bold text-gray-800"></p>
               <p class="text-gray-500 line-through">₹<%= product.price.toLocaleString() %></p>
-              <p class="text-green-600 font-semibold"><%= product.discountPercentage %>% off</p>
+              <p class="text-green-600 font-semibold">% off</p>
             </div>
 
             <!-- Rating -->
@@ -177,7 +177,7 @@
                 <p class="ml-1 text-gray-800 font-medium"><%= product.rating || 'No rating' %></p>
               </div>
               <div class="flex gap-2 mt-2">
-                <div class="text-xl font-bold text-gray-900">₹<%= product.discountPrice.toLocaleString() %></div>
+                <div class="text-xl font-bold text-gray-900">₹</div>
                 <div class="text-gray-500 line-through mt-1">₹<%= product.price.toLocaleString() %></div>
               </div>
             </a>

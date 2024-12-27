@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import userController from '../controller/userController.js';
-import productController from '../controller/userProductController.js';
+import productController from '../controller/user/viewProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 import userProfileController from '../controller/userProfileController.js';
 import userAddressController from '../controller/userAddressController.js';
