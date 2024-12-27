@@ -116,11 +116,8 @@
                 <input type="number" 
                        name="discountPercentage" 
                        id="discountPercentage" 
-                       
-                       min="0"
-                       max="100"
                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                       placeholder="Enter percentage (0-100)">
+                       placeholder="Enter percentage (1-90)">
               </div>
 
               <div>
@@ -145,7 +142,7 @@
 
               <div>
                 <label class="block text-gray-400 mb-1">Start Date</label>
-                <input type="datetime-local" 
+                <input type="date" 
                        name="startDate" 
                        id="startDate" 
                        
@@ -154,7 +151,7 @@
 
               <div>
                 <label class="block text-gray-400 mb-1">Expiry Date</label>
-                <input type="datetime-local" 
+                <input type="date" 
                        name="expiryDate" 
                        id="expiryDate" 
                        
@@ -281,11 +278,17 @@
               });
           }
 
+          // Convert dates to simple date format without time
           const start = new Date(startDate);
-          const expiry = new Date(expiryDate);
-          const currentDate = new Date();
+          start.setHours(0, 0, 0, 0);
 
-          if (start <= currentDate) {
+          const expiry = new Date(expiryDate);
+          expiry.setHours(0, 0, 0, 0);
+
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
+          if (start < currentDate) {
               return Swal.fire({
                   icon: 'error',
                   title: 'Validation Error',
