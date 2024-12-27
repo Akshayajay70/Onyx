@@ -205,13 +205,14 @@
                   <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
                     <%= product.productName %>
                   </h2>
-                  <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      <% if (product.discountPrice < product.price) { %>
-                        <span class="text-gray-500 line-through text-xs">₹<%= product.price %></span>
-                      <% } %>
-                      <span class="text-base font-bold text-gray-900">₹<%= product.discountPrice %></span>
-                    </div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
+                    <% if (product.discountPrice < product.price) { %>
+                      <span class="text-sm text-gray-500 line-through">₹<%= product.price %></span>
+                      <span class="text-xs text-green-600 font-medium">
+                        <%= Math.round((product.price - product.discountPrice) / product.price * 100) %>% off
+                      </span>
+                    <% } %>
                   </div>
                 </div>
               </a>
@@ -344,13 +345,14 @@
                           <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
                               ${product.productName}
                           </h2>
-                          <div class="space-y-1">
-                              <div class="flex items-center gap-2">
-                                  ${product.discountPrice < product.price ? `
-                                      <span class="text-gray-500 line-through text-xs">₹${product.price}</span>
-                                  ` : ''}
-                                  <span class="text-base font-bold text-gray-900">₹${product.discountPrice}</span>
-                              </div>
+                          <div class="flex items-baseline gap-2">
+                              <span class="text-lg font-bold text-gray-900">₹${product.discountPrice}</span>
+                              ${product.discountPrice < product.price ? `
+                                  <span class="text-sm text-gray-500 line-through">₹${product.price}</span>
+                                  <span class="text-xs text-green-600 font-medium">
+                                      ${Math.round((product.price - product.discountPrice) / product.price * 100)}% off
+                                  </span>
+                              ` : ''}
                           </div>
                       </div>
                   </a>
