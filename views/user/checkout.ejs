@@ -292,14 +292,41 @@
             const activeCouponsList = document.getElementById('activeCouponsList');
             activeCouponsList.innerHTML = '';
 
-            coupons.forEach(coupon => {
-                const isApplicable = coupon.isApplicable;
-                const couponElement = createCouponElement(coupon, isApplicable);
-                activeCouponsList.appendChild(couponElement);
-            });
+            // Separate applicable and non-applicable coupons
+            const applicableCoupons = coupons.filter(coupon => coupon.isApplicable);
+            const nonApplicableCoupons = coupons.filter(coupon => !coupon.isApplicable);
 
-            // Show "No coupons" message if section is empty
-            if (!activeCouponsList.children.length) {
+            // Render applicable coupons first with a header
+            if (applicableCoupons.length > 0) {
+                activeCouponsList.innerHTML += `
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-green-600 mb-3">Available for You</h4>
+                        <div class="space-y-3">
+                            ${applicableCoupons.map(coupon => 
+                                createCouponElement(coupon, true).outerHTML
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render non-applicable coupons with a header
+            if (nonApplicableCoupons.length > 0) {
+                activeCouponsList.innerHTML += `
+                    <div>
+                        ${applicableCoupons.length > 0 ? '<hr class="my-4">' : ''}
+                        <h4 class="text-sm font-medium text-gray-600 mb-3">Other Coupons</h4>
+                        <div class="space-y-3">
+                            ${nonApplicableCoupons.map(coupon => 
+                                createCouponElement(coupon, false).outerHTML
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show "No coupons" message if both sections are empty
+            if (!applicableCoupons.length && !nonApplicableCoupons.length) {
                 activeCouponsList.innerHTML = `
                     <div class="text-gray-500 text-center py-3">
                         No coupons available
