@@ -64,6 +64,25 @@ const productSchema = new mongoose.Schema({
         min: 0
     },
     imageUrl: [String],
+    
+    // Add offer-related fields
+    offer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer'
+    },
+    offerPrice: {
+        type: Number,
+        min: 0
+    },
+    offerApplied: {
+        type: Boolean,
+        default: false
+    },
+    offerType: {
+        type: String,
+        enum: ['product', 'category', 'none'],
+        default: 'none'
+    }
 }, 
 { timestamps: true });
 

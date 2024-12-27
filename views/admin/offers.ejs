@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Offers - Admin</title>
+    <link rel="stylesheet" href="/tailwindcss/output.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+</head>
+<body class="mybg-green">
+    <%- include('../partials/sidebar') %>
+
+    <div class="p-4 sm:ml-64">
+        <div class="p-4 mt-14">
+            <!-- Breadcrumb -->
+            <nav class="flex mb-8" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="/admin/dashboard" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                            <span class="text-gray-500">Offers</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Manage Offers</h2>
+                    <button onclick="openAddOfferModal()" 
+                            class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add New Offer
+                    </button>
+                </div>
+
+                <!-- Offers Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Name
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Type
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Applicable To
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Discount
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Duration
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% offers.forEach(offer => { %>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            <%= offer.name %>
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            <%= offer.description %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <%= offer.type === 'product' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' %>">
+                                            <%= offer.type.charAt(0).toUpperCase() + offer.type.slice(1) %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <%= offer.applicableTo.name %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <%= offer.discount %>%
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <%= offer.startDate.toLocaleDateString() %> to
+                                        <%= offer.endDate.toLocaleDateString() %>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <%= offer.status === 'active' ? 'bg-green-100 text-green-800' :
+                                                offer.status === 'expired' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800' %>">
+                                            <%= offer.status.charAt(0).toUpperCase() + offer.status.slice(1) %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button onclick="editOffer('<%= offer._id %>')" 
+                                                class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteOffer('<%= offer._id %>')" 
+                                                class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Offer Modal -->
+    <div id="offerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4" id="modalTitle">Add New Offer</h3>
+                <form id="offerForm" onsubmit="handleOfferSubmit(event)">
+                    <input type="hidden" id="offerId">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Offer Name</label>
+                            <input type="text" id="offerName" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Offer Type</label>
+                            <select id="offerType" required onchange="updateApplicableItems()"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                                <option value="">Select Type</option>
+                                <option value="product">Product Offer</option>
+                                <option value="category">Category Offer</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Applicable To</label>
+                            <select id="applicableTo" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                                <option value="">Select Item</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Discount Percentage</label>
+                            <input type="number" id="discount" required min="0" max="100"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                            <input type="date" id="startDate" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">End Date</label>
+                            <input type="date" id="endDate" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea id="description"
+                                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex justify-end gap-3">
+                        <button type="button" onclick="closeOfferModal()"
+                                class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            Save Offer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const products = <%- JSON.stringify(products) %>;
+        const categories = <%- JSON.stringify(categories) %>;
+
+        function updateApplicableItems() {
+            const type = document.getElementById('offerType').value;
+            const applicableSelect = document.getElementById('applicableTo');
+            applicableSelect.innerHTML = '<option value="">Select Item</option>';
+
+            const items = type === 'product' ? products : categories;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item._id;
+                option.textContent = item.name;
+                applicableSelect.appendChild(option);
+            });
+        }
+
+        function openAddOfferModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Offer';
+            document.getElementById('offerForm').reset();
+            document.getElementById('offerId').value = '';
+            document.getElementById('offerModal').classList.remove('hidden');
+        }
+
+        function closeOfferModal() {
+            document.getElementById('offerModal').classList.add('hidden');
+        }
+
+        async function handleOfferSubmit(event) {
+            event.preventDefault();
+            
+            const offerId = document.getElementById('offerId').value;
+            const formData = {
+                name: document.getElementById('offerName').value,
+                type: document.getElementById('offerType').value,
+                applicableTo: document.getElementById('applicableTo').value,
+                discount: document.getElementById('discount').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                description: document.getElementById('description').value
+            };
+
+            try {
+                const url = offerId ? 
+                    `/admin/offers/${offerId}` : 
+                    '/admin/offers';
+                
+                const response = await fetch(url, {
+                    method: offerId ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeOfferModal();
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function editOffer(offerId) {
+            try {
+                const response = await fetch(`/admin/offers/${offerId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const offer = data.offer;
+                    document.getElementById('modalTitle').textContent = 'Edit Offer';
+                    document.getElementById('offerId').value = offer._id;
+                    document.getElementById('offerName').value = offer.name;
+                    document.getElementById('offerType').value = offer.type;
+                    updateApplicableItems();
+                    document.getElementById('applicableTo').value = offer.applicableTo;
+                    document.getElementById('discount').value = offer.discount;
+                    document.getElementById('startDate').value = offer.startDate.split('T')[0];
+                    document.getElementById('endDate').value = offer.endDate.split('T')[0];
+                    document.getElementById('description').value = offer.description;
+                    
+                    document.getElementById('offerModal').classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Error loading offer details');
+            }
+        }
+
+        async function deleteOffer(offerId) {
+            if (confirm('Are you sure you want to delete this offer?')) {
+                try {
+                    const response = await fetch(`/admin/offers/${offerId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    alert('Error deleting offer');
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
