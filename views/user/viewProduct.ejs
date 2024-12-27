@@ -188,18 +188,11 @@
                 <p class="ml-1 text-gray-800 font-medium"><%= product.rating || 'No rating' %></p>
               </div>
               <div class="flex gap-2 mt-2">
-                <div class="text-xl font-bold text-gray-900">₹</div>
+                <div class="text-xl font-bold text-gray-900">₹<%= product.discountPrice %></div>
                 <div class="text-gray-500 line-through mt-1">₹<%= product.price.toLocaleString() %></div>
               </div>
             </a>
             <div class="flex justify-between items-center mt-4">
-              <button 
-                onclick="addToWishlist('<%= product._id %>')" 
-                class="hover:text-slate-500"
-                id="related-wishlist-<%= product._id %>"
-              >
-                <i class="far fa-heart"></i>
-              </button>
               <% if (product.stock === 0) { %>
                 <div class="text-red-600 bg-red-100 border border-red-600 rounded-lg p-2 text-sm font-semibold">
                   Out of Stock

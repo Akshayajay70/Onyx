@@ -966,6 +966,10 @@ video {
   width: 0.75rem;
 }
 
+.w-14 {
+  width: 3.5rem;
+}
+
 .min-w-\[140px\] {
   min-width: 140px;
 }
@@ -2252,6 +2256,11 @@ video {
   --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
 }
 
+.hover\:ring-black:hover {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(0 0 0 / var(--tw-ring-opacity, 1));
+}
+
 .focus\:border-2:focus {
   border-width: 2px;
 }
@@ -2423,6 +2432,10 @@ video {
 
   .md\:w-\[800px\] {
     width: 800px;
+  }
+
+  .md\:w-1\/2 {
+    width: 50%;
   }
 
   .md\:grid-cols-2 {
