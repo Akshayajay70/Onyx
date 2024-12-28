@@ -64,7 +64,8 @@ const orderSchema = new mongoose.Schema({
     statusHistory: [{
         status: {
             type: String,
-            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'approved', 'rejected'],
+            required: true
         },
         date: {
             type: Date,
@@ -85,7 +86,11 @@ const orderSchema = new mongoose.Schema({
     },
     returnStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected', null],
+        enum: ['pending', 'processing', 'approved', 'rejected', null],
+        default: null
+    },
+    returnAdminComment: {
+        type: String,
         default: null
     },
     isReturnAccepted: {

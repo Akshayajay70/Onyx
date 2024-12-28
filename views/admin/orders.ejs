@@ -48,6 +48,9 @@
                                     Status
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">
+                                    Return Status
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -94,6 +97,28 @@
                                                 %>">
                                                 <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
                                             </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <% if (order.returnStatus) { %>
+                                                <% if (order.returnStatus === 'pending') { %>
+                                                    <select 
+                                                        onchange="handleReturnRequest('<%= order._id %>', this.value)"
+                                                        class="rounded-md border-gray-300 shadow-sm focus:ring-black focus:border-black text-sm"
+                                                    >
+                                                        <option value="" disabled selected>Process Return</option>
+                                                        <option value="approved">Approve Return</option>
+                                                        <option value="rejected">Reject Return</option>
+                                                    </select>
+                                                <% } else { %>
+                                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                        <%= order.returnStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                                            order.returnStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                        %>">
+                                                        <%= order.returnStatus.charAt(0).toUpperCase() + order.returnStatus.slice(1) %>
+                                                    </span>
+                                                <% } %>
+                                            <% } %>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <select 
@@ -279,6 +304,55 @@
             } else {
                 // If user cancels, reset select to previous value
                 window.location.reload();
+            }
+        }
+
+        async function handleReturnRequest(orderId, returnStatus) {
+            const { value: adminComment } = await Swal.fire({
+                title: `${returnStatus === 'approved' ? 'Approve' : 'Reject'} Return Request`,
+                input: 'text',
+                inputLabel: 'Add a comment (optional)',
+                inputPlaceholder: 'Enter your comment here...',
+                showCancelButton: true,
+                confirmButtonColor: '#000000',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Confirm',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (returnStatus) {
+                try {
+                    const response = await fetch(`/admin/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ returnStatus, adminComment })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Return Request Updated',
+                            text: data.message,
+                            confirmButtonColor: '#000000'
+                        });
+                        
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to update return request',
+                        confirmButtonColor: '#000000'
+                    });
+                    window.location.reload();
+                }
             }
         }
     </script>
