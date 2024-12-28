@@ -1,5 +1,6 @@
 import orderSchema from '../model/orderModel.js';
 import Wallet from '../model/walletModel.js';
+import productSchema from '../model/productModel.js';
 
 const userOrderController = {
     getOrders: async (req, res) => {
@@ -21,7 +22,8 @@ const userOrderController = {
             const { orderId } = req.params;
             const userId = req.session.user;
 
-            const order = await orderSchema.findOne({ _id: orderId, userId });
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
 
             if (!order) {
                 return res.status(404).json({
@@ -37,6 +39,20 @@ const userOrderController = {
                 });
             }
 
+            // Update product stock
+            try {
+                for (const item of order.items) {
+                    const product = await productSchema.findById(item.product._id);
+                    if (product) {
+                        product.stock += item.quantity;
+                        await product.save();
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating product stock:', error);
+                throw new Error('Failed to update product stock');
+            }
+
             // Update order status
             order.orderStatus = 'cancelled';
             order.statusHistory.push({
@@ -46,7 +62,9 @@ const userOrderController = {
             });
 
             // Process refund if payment was made
-            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && order.paymentStatus === 'completed') {
+            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && 
+                order.paymentStatus === 'completed') {
+                
                 // Find or create wallet
                 let wallet = await Wallet.findOne({ userId });
                 if (!wallet) {
@@ -64,8 +82,9 @@ const userOrderController = {
                 });
 
                 await wallet.save();
-                
                 order.paymentStatus = 'refunded';
+            } else {
+                order.paymentStatus = 'cancelled';
             }
 
             await order.save();
@@ -79,7 +98,7 @@ const userOrderController = {
             console.error('Cancel order error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error cancelling order'
+                message: error.message || 'Error cancelling order'
             });
         }
     },

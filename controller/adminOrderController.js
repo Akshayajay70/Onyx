@@ -103,19 +103,16 @@ const adminOrderController = {
 
                 if (returnStatus === 'approved') {
                     try {
-                        // Get the actual user ID from the populated field
                         const userId = order.userId._id || order.userId;
 
-                        // Simplified condition for refund eligibility
+                        // Handle refund
                         const isEligibleForRefund = 
                             order.paymentMethod === 'cod' || 
                             ((['wallet', 'online', 'razorpay'].includes(order.paymentMethod)) && 
                              order.paymentStatus === 'completed');
 
                         if (isEligibleForRefund) {
-                            // Find or create wallet
                             let wallet = await Wallet.findOne({ userId: userId });
-                            
                             if (!wallet) {
                                 wallet = new Wallet({
                                     userId: userId,
@@ -124,10 +121,7 @@ const adminOrderController = {
                                 });
                             }
 
-                            // Add refund amount to wallet
                             wallet.balance += order.totalAmount;
-
-                            // Add transaction record
                             wallet.transactions.push({
                                 type: 'credit',
                                 amount: order.totalAmount,
@@ -137,23 +131,23 @@ const adminOrderController = {
                             });
 
                             await wallet.save();
-                            
-                            // Update order payment status
                             order.paymentStatus = 'refunded';
                         }
 
-                        // Update product stock
+                        // Update product stock for returned items
                         for (const item of order.items) {
-                            const product = await productSchema.findById(item.product);
-                            if (product) {
-                                product.stock += item.quantity;
-                                await product.save();
+                            try {
+                                const product = await productSchema.findById(item.product._id);
+                                if (product) {
+                                    product.stock += item.quantity;
+                                    await product.save();
+                                }
+                            } catch (error) {
+                                console.error(`Error updating stock for product ${item.product._id}:`, error);
                             }
                         }
 
-                        // Update order status to reflect return approval
                         order.orderStatus = 'returned';
-
                     } catch (error) {
                         console.error('Return processing error:', error);
                         throw new Error('Failed to process return: ' + error.message);
@@ -162,7 +156,6 @@ const adminOrderController = {
                     order.orderStatus = 'delivered';
                 }
 
-                // Add to status history
                 order.statusHistory.push({
                     status: order.orderStatus,
                     date: new Date(),
