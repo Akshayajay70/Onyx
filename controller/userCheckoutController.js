@@ -351,6 +351,17 @@ const userCheckoutController = {
             const userId = req.session.user;
             const { addressId, amount, couponCode } = req.body;
 
+            // Get cart and validate
+            const cart = await cartSchema.findOne({ userId })
+                .populate('items.productId');
+
+            if (!cart || cart.items.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cart is empty'
+                });
+            }
+
             // Validate the amount
             if (!amount || amount < 1) {
                 return res.status(400).json({
@@ -366,13 +377,14 @@ const userCheckoutController = {
             const options = {
                 amount: amountInPaise,
                 currency: "INR",
-                receipt: `ord_${Date.now().toString().slice(-8)}`
+                receipt: `ord_${Date.now()}`
             };
 
             const razorpayOrder = await razorpay.orders.create(options);
 
-            // Store order details in session
+            // Store cart details in session for verification
             req.session.pendingOrder = {
+                cartId: cart._id,
                 addressId,
                 amount,
                 couponCode,
@@ -396,6 +408,7 @@ const userCheckoutController = {
 
     verifyPayment: async (req, res) => {
         try {
+            const userId = req.session.user;
             const {
                 razorpay_order_id,
                 razorpay_payment_id,
@@ -426,19 +439,46 @@ const userCheckoutController = {
             }
 
             // Get cart details
-            const cart = await cartSchema.findById(pendingOrder.cartId)
+            const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
 
-            if (!cart) {
+            if (!cart || cart.items.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Cart not found'
+                    message: 'Cart is empty'
+                });
+            }
+
+            // Check stock availability and update stock
+            for (const item of cart.items) {
+                const product = await productSchema.findById(item.productId._id);
+                if (!product || product.stock < item.quantity) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Insufficient stock for ${product ? product.productName : 'a product'}`
+                    });
+                }
+                // Update stock
+                product.stock -= item.quantity;
+                await product.save();
+            }
+
+            // Get address
+            const address = await addressSchema.findOne({
+                _id: pendingOrder.addressId,
+                userId
+            });
+
+            if (!address) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery address not found'
                 });
             }
 
             // Create order
             const order = await orderSchema.create({
-                userId: req.session.user,
+                userId,
                 items: cart.items.map(item => ({
                     product: item.productId._id,
                     quantity: item.quantity,
@@ -446,25 +486,43 @@ const userCheckoutController = {
                     subtotal: item.quantity * item.price
                 })),
                 totalAmount: pendingOrder.amount,
-                shippingAddress: pendingOrder.addressId,
+                shippingAddress: {
+                    fullName: address.fullName,
+                    phone: address.mobileNumber,
+                    addressLine1: address.addressLine1,
+                    addressLine2: address.addressLine2,
+                    city: address.city,
+                    state: address.state,
+                    pincode: address.pincode
+                },
                 paymentMethod: 'online',
                 paymentStatus: 'completed',
-                orderStatus: 'pending',
-                statusHistory: [{
-                    status: 'pending',
-                    date: new Date(),
-                    comment: 'Order placed successfully'
-                }],
+                orderStatus: 'processing',
+                couponCode: pendingOrder.couponCode,
+                discount: cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) - pendingOrder.amount,
                 razorpayOrderId: razorpay_order_id,
                 razorpayPaymentId: razorpay_payment_id
             });
 
+            // Update coupon usage if applicable
+            if (pendingOrder.couponCode) {
+                await Coupon.findOneAndUpdate(
+                    { code: pendingOrder.couponCode },
+                    {
+                        $inc: { usedCouponCount: 1 },
+                        $push: {
+                            usedBy: {
+                                userId,
+                                orderId: order._id
+                            }
+                        }
+                    }
+                );
+            }
+
             // Clear cart
-            await cartSchema.findByIdAndUpdate(pendingOrder.cartId, {
-                items: [],
-                totalAmount: 0,
-                couponCode: null,
-                couponDiscount: 0
+            await cartSchema.findByIdAndUpdate(cart._id, {
+                $set: { items: [] }
             });
 
             // Clear pending order from session
