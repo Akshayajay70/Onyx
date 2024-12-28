@@ -3,21 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Wallet - Onyx</title>
+    <title>Onyx - My Wallet</title>
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Custom Scrollbar Styles */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        /* For Firefox */
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f1f1f1;
+        }
+
+        /* Smooth Scrolling */
+        .scrollbar-thin {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
+    <div class="h-10"></div>
+    <!-- Main Content -->
+    <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
+        <!-- Profile Sidebar -->
+        <%- include("../partials/profileSidebar") %>
 
-    <div class="container mx-auto px-4 py-8 mt-28">
-        <div class="max-w-4xl mx-auto">
+        <!-- Main Content -->
+        <section class="w-full md:w-3/4 bg-white p-6 rounded-lg shadow-md">
             <!-- Wallet Balance Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <div class="flex justify-between items-center mb-6">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">Wallet Balance</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Wallet Balance</h2>
                         <p class="text-3xl font-bold text-green-600 mt-2">₹<%= wallet.balance.toFixed(2) %></p>
                     </div>
                     <button 
@@ -30,7 +67,7 @@
             </div>
 
             <!-- Transaction History -->
-            <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="mt-8">
                 <h3 class="text-xl font-bold text-gray-800 mb-6">Transaction History</h3>
                 
                 <% if (transactions.length === 0) { %>
@@ -38,17 +75,13 @@
                         <p>No transactions yet</p>
                     </div>
                 <% } else { %>
-                    <div class="space-y-4">
+                    <div class="max-h-[400px] overflow-y-auto pr-2 space-y-4 
+                        scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 
+                        hover:scrollbar-thumb-gray-400">
                         <% transactions.forEach(transaction => { %>
                             <div class="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                                 <div>
                                     <p class="font-medium"><%= transaction.description %></p>
-                                    <% if (transaction.orderId) { %>
-                                        <a href="/order/<%= transaction.orderId %>" 
-                                           class="text-sm text-blue-600 hover:underline">
-                                            View Order Details
-                                        </a>
-                                    <% } %>
                                     <p class="text-sm text-gray-500">
                                         <%= new Date(transaction.date).toLocaleDateString('en-US', {
                                             year: 'numeric',
@@ -63,17 +96,16 @@
                                     <p class="font-bold <%= transaction.type === 'credit' ? 'text-green-600' : 'text-red-600' %>">
                                         <%= transaction.type === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
                                     </p>
-                                    <p class="text-sm text-gray-500">
-                                        Balance: ₹<%= (transaction.balanceAfter || 0).toFixed(2) %>
-                                    </p>
                                 </div>
                             </div>
                         <% }); %>
                     </div>
                 <% } %>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
+
+    <%- include("../partials/footer") %>
 
     <script>
     async function addFunds() {
@@ -83,6 +115,8 @@
             inputLabel: 'Enter amount (₹)',
             inputPlaceholder: 'Enter amount',
             showCancelButton: true,
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#d33',
             inputValidator: (value) => {
                 if (!value || value <= 0) {
                     return 'Please enter a valid amount';
