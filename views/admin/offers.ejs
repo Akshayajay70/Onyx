@@ -82,7 +82,7 @@
                         <label for="offerName" class="block text-sm font-medium text-gray-700 mb-1">
                             Offer Name
                         </label>
-                        <input type="text" id="offerName" required
+                        <input type="text" id="offerName" 
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
@@ -91,7 +91,7 @@
                         <label for="offerType" class="block text-sm font-medium text-gray-700 mb-1">
                             Apply To
                         </label>
-                        <select id="offerType" required onchange="handleTypeChange()"
+                        <select id="offerType"  onchange="handleTypeChange()"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select Type</option>
                             <option value="category">Category</option>
@@ -151,7 +151,7 @@
                         <label for="discount" class="block text-sm font-medium text-gray-700 mb-1">
                             Discount (%)
                         </label>
-                        <input type="number" id="discount" required min="0" max="100"
+                        <input type="number" id="discount"  min="0" max="100"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
@@ -161,14 +161,14 @@
                             <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">
                                 Start Date
                             </label>
-                            <input type="date" id="startDate" required
+                            <input type="datetime-local" id="startDate" 
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div>
                             <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
                                 End Date
                             </label>
-                            <input type="date" id="endDate" required
+                            <input type="datetime-local" id="endDate" 
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                     </div>
