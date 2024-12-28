@@ -74,10 +74,11 @@
                                         <p class="font-medium"><%= order.shippingAddress.fullName %></p>
                                         <p class="text-sm text-gray-600">
                                             <%= order.shippingAddress.addressLine1 %><br>
-                                            <%= order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2 + '<br>' : '' %>
+                                            <%= order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2  : '' %><br>
                                             <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
                                             <%= order.shippingAddress.pincode %>
                                         </p>
+                                        <p class="text-sm text-gray-600">Phone: <%= order.shippingAddress.mobileNumber %></p>
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500">Payment Method</p>
