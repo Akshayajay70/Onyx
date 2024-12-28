@@ -376,6 +376,21 @@
             return 'Not applicable';
         }
 
+        // Add this function to manage the Apply Coupon button state
+        function toggleApplyCouponButton(disabled) {
+            const applyCouponButton = document.querySelector('button[onclick="openCouponModal()"]');
+            if (applyCouponButton) {
+                applyCouponButton.disabled = disabled;
+                if (disabled) {
+                    applyCouponButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    applyCouponButton.classList.remove('hover:bg-gray-200');
+                } else {
+                    applyCouponButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    applyCouponButton.classList.add('hover:bg-gray-200');
+                }
+            }
+        }
+
         async function applyCoupon(couponCode) {
             try {
                 // Check for empty or whitespace-only coupon code
@@ -390,7 +405,7 @@
                 }
 
                 // Remove leading and trailing spaces
-                const trimmedCode = couponCode.trim();
+                const trimmedCode = couponCode.trim().toUpperCase();
 
                 const response = await fetch('/checkout/apply-coupon', {
                     method: 'POST',
@@ -403,24 +418,30 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Success notification
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Coupon Applied!',
-                        text: `${data.message}. You saved ₹${data.discount.toFixed(2)}!`,
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
+                    // Disable the Apply Coupon button
+                    toggleApplyCouponButton(true);
 
-                    // Update UI with new total
-                    updateTotalWithDiscount(data.discount);
+                    // Update UI elements
+                    document.getElementById('discountRow').classList.remove('hidden');
+                    document.getElementById('discountAmount').textContent = data.discount.toFixed(2);
+                    document.getElementById('finalTotal').textContent = (cartTotal - data.discount).toFixed(2);
+                    
+                    // Show applied coupon info
+                    const appliedCouponInfo = document.getElementById('appliedCouponInfo');
+                    const appliedCouponCode = document.getElementById('appliedCouponCode');
+                    const discountInfo = document.getElementById('discountInfo');
+                    
+                    appliedCouponInfo.classList.remove('hidden');
+                    appliedCouponCode.textContent = trimmedCode;
+                    discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
+
                     closeCouponModal();
                 } else {
                     // Error notification
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
-                        text: data.message,
+                        text: data.message || 'Failed to apply coupon',
                         confirmButtonColor: '#3B82F6'
                     });
                 }
@@ -447,48 +468,42 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Coupon Removed',
-                        text: data.message,
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
+                    // Enable the Apply Coupon button
+                    toggleApplyCouponButton(false);
 
-                    // Reset discount and update UI
-                    updateTotalWithDiscount(0);
+                    // Reset UI elements
+                    document.getElementById('discountRow').classList.add('hidden');
+                    document.getElementById('discountAmount').textContent = '0';
+                    document.getElementById('finalTotal').textContent = cartTotal.toFixed(2);
+                    document.getElementById('appliedCouponInfo').classList.add('hidden');
+
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message,
-                        confirmButtonColor: '#3B82F6'
-                    });
+                    throw new Error(data.message || 'Failed to remove coupon');
                 }
             } catch (error) {
                 console.error('Error removing coupon:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to remove coupon. Please try again.',
+                    text: error.message || 'Failed to remove coupon. Please try again.',
                     confirmButtonColor: '#3B82F6'
                 });
             }
         }
 
         function updateTotalWithDiscount(discount) {
-            const totalElement = document.getElementById('orderTotal');
-            const originalTotal = parseFloat(totalElement.dataset.originalTotal);
-            const newTotal = originalTotal - discount;
-            
-            // Update total display
-            totalElement.textContent = `₹${newTotal.toFixed(2)}`;
-            
-            // Update discount display if it exists
+            const finalTotalElement = document.getElementById('finalTotal');
             const discountElement = document.getElementById('discountAmount');
-            if (discountElement) {
-                discountElement.textContent = `₹${discount.toFixed(2)}`;
-                document.getElementById('discountSection').classList.toggle('hidden', discount === 0);
+            const discountRow = document.getElementById('discountRow');
+            
+            if (discount > 0) {
+                discountRow.classList.remove('hidden');
+                discountElement.textContent = discount.toFixed(2);
+                finalTotalElement.textContent = (cartTotal - discount).toFixed(2);
+            } else {
+                discountRow.classList.add('hidden');
+                discountElement.textContent = '0';
+                finalTotalElement.textContent = cartTotal.toFixed(2);
             }
         }
 
