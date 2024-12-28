@@ -1,5 +1,4 @@
 import orderSchema from '../model/orderModel.js';
-import productSchema from '../model/productModel.js';
 import Wallet from '../model/walletModel.js';
 
 const userOrderController = {

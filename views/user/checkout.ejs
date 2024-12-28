@@ -588,7 +588,7 @@
                         confirmButtonColor: '#000000'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = `/order/${data.orderId}`;
+                            window.location.href = `/orders`;
                         } else {
                             window.location.href = '/orders';
                         }
@@ -615,7 +615,7 @@
                             confirmButtonColor: '#000000'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                window.location.href = `/order/${data.orderId}`;
+                                window.location.href = `/orders`;
                             }
                         });
                     } else {
@@ -657,7 +657,7 @@
                                         confirmButtonColor: '#000000'
                                     }).then((result) => {
                                         if (result.isConfirmed) {
-                                            window.location.href = `/order/${verifyData.orderId}`;
+                                            window.location.href = `/orders`;
                                         }
                                     });
                                 } else {

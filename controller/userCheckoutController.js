@@ -154,7 +154,7 @@ const userCheckoutController = {
                 totalAmount: total - discount,
                 shippingAddress: {
                     fullName: address.fullName,
-                    phone: address.mobileNumber,
+                    mobileNumber: address.mobileNumber,
                     addressLine1: address.addressLine1,
                     addressLine2: address.addressLine2,
                     city: address.city,
@@ -488,7 +488,7 @@ const userCheckoutController = {
                 totalAmount: pendingOrder.amount,
                 shippingAddress: {
                     fullName: address.fullName,
-                    phone: address.mobileNumber,
+                    mobileNumber: address.mobileNumber,
                     addressLine1: address.addressLine1,
                     addressLine2: address.addressLine2,
                     city: address.city,
@@ -567,6 +567,19 @@ const userCheckoutController = {
                 });
             }
 
+            // Get address details
+            const address = await addressSchema.findOne({
+                _id: addressId,
+                userId
+            });
+
+            if (!address) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery address not found'
+                });
+            }
+
             // Check stock availability
             for (const item of cart.items) {
                 const product = await productSchema.findById(item.productId);
@@ -595,17 +608,25 @@ const userCheckoutController = {
                 subtotal: item.quantity * item.price
             }));
 
-            // Create order with discounted amount
+            // Create order with discounted amount and shipping details
             const order = await orderSchema.create({
                 userId,
                 items: orderItems,
-                totalAmount: amount, // Use the discounted amount
-                shippingAddress: addressId,
+                totalAmount: amount,
+                shippingAddress: {
+                    fullName: address.fullName,
+                    mobileNumber: address.mobileNumber,
+                    addressLine1: address.addressLine1,
+                    addressLine2: address.addressLine2,
+                    city: address.city,
+                    state: address.state,
+                    pincode: address.pincode
+                },
                 paymentMethod: 'wallet',
                 paymentStatus: 'completed',
                 orderStatus: 'pending',
-                couponCode: couponCode, // Save applied coupon
-                discount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) - amount, // Calculate actual discount
+                couponCode: couponCode,
+                discount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) - amount,
                 statusHistory: [{
                     status: 'pending',
                     date: new Date(),
