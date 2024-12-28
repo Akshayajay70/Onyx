@@ -337,38 +337,31 @@
 
         function createCouponElement(coupon, isApplicable) {
             const div = document.createElement('div');
-            div.className = `border rounded-lg p-4 ${isApplicable ? 'hover:border-green-500' : 'opacity-50'}`;
+            div.className = `p-4 border rounded-lg ${isApplicable ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`;
             
-            const discountText = coupon.maximumDiscount 
-                ? `Up to ₹${coupon.maximumDiscount}`
-                : `${coupon.discountPercentage}% off`;
-
             div.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-lg">${coupon.code}</span>
-                            ${coupon.minimumPurchase ? `
-                                <span class="text-xs text-gray-500">
-                                    Min. Purchase: ₹${coupon.minimumPurchase}
-                                </span>
-                            ` : ''}
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">${coupon.description || discountText}</p>
-                        <p class="text-xs text-gray-500 mt-2">
-                            Valid till ${new Date(coupon.expiryDate).toLocaleDateString()}
+                        <h3 class="font-medium ${isApplicable ? 'text-green-700' : 'text-gray-700'}">${coupon.code}</h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            ${coupon.discountPercentage}% OFF
+                            ${coupon.maximumDiscount ? ` up to ₹${coupon.maximumDiscount}` : ''}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Min purchase: ₹${coupon.minimumPurchase}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Valid till: ${new Date(coupon.expiryDate).toLocaleDateString()}
                         </p>
                     </div>
                     ${isApplicable ? `
-                        <button 
-                            onclick="applyCoupon('${coupon.code}')"
-                            class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 transition-colors"
-                        >
+                        <button onclick="applyCoupon('${coupon.code}')"
+                                class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             Apply
                         </button>
                     ` : `
-                        <span class="text-xs text-gray-500">
-                            ${getCouponInactiveReason(coupon)}
+                        <span class="text-xs text-gray-500 italic">
+                            Not applicable
                         </span>
                     `}
                 </div>
@@ -383,56 +376,61 @@
             return 'Not applicable';
         }
 
-        async function applyCoupon(code) {
+        async function applyCoupon(couponCode) {
             try {
+                // Check for empty or whitespace-only coupon code
+                if (!couponCode || !couponCode.trim()) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Coupon',
+                        text: 'Please enter a valid coupon code',
+                        confirmButtonColor: '#3B82F6'
+                    });
+                    return;
+                }
+
+                // Remove leading and trailing spaces
+                const trimmedCode = couponCode.trim();
+
                 const response = await fetch('/checkout/apply-coupon', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ code })
+                    body: JSON.stringify({ code: trimmedCode })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    appliedCoupon = data.couponCode;
-                    currentDiscount = data.discount;
-                    
-                    // Update UI
-                    document.getElementById('discountRow').classList.remove('hidden');
-                    document.getElementById('discountAmount').textContent = currentDiscount;
-                    document.getElementById('finalTotal').textContent = cartTotal - currentDiscount;
-                    
-                    // Show applied coupon info
-                    document.getElementById('appliedCouponInfo').classList.remove('hidden');
-                    document.getElementById('appliedCouponCode').textContent = data.couponCode;
-                    document.getElementById('discountInfo').textContent = `Saved ₹${data.discount}`;
-                    
-                    closeCouponModal();
-                    
-                    // Show success message
+                    // Success notification
                     Swal.fire({
                         icon: 'success',
                         title: 'Coupon Applied!',
-                        text: data.message,
-                        toast: true,
-                        position: 'top-end',
+                        text: `${data.message}. You saved ₹${data.discount.toFixed(2)}!`,
                         showConfirmButton: false,
-                        timer: 3000
+                        timer: 2000
                     });
+
+                    // Update UI with new total
+                    updateTotalWithDiscount(data.discount);
+                    closeCouponModal();
                 } else {
-                    throw new Error(data.message);
+                    // Error notification
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message,
+                        confirmButtonColor: '#3B82F6'
+                    });
                 }
             } catch (error) {
+                console.error('Error applying coupon:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: error.message || 'Error applying coupon',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
+                    text: 'Failed to apply coupon. Please try again.',
+                    confirmButtonColor: '#3B82F6'
                 });
             }
         }
@@ -440,40 +438,57 @@
         async function removeCoupon() {
             try {
                 const response = await fetch('/checkout/remove-coupon', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    // Reset everything
-                    document.getElementById('appliedCouponInfo').classList.add('hidden');
-                    document.getElementById('discountRow').classList.add('hidden');
-                    document.getElementById('finalTotal').textContent = cartTotal;
-                    
-                    appliedCoupon = null;
-                    currentDiscount = 0;
-
-                    // Show success message
                     Swal.fire({
                         icon: 'success',
                         title: 'Coupon Removed',
-                        toast: true,
-                        position: 'top-end',
+                        text: data.message,
                         showConfirmButton: false,
-                        timer: 3000
+                        timer: 1500
+                    });
+
+                    // Reset discount and update UI
+                    updateTotalWithDiscount(0);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                        confirmButtonColor: '#3B82F6'
                     });
                 }
             } catch (error) {
+                console.error('Error removing coupon:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Error removing coupon',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
+                    text: 'Failed to remove coupon. Please try again.',
+                    confirmButtonColor: '#3B82F6'
                 });
+            }
+        }
+
+        function updateTotalWithDiscount(discount) {
+            const totalElement = document.getElementById('orderTotal');
+            const originalTotal = parseFloat(totalElement.dataset.originalTotal);
+            const newTotal = originalTotal - discount;
+            
+            // Update total display
+            totalElement.textContent = `₹${newTotal.toFixed(2)}`;
+            
+            // Update discount display if it exists
+            const discountElement = document.getElementById('discountAmount');
+            if (discountElement) {
+                discountElement.textContent = `₹${discount.toFixed(2)}`;
+                document.getElementById('discountSection').classList.toggle('hidden', discount === 0);
             }
         }
 
