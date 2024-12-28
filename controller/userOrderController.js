@@ -155,14 +155,15 @@ const userOrderController = {
             }
 
             // Update order with return details
-            order.orderStatus = 'returned';
             order.returnReason = reason;
             order.returnRequestDate = new Date();
             order.returnStatus = 'pending';
-            
+            order.orderStatus = 'refund processing';
+            order.paymentStatus = 'refund processing';
+
             // Add to status history
             order.statusHistory.push({
-                status: 'returned',
+                status: 'refund processing',
                 date: new Date(),
                 comment: `Return requested: ${reason}`
             });
@@ -196,7 +197,7 @@ const userOrderController = {
 
             res.json({
                 success: true,
-                message: 'Return request processed successfully'
+                message: 'Return request submitted successfully'
             });
 
         } catch (error) {

@@ -50,9 +50,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">
                                     Actions
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">
-                                    Return Status
-                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-zinc-800 divide-y divide-gray-200">
@@ -99,43 +96,27 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <select 
-                                                onchange="updateOrderStatus('<%= order._id %>', this.value)"
-                                                class="rounded-md border-gray-300 shadow-sm focus:ring-black focus:border-black text-sm
-                                                    <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'bg-gray-100 cursor-not-allowed' : '' %>"
-                                                <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'disabled' : '' %>
-                                            >
-                                                <option value="" disabled selected>
-                                                    <%= (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') ? 'No Actions Available' : 'Update Status' %>
-                                                </option>
-                                                <% if (order.orderStatus !== 'cancelled' && order.orderStatus !== 'delivered') { %>
-                                                    <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Process</option>
-                                                    <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Ship</option>
-                                                    <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Deliver</option>
-                                                    <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancel</option>
-                                                <% } %>
-                                            </select>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <% if (order.returnStatus) { %>
-                                                <% if (order.returnStatus === 'pending') { %>
-                                                    <select 
-                                                        onchange="handleReturnRequest('<%= order._id %>', this.value)"
-                                                        class="rounded-md border-gray-300 shadow-sm focus:ring-black focus:border-black text-sm"
-                                                    >
-                                                        <option value="" disabled selected>Process Return</option>
-                                                        <option value="approved">Approve Return</option>
-                                                        <option value="rejected">Reject Return</option>
-                                                    </select>
-                                                <% } else { %>
-                                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                        <%= order.returnStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                                                            order.returnStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                            'bg-yellow-100 text-yellow-800'
-                                                        %>">
-                                                        <%= order.returnStatus.charAt(0).toUpperCase() + order.returnStatus.slice(1) %>
-                                                    </span>
-                                                <% } %>
+                                            <% if (order.orderStatus === 'refund processing') { %>
+                                                <div class="flex space-x-2">
+                                                    <button onclick="handleReturnRequest('<%= order._id %>', 'approved')"
+                                                            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                                                        Approve
+                                                    </button>
+                                                    <button onclick="handleReturnRequest('<%= order._id %>', 'rejected')"
+                                                            class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            <% } else if (!['cancelled', 'returned', 'delivered'].includes(order.orderStatus)) { %>
+                                                <select onchange="updateOrderStatus('<%= order._id %>', this.value)"
+                                                        class="form-select rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                                    <option value="" disabled selected>Update Status</option>
+                                                    <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Processing</option>
+                                                    <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                                    <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                                </select>
+                                            <% } else { %>
+                                                <span class="text-gray-500">No actions available</span>
                                             <% } %>
                                         </td>
                                         
@@ -315,9 +296,9 @@
                 inputLabel: 'Add a comment (optional)',
                 inputPlaceholder: 'Enter your comment here...',
                 showCancelButton: true,
-                confirmButtonColor: '#000000',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Confirm',
+                confirmButtonColor: returnStatus === 'approved' ? '#10B981' : '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: returnStatus === 'approved' ? 'Approve' : 'Reject',
                 cancelButtonText: 'Cancel'
             });
 
