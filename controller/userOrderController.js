@@ -99,6 +99,7 @@ const userOrderController = {
                 });
             }
 
+            // Validate order status
             if (order.orderStatus !== 'delivered') {
                 return res.status(400).json({
                     success: false,
@@ -106,25 +107,51 @@ const userOrderController = {
                 });
             }
 
-            // Check return window (e.g., 7 days)
-            const deliveryDate = order.statusHistory.find(h => h.status === 'delivered')?.date;
-            if (!deliveryDate || Date.now() - new Date(deliveryDate) > 7 * 24 * 60 * 60 * 1000) {
+            // Check if return is already requested
+            if (order.returnReason) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Return window has expired'
+                    message: 'Return already requested for this order'
                 });
             }
 
-            // Update order status
+            // Check return window (7 days)
+            // First, try to get delivery date from status history
+            let deliveryDate;
+            const deliveryStatus = order.statusHistory.find(h => h.status === 'delivered');
+            
+            if (deliveryStatus && deliveryStatus.date) {
+                deliveryDate = deliveryStatus.date;
+            } else {
+                // Fallback to order's last update date if status history is not available
+                deliveryDate = order.updatedAt;
+            }
+
+            const daysSinceDelivery = Math.floor((Date.now() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24));
+            if (daysSinceDelivery > 7) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return window has expired (7 days from delivery)'
+                });
+            }
+
+            // Update order with return details
             order.orderStatus = 'returned';
+            order.returnReason = reason;
+            order.returnRequestDate = new Date();
+            order.returnStatus = 'pending';
+            
+            // Add to status history
             order.statusHistory.push({
                 status: 'returned',
                 date: new Date(),
-                comment: reason || 'Return requested by user'
+                comment: `Return requested: ${reason}`
             });
 
             // Process refund if payment was made
-            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && order.paymentStatus === 'completed') {
+            if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && 
+                order.paymentStatus === 'completed') {
+                
                 // Find or create wallet
                 let wallet = await Wallet.findOne({ userId });
                 if (!wallet) {

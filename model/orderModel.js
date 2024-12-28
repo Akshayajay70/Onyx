@@ -76,10 +76,17 @@ const orderSchema = new mongoose.Schema({
         type: String
     },
     returnReason: {
-        type: String
+        type: String,
+        default: null
     },
     returnRequestDate: {
-        type: Date
+        type: Date,
+        default: null
+    },
+    returnStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', null],
+        default: null
     },
     isReturnAccepted: {
         type: Boolean,
