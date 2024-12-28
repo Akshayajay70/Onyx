@@ -151,7 +151,9 @@
                         <label for="discount" class="block text-sm font-medium text-gray-700 mb-1">
                             Discount (%)
                         </label>
-                        <input type="number" id="discount"  min="0" max="100"
+                        <input type="number" 
+                               id="discount"  
+                               placeholder="Enter discount (1-90%)"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
@@ -280,38 +282,118 @@
             updateSelectedCount();
         }
 
+        function validateOfferName(name) {
+            // Remove leading/trailing spaces and capitalize
+            const trimmedName = name.trim().toUpperCase();
+            
+            // Check length (3-10 characters)
+            if (trimmedName.length < 3 || trimmedName.length > 10) {
+                throw new Error('Offer name must be between 3 and 10 characters');
+            }
+            
+            // Check for multiple spaces
+            if (/\s{2,}/.test(name)) {
+                throw new Error('Offer name cannot contain multiple spaces');
+            }
+            
+            return trimmedName;
+        }
+
+        // Add real-time validation for the name input
+        document.getElementById('offerName').addEventListener('input', function(e) {
+            const input = e.target;
+            const errorSpan = document.getElementById('nameError') || 
+                             (() => {
+                                 const span = document.createElement('span');
+                                 span.id = 'nameError';
+                                 span.className = 'text-red-500 text-xs mt-1';
+                                 input.parentNode.appendChild(span);
+                                 return span;
+                             })();
+            
+            try {
+                const validatedName = validateOfferName(input.value);
+                errorSpan.textContent = '';
+                input.classList.remove('border-red-500');
+                input.classList.add('border-gray-300');
+                input.value = validatedName; // Auto-capitalize the input
+            } catch (error) {
+                errorSpan.textContent = error.message;
+                input.classList.remove('border-gray-300');
+                input.classList.add('border-red-500');
+            }
+        });
+
+        function validateDiscount(discount) {
+            const numDiscount = parseInt(discount);
+            
+            if (isNaN(numDiscount)) {
+                throw new Error('Please enter a valid discount percentage');
+            }
+            
+            if (numDiscount < 1 || numDiscount > 90) {
+                throw new Error('Discount must be between 1% and 90%');
+            }
+            
+            return numDiscount;
+        }
+
+        // Add real-time validation for the discount input
+        document.getElementById('discount').addEventListener('input', function(e) {
+            const input = e.target;
+            const errorSpan = document.getElementById('discountError') || 
+                             (() => {
+                                 const span = document.createElement('span');
+                                 span.id = 'discountError';
+                                 span.className = 'text-red-500 text-xs mt-1';
+                                 input.parentNode.appendChild(span);
+                                 return span;
+                             })();
+            
+            try {
+                const validatedDiscount = validateDiscount(input.value);
+                errorSpan.textContent = '';
+                input.classList.remove('border-red-500');
+                input.classList.add('border-gray-300');
+            } catch (error) {
+                errorSpan.textContent = error.message;
+                input.classList.remove('border-gray-300');
+                input.classList.add('border-red-500');
+            }
+        });
+
         async function handleOfferSubmit(event) {
             event.preventDefault();
             if (isSubmitting) return;
 
-            const type = document.getElementById('offerType').value;
-            let itemIds = [];
-
-            if (type === 'category') {
-                const categoryId = document.getElementById('categorySelect').value;
-                if (!categoryId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: 'Please select a category'
-                    });
-                    return;
-                }
-                itemIds = [categoryId];
-            } else {
-                const selectedProducts = document.querySelectorAll('#productList input[type="checkbox"]:checked');
-                itemIds = Array.from(selectedProducts).map(cb => cb.value);
-                if (itemIds.length === 0) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: 'Please select at least one product'
-                    });
-                    return;
-                }
-            }
-
             try {
+                // Validate offer name
+                const offerNameInput = document.getElementById('offerName');
+                const validatedName = validateOfferName(offerNameInput.value);
+                offerNameInput.value = validatedName;
+
+                // Validate discount
+                const discountInput = document.getElementById('discount');
+                const validatedDiscount = validateDiscount(discountInput.value);
+                discountInput.value = validatedDiscount;
+
+                const type = document.getElementById('offerType').value;
+                let itemIds = [];
+
+                if (type === 'category') {
+                    const categoryId = document.getElementById('categorySelect').value;
+                    if (!categoryId) {
+                        throw new Error('Please select a category');
+                    }
+                    itemIds = [categoryId];
+                } else {
+                    const selectedProducts = document.querySelectorAll('#productList input[type="checkbox"]:checked');
+                    itemIds = Array.from(selectedProducts).map(cb => cb.value);
+                    if (itemIds.length === 0) {
+                        throw new Error('Please select at least one product');
+                    }
+                }
+
                 isSubmitting = true;
                 const submitButton = document.getElementById('submitButton');
                 submitButton.disabled = true;
@@ -319,10 +401,10 @@
 
                 const offerId = document.getElementById('offerId').value;
                 const formData = {
-                    name: document.getElementById('offerName').value.trim(),
+                    name: validatedName,
                     type,
                     itemIds,
-                    discount: document.getElementById('discount').value,
+                    discount: validatedDiscount,
                     startDate: document.getElementById('startDate').value,
                     endDate: document.getElementById('endDate').value
                 };
@@ -379,7 +461,6 @@
         function editOffer(button) {
             try {
                 const offer = JSON.parse(decodeURIComponent(button.dataset.offer));
-                console.log('Editing offer:', offer); // Debug log
 
                 document.getElementById('modalTitle').textContent = 'Edit Offer';
                 document.getElementById('offerId').value = offer._id;
@@ -388,6 +469,14 @@
                 // Set offer type
                 const type = offer.categoryId ? 'category' : 'product';
                 document.getElementById('offerType').value = type;
+                
+                // Format dates properly
+                const startDate = new Date(offer.startDate);
+                const endDate = new Date(offer.endDate);
+                
+                // Format dates to ISO string and take only the date-time part
+                document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
+                document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
                 
                 // Setup UI based on type
                 handleTypeChange();
@@ -414,10 +503,8 @@
                         updateSelectedCount();
                     }
 
-                    // Set other fields
+                    // Set discount
                     document.getElementById('discount').value = offer.discount;
-                    document.getElementById('startDate').value = new Date(offer.startDate).toISOString().split('T')[0];
-                    document.getElementById('endDate').value = new Date(offer.endDate).toISOString().split('T')[0];
                 }, 100);
 
                 // Show modal
