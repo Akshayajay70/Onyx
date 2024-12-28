@@ -161,22 +161,20 @@
                     </div>
 
                     <!-- Price Breakdown -->
-                    <div class="space-y-3 border-t pt-4">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal</span>
-                            <span>₹<%= total %></span>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>₹<span id="subtotal"><%= total %></span></span>
                         </div>
-                        <div id="discountRow" class="flex justify-between text-gray-600 hidden">
-                            <span>Discount</span>
-                            <span class="text-green-500">-₹<span id="discountAmount">0</span></span>
+                        
+                        <div id="discountRow" class="flex justify-between <%= locals.discount ? '' : 'hidden' %>">
+                            <span>Discount:</span>
+                            <span class="text-green-500">-₹<span id="discountAmount"><%= locals.discount || 0 %></span></span>
                         </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Shipping</span>
-                            <span class="text-green-500">Free</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg border-t pt-3">
-                            <span>Total</span>
-                            <span>₹<span id="finalTotal"><%= total %></span></span>
+                        
+                        <div class="flex justify-between font-bold">
+                            <span>Total Amount:</span>
+                            <span>₹<span id="finalTotal"><%= total - (locals.discount || 0) %></span></span>
                         </div>
                     </div>
 
@@ -507,6 +505,69 @@
             }
         }
 
+        // Add this function to get the current total with discount
+        function getDiscountedTotal() {
+            const subtotal = parseFloat(document.getElementById('subtotal').textContent);
+            const discountAmount = parseFloat(document.getElementById('discountAmount').textContent) || 0;
+            return subtotal - discountAmount;
+        }
+
+        // Update createRazorpayOrder function
+        async function createRazorpayOrder(addressId) {
+            try {
+                const finalAmount = getDiscountedTotal();
+                
+                const response = await fetch('/checkout/create-razorpay-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        addressId: addressId,
+                        amount: finalAmount,
+                        couponCode: document.getElementById('appliedCouponCode')?.textContent
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message);
+                }
+                return data;
+            } catch (error) {
+                console.error('Error creating Razorpay order:', error);
+                throw error;
+            }
+        }
+
+        // Update wallet payment function
+        async function processWalletPayment(addressId) {
+            try {
+                const finalAmount = getDiscountedTotal();
+                
+                const response = await fetch('/checkout/wallet-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        addressId: addressId,
+                        amount: finalAmount,
+                        couponCode: document.getElementById('appliedCouponCode')?.textContent
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Wallet payment failed');
+                }
+                return data;
+            } catch (error) {
+                console.error('Error processing wallet payment:', error);
+                throw error;
+            }
+        }
+
         async function placeOrder() {
             try {
                 const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
@@ -518,34 +579,20 @@
 
                 if (paymentMethod === 'wallet') {
                     // Handle wallet payment
-                    const response = await fetch('/checkout/wallet-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            addressId: selectedAddress.value
-                        })
+                    const data = await processWalletPayment(selectedAddress.value);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Placed Successfully!',
+                        text: 'Payment completed using wallet balance',
+                        confirmButtonText: 'View Order',
+                        confirmButtonColor: '#000000'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = `/order/${data.orderId}`;
+                        } else {
+                            window.location.href = '/orders';
+                        }
                     });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Order Placed Successfully!',
-                            text: 'Payment completed using wallet balance',
-                            confirmButtonText: 'View Order',
-                            confirmButtonColor: '#000000'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = `/order/${data.orderId}`;
-                            } else {
-                                window.location.href = '/orders';
-                            }
-                        });
-                    } else {
-                        throw new Error(data.message || 'Payment failed');
-                    }
                 } else if (paymentMethod === 'cod') {
                     // Existing COD logic
                     const response = await fetch('/checkout/place-order', {
@@ -576,20 +623,7 @@
                     }
                 } else if (paymentMethod === 'online') {
                     // Create Razorpay order
-                    const response = await fetch('/checkout/create-razorpay-order', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            addressId: selectedAddress.value
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (!data.success) {
-                        throw new Error(data.message);
-                    }
+                    const data = await createRazorpayOrder(selectedAddress.value);
 
                     // Initialize Razorpay
                     const options = {

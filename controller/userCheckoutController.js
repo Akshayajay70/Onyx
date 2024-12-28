@@ -349,41 +349,19 @@ const userCheckoutController = {
     createRazorpayOrder: async (req, res) => {
         try {
             const userId = req.session.user;
-            const { addressId } = req.body;
+            const { addressId, amount, couponCode } = req.body;
 
-            // Get cart details
-            const cart = await cartSchema.findOne({ userId })
-                .populate('items.productId');
-
-            if (!cart || cart.items.length === 0) {
+            // Validate the amount
+            if (!amount || amount < 1) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Cart is empty'
-                });
-            }
-
-            // Calculate total amount from cart items
-            let totalAmount = 0;
-            cart.items.forEach(item => {
-                totalAmount += (item.productId.price * item.quantity);
-            });
-
-            // Apply coupon discount if any
-            if (cart.couponDiscount) {
-                totalAmount = Math.max(0, totalAmount - cart.couponDiscount);
-                console.log('Amount after coupon discount:', totalAmount);
-            }
-
-            // Validate total amount
-            if (totalAmount < 1) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Order amount must be at least ₹1'
+                    message: 'Invalid order amount'
                 });
             }
 
             // Convert to paise and ensure it's an integer
-            const amountInPaise = Math.round(totalAmount * 100);
+            const amountInPaise = Math.round(amount * 100);
+
             // Create Razorpay order
             const options = {
                 amount: amountInPaise,
@@ -396,8 +374,8 @@ const userCheckoutController = {
             // Store order details in session
             req.session.pendingOrder = {
                 addressId,
-                cartId: cart._id,
-                amount: totalAmount,
+                amount,
+                couponCode,
                 razorpayOrderId: razorpayOrder.id
             };
 
@@ -510,9 +488,17 @@ const userCheckoutController = {
     walletPayment: async (req, res) => {
         try {
             const userId = req.session.user;
-            const { addressId } = req.body;
+            const { addressId, amount, couponCode } = req.body;
 
-            // Get cart details with populated products
+            // Validate amount
+            if (!amount || amount < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid order amount'
+                });
+            }
+
+            // Get cart details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
 
@@ -523,34 +509,45 @@ const userCheckoutController = {
                 });
             }
 
-            // Calculate total amount from cart items
-            const totalAmount = cart.items.reduce((total, item) => {
-                return total + (item.productId.price * item.quantity);
-            }, 0);
+            // Check stock availability
+            for (const item of cart.items) {
+                const product = await productSchema.findById(item.productId);
+                if (!product || product.stock < item.quantity) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Insufficient stock for ${product ? product.productName : 'a product'}`
+                    });
+                }
+            }
 
             // Get wallet
             const wallet = await Wallet.findOne({ userId });
-            if (!wallet || wallet.balance < totalAmount) {
+            if (!wallet || wallet.balance < amount) {
                 return res.status(400).json({
                     success: false,
                     message: 'Insufficient wallet balance'
                 });
             }
 
-            // Create order with calculated total amount
+            // Create order items array
+            const orderItems = cart.items.map(item => ({
+                product: item.productId._id,
+                quantity: item.quantity,
+                price: item.price,
+                subtotal: item.quantity * item.price
+            }));
+
+            // Create order with discounted amount
             const order = await orderSchema.create({
                 userId,
-                items: cart.items.map(item => ({
-                    product: item.productId._id,
-                    quantity: item.quantity,
-                    price: item.productId.price,
-                    subtotal: item.quantity * item.productId.price
-                })),
-                totalAmount: totalAmount, // Set the calculated total amount
+                items: orderItems,
+                totalAmount: amount, // Use the discounted amount
                 shippingAddress: addressId,
                 paymentMethod: 'wallet',
                 paymentStatus: 'completed',
                 orderStatus: 'pending',
+                couponCode: couponCode, // Save applied coupon
+                discount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) - amount, // Calculate actual discount
                 statusHistory: [{
                     status: 'pending',
                     date: new Date(),
@@ -558,11 +555,19 @@ const userCheckoutController = {
                 }]
             });
 
+            // Update product stock
+            for (const item of cart.items) {
+                await productSchema.findByIdAndUpdate(
+                    item.productId,
+                    { $inc: { stock: -item.quantity } }
+                );
+            }
+
             // Update wallet balance
-            wallet.balance -= totalAmount;
+            wallet.balance -= amount;
             wallet.transactions.push({
                 type: 'debit',
-                amount: totalAmount,
+                amount: amount,
                 description: `Payment for order #${order._id}`,
                 orderId: order._id,
                 date: new Date()
@@ -572,10 +577,24 @@ const userCheckoutController = {
             // Clear cart
             await cartSchema.findByIdAndUpdate(cart._id, {
                 items: [],
-                totalAmount: 0,
-                couponCode: null,
-                couponDiscount: 0
+                totalAmount: 0
             });
+
+            // Update coupon usage if applicable
+            if (couponCode) {
+                await Coupon.findOneAndUpdate(
+                    { code: couponCode },
+                    {
+                        $inc: { usedCouponCount: 1 },
+                        $push: {
+                            usedBy: {
+                                userId,
+                                orderId: order._id
+                            }
+                        }
+                    }
+                );
+            }
 
             res.json({
                 success: true,
