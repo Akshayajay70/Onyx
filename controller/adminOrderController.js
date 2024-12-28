@@ -47,8 +47,57 @@ const adminOrderController = {
                 });
             }
 
+            // Handle cancellation
+            if (status === 'cancelled') {
+                // Update product stock
+                for (const item of order.items) {
+                    const product = await productSchema.findById(item.product);
+                    if (product) {
+                        product.stock += item.quantity;
+                        await product.save();
+                    }
+                }
+
+                // Process refund if payment was made
+                if (['wallet', 'online', 'razorpay'].includes(order.paymentMethod) && 
+                    order.paymentStatus === 'completed') {
+                    
+                    const userId = order.userId._id || order.userId;
+                    let wallet = await Wallet.findOne({ userId });
+                    
+                    if (!wallet) {
+                        wallet = new Wallet({
+                            userId,
+                            balance: 0,
+                            transactions: []
+                        });
+                    }
+
+                    wallet.balance += order.totalAmount;
+                    wallet.transactions.push({
+                        type: 'credit',
+                        amount: order.totalAmount,
+                        description: `Refund for cancelled order #${order._id}`,
+                        orderId: order._id,
+                        date: new Date()
+                    });
+
+                    await wallet.save();
+                    order.paymentStatus = 'refunded';
+                } else {
+                    // For COD orders or pending payments
+                    order.paymentStatus = 'cancelled';
+                }
+
+                order.orderStatus = 'cancelled';
+                order.statusHistory.push({
+                    status: 'cancelled',
+                    date: new Date(),
+                    comment: adminComment || 'Order cancelled'
+                });
+            }
             // Handle return request approval/rejection
-            if (returnStatus) {
+            else if (returnStatus) {
                 order.returnStatus = returnStatus;
                 order.returnAdminComment = adminComment;
 
@@ -120,28 +169,16 @@ const adminOrderController = {
                     comment: `Return ${returnStatus}: ${adminComment || ''}`
                 });
             } 
-            // Handle regular status updates
+            // Handle other status updates
             else if (status) {
                 order.orderStatus = status;
                 
                 if (status === 'delivered') {
                     order.paymentStatus = 'completed';
-                } else if (status === 'cancelled') {
-                    order.paymentStatus = 'cancelled';
-                    
-                    // Restore stock for cancelled orders
-                    for (const item of order.items) {
-                        const product = await productSchema.findById(item.product);
-                        if (product) {
-                            product.stock += item.quantity;
-                            await product.save();
-                        }
-                    }
                 }
 
-                // Add to status history
                 order.statusHistory.push({
-                    status: status,
+                    status,
                     date: new Date(),
                     comment: adminComment || `Order status updated to ${status}`
                 });
@@ -151,9 +188,11 @@ const adminOrderController = {
 
             res.status(200).json({
                 success: true,
-                message: returnStatus 
-                    ? `Return request ${returnStatus} successfully` 
-                    : 'Order status updated successfully'
+                message: status === 'cancelled' 
+                    ? 'Order cancelled successfully'
+                    : returnStatus 
+                        ? `Return request ${returnStatus} successfully` 
+                        : 'Order status updated successfully'
             });
 
         } catch (error) {
