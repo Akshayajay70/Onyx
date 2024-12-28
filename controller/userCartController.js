@@ -101,8 +101,11 @@ const addToCart = async (req, res) => {
 
         // Check if product exists and is in stock
         const product = await productSchema.findById(productId).populate('categoriesId');
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+        if (!product || !product.isActive) {
+            return res.status(400).json({
+                success: false,
+                message: 'Product is not available'
+            });
         }
 
         // Get active offers for the product and its category

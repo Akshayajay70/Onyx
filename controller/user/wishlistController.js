@@ -9,7 +9,7 @@ const wishlistController = {
             // Get wishlist with populated product details
             const wishlist = await Wishlist.findOne({ userId }).populate({
                 path: 'items.productId',
-                select: 'productName price imageUrl stock'
+                select: 'productName price imageUrl stock isActive'
             });
 
             res.render('user/wishlist', {
