@@ -517,6 +517,15 @@
             try {
                 const finalAmount = getDiscountedTotal();
                 
+                // Validate amount limits
+                if (finalAmount < 1) {
+                    throw new Error('Minimum order amount should be ₹1');
+                }
+
+                if (finalAmount > 500000) {
+                    throw new Error('Maximum order amount cannot exceed ₹5,00,000');
+                }
+
                 const response = await fetch('/checkout/create-razorpay-order', {
                     method: 'POST',
                     headers: {

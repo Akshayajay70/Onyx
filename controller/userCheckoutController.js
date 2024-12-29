@@ -359,6 +359,21 @@ const userCheckoutController = {
             const userId = req.session.user;
             const { addressId, amount, couponCode } = req.body;
 
+            // Validate amount limits
+            if (!amount || amount < 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Minimum order amount should be ₹1'
+                });
+            }
+
+            if (amount > 500000) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Maximum order amount cannot exceed ₹5,00,000'
+                });
+            }
+
             // Get cart and validate
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
@@ -367,14 +382,6 @@ const userCheckoutController = {
                 return res.status(400).json({
                     success: false,
                     message: 'Cart is empty'
-                });
-            }
-
-            // Validate the amount
-            if (!amount || amount < 1) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid order amount'
                 });
             }
 
