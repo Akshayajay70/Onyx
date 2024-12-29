@@ -198,7 +198,7 @@ const userCheckoutController = {
             res.status(200).json({ 
                 success: true, 
                 message: 'Order placed successfully',
-                orderId: newOrder._id 
+                orderId: newOrder.orderCode 
             });
 
         } catch (error) {
@@ -546,7 +546,7 @@ const userCheckoutController = {
             res.json({
                 success: true,
                 message: 'Payment verified and order placed successfully',
-                orderId: order._id
+                orderId: order.orderCode
             });
 
         } catch (error) {
@@ -699,7 +699,7 @@ const userCheckoutController = {
             res.json({
                 success: true,
                 message: 'Order placed successfully',
-                orderId: order._id
+                orderId: order.orderCode
             });
 
         } catch (error) {

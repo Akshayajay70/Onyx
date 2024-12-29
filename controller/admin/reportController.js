@@ -161,7 +161,7 @@ const reportController = {
                     sum + (item.price * item.quantity), 0);
 
                 worksheet.addRow([
-                    order._id.toString(),
+                    order.orderCode,
                     order.createdAt.toLocaleDateString(),
                     order.userId ? `${order.userId.firstName || ''} ${order.userId.lastName || ''}` : 'N/A',
                     order.items.length,
@@ -332,7 +332,7 @@ const reportController = {
                 const totalDiscount = (order.couponDiscount || 0) + (order.discount || 0);
 
                 doc.fontSize(9)
-                   .text(order._id.toString().slice(-6), columns.orderID.x, row)
+                   .text(order.orderCode, columns.orderID.x, row)
                    .text(order.createdAt.toLocaleDateString(), columns.date.x, row)
                    .text(order.userId ? `${order.userId.firstName || ''} ${order.userId.lastName || ''}` : 'N/A', columns.customer.x, row)
                    .text(`₹${originalPrice.toFixed(2)}`, columns.original.x, row)

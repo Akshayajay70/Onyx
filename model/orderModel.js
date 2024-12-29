@@ -109,9 +109,26 @@ const orderSchema = new mongoose.Schema({
     couponDiscount: {
         type: Number,
         default: 0
+    },
+    orderCode: {
+        type: String,
+        unique: true
     }
 }, {timestamps: true}
 );
+
+// Pre-save middleware to generate orderCode
+orderSchema.pre('save', function(next) {
+    if (!this.orderCode && this._id) {
+        const day = this.createdAt.getDate().toString().padStart(2, '0');
+        const month = (this.createdAt.getMonth() + 1).toString().padStart(2, '0');
+        const year = this.createdAt.getFullYear();
+        const dateStr = `${day}${month}${year}`;
+        const idSuffix = this._id.toString().slice(-6);
+        this.orderCode = `${dateStr}${idSuffix}`;
+    }
+    next();
+});
 
 export default mongoose.model('Order', orderSchema);
 
