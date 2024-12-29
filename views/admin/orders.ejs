@@ -157,27 +157,23 @@
 
             let content = `
                 <div class="overflow-hidden">
-                    <!-- Product Details Table -->
                     <table class="min-w-full divide-y divide-gray-200 mb-6">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Original Price</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final Price</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
             `;
 
-            items.forEach(item => {
-                const originalPrice = item.originalPrice || item.price;
-                const discount = originalPrice - item.price;
-                const discountPercentage = ((discount / originalPrice) * 100).toFixed(1);
+            let orderDetails = items[0].order; // Get order details from first item
+            let subtotal = 0;
 
+            items.forEach(item => {
+                subtotal += item.price * item.quantity;
                 content += `
                     <tr>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -190,17 +186,8 @@
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                             ${item.quantity}
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            ₹${originalPrice.toFixed(2)}
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">
-                            ${discount > 0 ? `-${discountPercentage}% (₹${discount.toFixed(2)})` : 'No discount'}
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            ₹${item.price.toFixed(2)}
-                        </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ₹${(item.price * item.quantity).toFixed(2)}
+                            ₹${orderDetails.totalAmount.toFixed(2)}
                         </td>
                     </tr>
                 `;
@@ -211,39 +198,29 @@
                     </table>
 
                     <!-- Order Summary -->
-                    <div class="bg-gray-50 p-4 rounded-lg mt-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
                         <h4 class="text-lg font-semibold mb-4">Order Summary</h4>
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Subtotal:</span>
-                                <span class="text-gray-900">₹${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                                <span class="text-gray-900">₹${subtotal.toFixed(2)}</span>
                             </div>
-                            ${items[0].order?.couponDiscount ? `
+                            ${orderDetails.couponCode ? `
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Coupon Applied:</span>
-                                    <span class="text-green-600">${items[0].order.couponCode} (-₹${items[0].order.couponDiscount.toFixed(2)})</span>
+                                    <span class="text-gray-600">Coupon (${orderDetails.couponCode}):</span>
+                                    <span class="text-green-600">-₹${orderDetails.couponDiscount.toFixed(2)}</span>
                                 </div>
                             ` : ''}
-                            ${items[0].order?.categoryOffer ? `
+                            ${orderDetails.discount > 0 ? `
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Category Offer:</span>
-                                    <span class="text-green-600">-${items[0].order.categoryOffer}%</span>
+                                    <span class="text-gray-600">Additional Discount:</span>
+                                    <span class="text-green-600">-₹${orderDetails.discount.toFixed(2)}</span>
                                 </div>
                             ` : ''}
-                            ${items[0].order?.productOffer ? `
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Product Offer:</span>
-                                    <span class="text-green-600">-${items[0].order.productOffer}%</span>
-                                </div>
-                            ` : ''}
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">Shipping:</span>
-                                <span class="text-gray-900">₹${items[0].order?.shippingCost?.toFixed(2) || '0.00'}</span>
-                            </div>
                             <div class="border-t border-gray-200 pt-2 mt-2">
                                 <div class="flex justify-between font-semibold">
-                                    <span>Total:</span>
-                                    <span>₹${items[0].order?.totalAmount?.toFixed(2) || items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                                    <span>Total Amount:</span>
+                                    <span>₹${orderDetails.totalAmount.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -255,16 +232,15 @@
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span class="text-gray-600">Payment Method:</span>
-                                <span class="text-gray-900 ml-2">${items[0].order?.paymentMethod?.toUpperCase() || 'N/A'}</span>
+                                <span class="text-gray-900 ml-2">${orderDetails.paymentMethod.toUpperCase()}</span>
                             </div>
                             <div>
                                 <span class="text-gray-600">Payment Status:</span>
-                                <span class="text-gray-900 ml-2">${items[0].order?.paymentStatus?.toUpperCase() || 'N/A'}</span>
+                                <span class="text-gray-900 ml-2">${orderDetails.paymentStatus.toUpperCase()}</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
 
             modalContent.innerHTML = content;
             modal.classList.remove('hidden');

@@ -173,7 +173,8 @@ const userCheckoutController = {
                 paymentStatus: 'pending',
                 orderStatus: 'processing',
                 orderDate: new Date(),
-                discount: discount,
+                couponCode: couponCode,
+                couponDiscount: discount,
             });
 
             await newOrder.save();
@@ -445,11 +446,6 @@ const userCheckoutController = {
                 });
             }
 
-            const coupon = await Coupon.findOne({ code: pendingOrder.couponCode });
-            if (coupon) {
-                var couponDiscount = coupon.discountPercentage;
-            }
-
             // Get cart details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
@@ -496,7 +492,6 @@ const userCheckoutController = {
                     quantity: item.quantity,
                     price: item.price,
                     subtotal: item.quantity * item.price,
-                    couponDiscountPercentage: couponDiscount
                 })),
                 totalAmount: pendingOrder.amount,
                 shippingAddress: {
@@ -512,7 +507,7 @@ const userCheckoutController = {
                 paymentStatus: 'completed',
                 orderStatus: 'processing',
                 couponCode: pendingOrder.couponCode,
-                discount: cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) - pendingOrder.amount,
+                couponDiscount: cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) - pendingOrder.amount,
                 razorpayOrderId: razorpay_order_id,
                 razorpayPaymentId: razorpay_payment_id
             });
@@ -645,7 +640,7 @@ const userCheckoutController = {
                 paymentStatus: 'completed',
                 orderStatus: 'pending',
                 couponCode: couponCode,
-                discount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) - amount,
+                couponDiscount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) - amount,
                 statusHistory: [{
                     status: 'pending',
                     date: new Date(),

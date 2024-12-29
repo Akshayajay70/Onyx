@@ -14,7 +14,24 @@ const adminOrderController = {
                     path: 'items.product',
                     select: 'productName imageUrl price'
                 })
+                .lean()
                 .sort({ orderDate: -1 });
+
+            // Format order items with additional details
+            orders.forEach(order => {
+                order.items = order.items.map(item => ({
+                    ...item,
+                    order: {
+                        couponCode: order.couponCode,
+                        couponDiscount: order.couponDiscount,
+                        discount: order.discount,
+                        totalAmount: order.totalAmount,
+                        paymentMethod: order.paymentMethod,
+                        paymentStatus: order.paymentStatus,
+                        orderStatus: order.orderStatus
+                    }
+                }));
+            });
 
             res.render('admin/orders', {
                 orders,
