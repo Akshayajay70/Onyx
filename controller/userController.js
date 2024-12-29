@@ -480,4 +480,62 @@ const resetPassword = async (req, res) => {
     }
 };
 
-export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop, getForgotPassword, sendForgotPasswordOTP, verifyForgotPasswordOTP, resetPassword }
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.session.user;
+
+        const user = await userSchema.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+        
+        // Update password
+        await userSchema.findByIdAndUpdate(userId, {
+            password: hashedPassword
+        });
+
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ message: 'Failed to update password' });
+    }
+};
+
+const getChangePassword = async (req, res) => {
+    try {
+        // Get user from session
+        const userId = req.session.user;
+        const user = await userSchema.findById(userId);
+
+        if (!user) {
+            return res.redirect('/login');
+        }
+
+        // Check if user has a password (not Google login)
+        if (!user.password) {
+            return res.redirect('/profile');
+        }
+
+        // Pass the user object to the view
+        res.render('user/changePassword', { user });
+
+    } catch (error) {
+        console.error('Get change password error:', error);
+        res.status(500).render('error', { 
+            message: 'Error loading change password page',
+            error: error.message 
+        });
+    }
+};
+
+export default { getSignUp, postSignUp, postOtp, postResendOtp, getLogin, postLogin, getHome, getLogout, getGoogleCallback, getGoogle, getShop, getForgotPassword, sendForgotPasswordOTP, verifyForgotPasswordOTP, resetPassword, changePassword, getChangePassword }

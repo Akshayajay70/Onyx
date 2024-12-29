@@ -103,5 +103,9 @@ route.post('/checkout/wallet-payment', userMiddlewares.checkSession, userCheckou
 
 route.get('/coupons', userMiddlewares.checkSession, couponController.getCoupons);
 
+route.get('/change-password', userMiddlewares.checkSession, userController.getChangePassword);
+
+route.post('/change-password', userMiddlewares.checkSession, userController.changePassword);
+
 export default route;
 
