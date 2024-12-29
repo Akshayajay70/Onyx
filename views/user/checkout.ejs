@@ -576,6 +576,8 @@
                 }
 
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                // Get coupon code if applied
+                const couponCode = document.getElementById('appliedCouponCode')?.textContent;
 
                 if (paymentMethod === 'wallet') {
                     // Handle wallet payment
@@ -594,7 +596,7 @@
                         }
                     });
                 } else if (paymentMethod === 'cod') {
-                    // Existing COD logic
+                    // Add couponCode to the request body for COD
                     const response = await fetch('/checkout/place-order', {
                         method: 'POST',
                         headers: {
@@ -602,7 +604,8 @@
                         },
                         body: JSON.stringify({
                             addressId: selectedAddress.value,
-                            paymentMethod: 'cod'
+                            paymentMethod: 'cod',
+                            couponCode: couponCode
                         })
                     });
 
