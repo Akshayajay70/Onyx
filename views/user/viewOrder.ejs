@@ -47,6 +47,17 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500">Status</p>
+                                        <% 
+                                            let statusText = order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1);
+                                            let isAdminCancelled = order.statusHistory.some(status => 
+                                                status.status === 'cancelled' && 
+                                                status.comment && 
+                                                status.comment.toLowerCase().includes('admin')
+                                            );
+                                            if (order.orderStatus === 'cancelled' && isAdminCancelled) {
+                                                statusText;
+                                            }
+                                        %>
                                         <span class="
                                             inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                             <%= order.orderStatus === 'delivered' ? 'bg-green-100 text-green-800' :
@@ -56,7 +67,7 @@
                                                 'bg-yellow-100 text-yellow-800'
                                             %>
                                         ">
-                                            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                                            <%= statusText %>
                                         </span>
                                     </div>
                                     <div class="flex items-center">
@@ -118,16 +129,26 @@
                                     <div class="space-y-4">
                                         <% order.statusHistory.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(status => { %>
                                             <div class="flex items-start gap-4">
-                                                <div class="w-2 h-2 mt-2 rounded-full bg-gray-400"></div>
+                                                <div class="w-2 h-2 mt-2 rounded-full 
+                                                    <%= status.status === 'cancelled' ? 'bg-red-500' : 
+                                                       status.status === 'delivered' ? 'bg-green-500' : 
+                                                       status.status === 'returned' ? 'bg-orange-500' : 
+                                                       'bg-gray-400' %>">
+                                                </div>
                                                 <div>
                                                     <p class="font-medium">
                                                         <%= status.status.charAt(0).toUpperCase() + status.status.slice(1) %>
+                                                        <% if (status.status === 'cancelled' && status.comment && status.comment.toLowerCase().includes('admin')) { %>
+                                                            <span class="text-sm text-red-600">(by Admin)</span>
+                                                        <% } %>
                                                     </p>
                                                     <p class="text-sm text-gray-500">
                                                         <%= new Date(status.date).toLocaleString() %>
                                                     </p>
                                                     <% if (status.comment) { %>
-                                                        <p class="text-sm text-gray-600"><%= status.comment %></p>
+                                                        <p class="text-sm text-gray-600">
+                                                            <%= status.comment %>
+                                                        </p>
                                                     <% } %>
                                                 </div>
                                             </div>
