@@ -1,10 +1,13 @@
 import orderSchema from '../model/orderModel.js';
 import Wallet from '../model/walletModel.js';
 import productSchema from '../model/productModel.js';
+import userSchema from '../model/userModel.js';
 
 const userOrderController = {
     getOrders: async (req, res) => {
         try {
+            const user = await userSchema.findById(req.session.user);
+
             const userId = req.session.user;
             const page = parseInt(req.query.page) || 1;
             const limit = 5; // Orders per page
@@ -25,7 +28,8 @@ const userOrderController = {
                 currentPage: page,
                 totalPages,
                 hasNextPage: page < totalPages,
-                hasPrevPage: page > 1
+                hasPrevPage: page > 1,
+                user
             });
         } catch (error) {
             console.error('Get orders error:', error);

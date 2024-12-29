@@ -1,9 +1,11 @@
 import addressSchema from '../model/addressModel.js';
+import userSchema from '../model/userModel.js';
 
 const getAddress = async (req, res) => {
     try {
+        const user = await userSchema.findById(req.session.user);
         const addresses = await addressSchema.find({ userId: req.session.user });
-        res.render('user/address', { addresses });
+        res.render('user/address', { addresses, user });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }

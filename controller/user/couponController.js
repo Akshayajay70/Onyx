@@ -1,9 +1,12 @@
 import Coupon from '../../model/couponModel.js';
+import userSchema from '../../model/userModel.js';
 
 const couponController = {
     getCoupons: async (req, res) => {
         try {
             const currentDate = new Date();
+
+            const user = await userSchema.findById(req.session.user);
             
             // Find active coupons that haven't expired
             const coupons = await Coupon.find({
@@ -18,7 +21,7 @@ const couponController = {
                 return coupon.usedCouponCount < coupon.totalCoupon;
             });
 
-            res.render('user/coupon', { coupons: availableCoupons });
+            res.render('user/coupon', { coupons: availableCoupons, user });
             
         } catch (error) {
             console.error('Get coupons error:', error);

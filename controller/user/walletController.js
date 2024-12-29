@@ -1,10 +1,11 @@
 import Wallet from '../../model/walletModel.js';
-import User from '../../model/userModel.js';
+import userSchema from '../../model/userModel.js';
 
 const walletController = {
     getWallet: async (req, res) => {
         try {
             const userId = req.session.user;
+            const user = await userSchema.findById(userId);
 
             // Find or create wallet
             let wallet = await Wallet.findOne({ userId });
@@ -18,7 +19,7 @@ const walletController = {
             res.render('user/wallet', {
                 wallet,
                 transactions,
-                user: req.session.user
+                user
             });
 
         } catch (error) {
