@@ -1,4 +1,5 @@
 import Order from '../../model/orderModel.js';
+import User from '../../model/userModel.js';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 
@@ -42,9 +43,9 @@ const reportController = {
                 };
             }
 
-            // Fetch orders with date range
+            // Fetch orders with date range and populate user data
             const orders = await Order.find(query)
-                .populate('userId', 'name email')
+                .populate('userId', 'firstName lastName email')
                 .sort({ createdAt: -1 });
 
             // Calculate metrics

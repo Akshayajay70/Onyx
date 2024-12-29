@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
 
 </head>
 <body class="mybg-green">
@@ -14,23 +18,6 @@
 
     <div class="p-4 sm:ml-64">
         <div class="p-4 mt-14">
-            <!-- Breadcrumb -->
-            <nav class="flex mb-8" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="/admin/dashboard" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
-                            <i class="fas fa-home mr-2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                            <span class="text-gray-500">Sales Report</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-
             <!-- Main Content -->
             <div class="bg-white rounded-lg shadow-lg p-6">
                 <!-- Filter Section -->
@@ -154,7 +141,7 @@
                                         <%= order.createdAt.toLocaleDateString() %>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <%= order.userId.name %>
+                                        <%= order.userId?.firstName %> <%= order.userId?.lastName %>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         ₹<%= order.totalAmount.toFixed(2) %>

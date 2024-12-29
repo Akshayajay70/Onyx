@@ -61,7 +61,7 @@
                 <% userList.forEach((user, index) => { %>
                   <tr class="border-b border-gray-700 hover:bg-zinc-700 transition-colors">
                     <td class="py-3 px-4"><%= index + 1 %></td>
-                    <td class="py-3 px-4"><%= user.fullName %></td>
+                    <td class="py-3 px-4"><%= user.firstName %> <%= user.lastName %></td>
                     <td class="py-3 px-4"><%= user.email %></td>
                     <td class="py-3 px-4"><%= user.mobileNumber || "N/A" %></td>
                     <td class="py-3 px-4">
