@@ -278,6 +278,41 @@
               });
           }
 
+          // Add description validation
+          if (!description) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Please enter a coupon description',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          if (description.length > 100) {
+              return Swal.fire({
+                  icon: 'error',
+                  title: 'Validation Error',
+                  text: 'Description must be less than 100 characters',
+                  confirmButtonColor: '#10B981'
+              });
+          }
+
+          // Add character counter to description textarea
+          const textarea = document.getElementById('description');
+          const charCount = document.createElement('div');
+          charCount.className = 'text-xs text-gray-500 mt-1';
+          textarea.parentNode.insertBefore(charCount, textarea.nextSibling);
+
+          textarea.addEventListener('input', function() {
+              const remaining = 100 - this.value.length;
+              charCount.textContent = `${remaining} characters remaining`;
+              if (remaining < 0) {
+                  charCount.classList.add('text-red-500');
+              } else {
+                  charCount.classList.remove('text-red-500');
+              }
+          });
+
           // Convert dates to simple date format without time
           const start = new Date(startDate);
           start.setHours(0, 0, 0, 0);

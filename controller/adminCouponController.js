@@ -27,6 +27,15 @@ const adminCouponController = {
                 userUsageLimit
             } = req.body;
 
+            // Validate description
+            if (!description || description.trim().length === 0) {
+                return res.status(400).json({ message: 'Description is required' });
+            }
+
+            if (description.length > 100) {
+                return res.status(400).json({ message: 'Description must be less than 100 characters' });
+            }
+
             // Validate discount percentage
             if (discountPercentage < 0 || discountPercentage > 100) {
                 return res.status(400).json({ message: 'Discount percentage must be between 0 and 100' });
@@ -41,7 +50,7 @@ const adminCouponController = {
             // Create new coupon
             const newCoupon = new Coupon({
                 code: code.toUpperCase(),
-                description,
+                description: description.trim(),
                 discountPercentage,
                 minimumPurchase: minimumPurchase || 0,
                 maximumDiscount: maximumDiscount || null,
