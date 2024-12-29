@@ -151,76 +151,138 @@
 
     <script>
         function showProductDetails(itemsJson) {
-        const items = JSON.parse(itemsJson);
-        const modal = document.getElementById('productModal');
-        const modalContent = document.getElementById('modalContent');
+            const items = JSON.parse(itemsJson);
+            const modal = document.getElementById('productModal');
+            const modalContent = document.getElementById('modalContent');
 
-        let content = `
-            <div class="overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-        `;
-
-        items.forEach(item => {
-            content += `
-                <tr>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <img src="${item.product.imageUrl[0]}" alt="${item.product.productName}" 
-                             class="h-16 w-16 object-cover rounded-md">
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        ${item.product.productName}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                        ${item.quantity}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        ₹${item.price.toFixed(2)}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ₹${(item.price * item.quantity).toFixed(2)}
-                    </td>
-                </tr>
+            let content = `
+                <div class="overflow-hidden">
+                    <!-- Product Details Table -->
+                    <table class="min-w-full divide-y divide-gray-200 mb-6">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Original Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
             `;
-        });
 
-        content += `
-                    </tbody>
-                </table>
-                <div class="mt-4 text-right">
-                    <p class="text-lg font-semibold text-gray-900">
-                        Total: ₹${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
-                    </p>
+            items.forEach(item => {
+                const originalPrice = item.originalPrice || item.price;
+                const discount = originalPrice - item.price;
+                const discountPercentage = ((discount / originalPrice) * 100).toFixed(1);
+
+                content += `
+                    <tr>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <img src="${item.product.imageUrl[0]}" alt="${item.product.productName}" 
+                                 class="h-16 w-16 object-cover rounded-md">
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            ${item.product.productName}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            ${item.quantity}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            ₹${originalPrice.toFixed(2)}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600">
+                            ${discount > 0 ? `-${discountPercentage}% (₹${discount.toFixed(2)})` : 'No discount'}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            ₹${item.price.toFixed(2)}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ₹${(item.price * item.quantity).toFixed(2)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            content += `
+                        </tbody>
+                    </table>
+
+                    <!-- Order Summary -->
+                    <div class="bg-gray-50 p-4 rounded-lg mt-6">
+                        <h4 class="text-lg font-semibold mb-4">Order Summary</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="text-gray-900">₹${items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                            </div>
+                            ${items[0].order?.couponDiscount ? `
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Coupon Applied:</span>
+                                    <span class="text-green-600">${items[0].order.couponCode} (-₹${items[0].order.couponDiscount.toFixed(2)})</span>
+                                </div>
+                            ` : ''}
+                            ${items[0].order?.categoryOffer ? `
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Category Offer:</span>
+                                    <span class="text-green-600">-${items[0].order.categoryOffer}%</span>
+                                </div>
+                            ` : ''}
+                            ${items[0].order?.productOffer ? `
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Product Offer:</span>
+                                    <span class="text-green-600">-${items[0].order.productOffer}%</span>
+                                </div>
+                            ` : ''}
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Shipping:</span>
+                                <span class="text-gray-900">₹${items[0].order?.shippingCost?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            <div class="border-t border-gray-200 pt-2 mt-2">
+                                <div class="flex justify-between font-semibold">
+                                    <span>Total:</span>
+                                    <span>₹${items[0].order?.totalAmount?.toFixed(2) || items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg mt-4">
+                        <h4 class="text-lg font-semibold mb-4">Payment Information</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Payment Method:</span>
+                                <span class="text-gray-900 ml-2">${items[0].order?.paymentMethod?.toUpperCase() || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Payment Status:</span>
+                                <span class="text-gray-900 ml-2">${items[0].order?.paymentStatus?.toUpperCase() || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        modalContent.innerHTML = content;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('productModal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    // Close modal when clicking outside
-    document.getElementById('productModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
+            modalContent.innerHTML = content;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
-    });
+
+        function closeModal() {
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
         async function updateOrderStatus(orderId, status) {
             // First show confirmation dialog
             const result = await Swal.fire({

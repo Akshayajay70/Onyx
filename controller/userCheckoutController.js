@@ -82,6 +82,28 @@ const userCheckoutController = {
             const { addressId, paymentMethod, couponCode } = req.body;
             const userId = req.session.user;
 
+            // Find coupon if code exists
+            let coupon = null;
+            let discount = 0;
+            if (couponCode) {
+                coupon = await Coupon.findOne({ code: couponCode });
+                if (coupon) {
+                    // Get cart total for discount calculation
+                    const cart = await cartSchema.findOne({ userId })
+                        .populate('items.productId');
+                    const cartTotal = cart.items.reduce(
+                        (sum, item) => sum + (item.quantity * item.price), 
+                        0
+                    );
+                    
+                    // Calculate discount
+                    discount = (cartTotal * coupon.discountPercentage) / 100;
+                    if (coupon.maximumDiscount) {
+                        discount = Math.min(discount, coupon.maximumDiscount);
+                    }
+                }
+            }
+
             // Get cart with populated product details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
@@ -133,20 +155,6 @@ const userCheckoutController = {
             // Calculate total
             const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-            let discount = 0;
-            let appliedCoupon = null;
-
-            // Handle coupon before creating order
-            if (couponCode) {
-                appliedCoupon = await Coupon.findOne({ code: couponCode });
-                if (appliedCoupon) {
-                    discount = (total * appliedCoupon.discountPercentage) / 100;
-                    if (appliedCoupon.maximumDiscount) {
-                        discount = Math.min(discount, appliedCoupon.maximumDiscount);
-                    }
-                }
-            }
-
             // Create new order
             const newOrder = new orderSchema({
                 userId,
@@ -165,20 +173,19 @@ const userCheckoutController = {
                 paymentStatus: 'pending',
                 orderStatus: 'processing',
                 orderDate: new Date(),
-                couponCode: appliedCoupon?.code,
                 discount: discount,
             });
 
             await newOrder.save();
 
             // Update coupon usage after order is created
-            if (appliedCoupon) {
-                appliedCoupon.usedCouponCount += 1;
-                appliedCoupon.usedBy.push({
+            if (coupon) {
+                coupon.usedCouponCount += 1;
+                coupon.usedBy.push({
                     userId,
                     orderId: newOrder._id
                 });
-                await appliedCoupon.save();
+                await coupon.save();
             }
 
             // Clear cart
@@ -438,6 +445,11 @@ const userCheckoutController = {
                 });
             }
 
+            const coupon = await Coupon.findOne({ code: pendingOrder.couponCode });
+            if (coupon) {
+                var couponDiscount = coupon.discountPercentage;
+            }
+
             // Get cart details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
@@ -483,7 +495,8 @@ const userCheckoutController = {
                     product: item.productId._id,
                     quantity: item.quantity,
                     price: item.price,
-                    subtotal: item.quantity * item.price
+                    subtotal: item.quantity * item.price,
+                    couponDiscountPercentage: couponDiscount
                 })),
                 totalAmount: pendingOrder.amount,
                 shippingAddress: {
@@ -556,6 +569,11 @@ const userCheckoutController = {
                 });
             }
 
+            const coupon = await Coupon.findOne({ code: couponCode });
+            if (coupon) {
+                var couponDiscountPercentage = coupon.discountPercentage;
+            }
+
             // Get cart details
             const cart = await cartSchema.findOne({ userId })
                 .populate('items.productId');
@@ -605,7 +623,8 @@ const userCheckoutController = {
                 product: item.productId._id,
                 quantity: item.quantity,
                 price: item.price,
-                subtotal: item.quantity * item.price
+                subtotal: item.quantity * item.price,
+                couponDiscountPercentage: couponDiscountPercentage
             }));
 
             // Create order with discounted amount and shipping details

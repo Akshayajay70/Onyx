@@ -155,14 +155,12 @@ const userOrderController = {
             }
 
             // Check return window (7 days)
-            // First, try to get delivery date from status history
             let deliveryDate;
             const deliveryStatus = order.statusHistory.find(h => h.status === 'delivered');
             
             if (deliveryStatus && deliveryStatus.date) {
                 deliveryDate = deliveryStatus.date;
             } else {
-                // Fallback to order's last update date if status history is not available
                 deliveryDate = order.updatedAt;
             }
 
