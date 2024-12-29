@@ -55,6 +55,10 @@ const adminOrderController = {
                 .populate({
                     path: 'userId',
                     select: '_id'
+                })
+                .populate({
+                    path: 'items.product',
+                    select: '_id stock'
                 });
 
             if (!order) {
@@ -64,8 +68,15 @@ const adminOrderController = {
                 });
             }
 
-            // Handle cancellation
+            // Check if order can be cancelled
             if (status === 'cancelled') {
+                if (['delivered', 'returned'].includes(order.orderStatus)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Cannot cancel order in current status'
+                    });
+                }
+
                 // Update product stock
                 for (const item of order.items) {
                     const product = await productSchema.findById(item.product);
@@ -110,7 +121,7 @@ const adminOrderController = {
                 order.statusHistory.push({
                     status: 'cancelled',
                     date: new Date(),
-                    comment: adminComment || 'Order cancelled'
+                    comment: adminComment || 'Order cancelled by admin'
                 });
             }
             // Handle return request approval/rejection

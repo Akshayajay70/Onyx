@@ -197,17 +197,141 @@
             window.location.href = `/admin/sales-report?period=${period}`;
         }
 
-        function applyDateFilter() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            window.location.href = `/admin/sales-report?startDate=${startDate}&endDate=${endDate}`;
+        async function applyDateFilter() {
+            try {
+                const startDateStr = document.getElementById('startDate').value;
+                const endDateStr = document.getElementById('endDate').value;
+                
+                // Create dates and set to start and end of day
+                const startDate = new Date(startDateStr);
+                startDate.setHours(0, 0, 0, 0);
+                
+                const endDate = new Date(endDateStr);
+                endDate.setHours(23, 59, 59, 999);
+                
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+
+                // Client-side validation
+                if (!startDateStr || !endDateStr) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Dates',
+                        text: 'Please select both start and end dates',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                if (startDate > today) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Date',
+                        text: 'Start date cannot be in the future',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                if (endDate < startDate) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Date Range',
+                        text: 'End date must be after or equal to start date',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                window.location.href = `/admin/sales-report?startDate=${startDateStr}&endDate=${endDateStr}`;
+
+            } catch (error) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Error applying filter',
+                    confirmButtonColor: '#000000'
+                });
+            }
         }
 
         // Download Functions
-        function downloadReport(type) {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            window.location.href = `/admin/sales-report/download-${type}?startDate=${startDate}&endDate=${endDate}`;
+        async function downloadReport(type) {
+            try {
+                const startDateStr = document.getElementById('startDate').value;
+                const endDateStr = document.getElementById('endDate').value;
+                
+                // Create dates and set to start and end of day
+                const startDate = new Date(startDateStr);
+                startDate.setHours(0, 0, 0, 0);
+                
+                const endDate = new Date(endDateStr);
+                endDate.setHours(23, 59, 59, 999);
+                
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+
+                // Client-side validation
+                if (!startDateStr || !endDateStr) {
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Dates',
+                        text: 'Please select both start and end dates',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                if (startDate > today) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Date',
+                        text: 'Start date cannot be in the future',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                if (endDate < startDate) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Date Range',
+                        text: 'End date must be after or equal to start date',
+                        confirmButtonColor: '#000000'
+                    });
+                    return;
+                }
+
+                // Make the request using the original date strings from input
+                const response = await fetch(`/admin/sales-report/download-${type}?startDate=${startDateStr}&endDate=${endDateStr}`);
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message);
+                }
+
+                if (type === 'excel') {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sales-report-${startDateStr}-${endDateStr}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    window.location.href = `/admin/sales-report/download-${type}?startDate=${startDateStr}&endDate=${endDateStr}`;
+                }
+
+            } catch (error) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Download Failed',
+                    text: error.message || 'Error downloading report',
+                    confirmButtonColor: '#000000'
+                });
+            }
         }
     </script>
 </body>

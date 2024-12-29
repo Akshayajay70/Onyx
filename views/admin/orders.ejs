@@ -114,6 +114,7 @@
                                                     <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Processing</option>
                                                     <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
                                                     <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                                    <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancel Order</option>
                                                 </select>
                                             <% } else { %>
                                                 <span class="text-gray-500">No actions available</span>
