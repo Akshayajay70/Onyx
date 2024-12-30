@@ -117,7 +117,7 @@
                                                         Quantity: <%= item.quantity %> × ₹<%= item.price %>
                                                     </p>
                                                 </div>
-                                                <p class="font-medium">₹<%= item.subtotal %></p>
+                                                <p class="font-medium">₹<%= order.totalAmount %></p>
                                             </div>
                                         <% }); %>
                                     </div>
@@ -230,7 +230,6 @@
 
     <%- include("../partials/footer") %>
 
-    <!-- Keep your existing JavaScript -->
     <script>
         function toggleOrderDetails(orderId) {
             const detailsDiv = document.getElementById(`details-${orderId}`);

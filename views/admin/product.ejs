@@ -136,7 +136,6 @@
                      name="productName" 
                      id="productName" 
                      required
-                     pattern="[A-Za-z\s]+"
                      oninput="this.value = capitalizeAndTrim(this.value)"
                      class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
               <p class="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
@@ -785,7 +784,6 @@
           }
 
           if (file.size > maxSize) {
-            errorMessage.textContent = 'Image size must be less than 5MB';
             errorMessage.classList.remove('hidden');
             input.value = '';
             return;
@@ -995,7 +993,6 @@
               
               // Validate file size
               if (file.size > 5 * 1024 * 1024) {
-                errorMessage.textContent = 'Image must be less than 5MB';
                 errorMessage.classList.remove('hidden');
                 this.value = '';
                 return;

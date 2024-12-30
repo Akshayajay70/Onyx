@@ -16,5 +16,5 @@ export const calculateFinalPrice = (product, categoryOffer, productOffer) => {
     }
 
     finalPrice -= appliedDiscount;
-    return Math.round(finalPrice); // Round to nearest integer
+    return Math.round(finalPrice);
 }; 

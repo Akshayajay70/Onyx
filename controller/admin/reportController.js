@@ -50,7 +50,7 @@ const reportController = {
             // Calculate metrics using discounted prices
             const metrics = {
                 totalOrders: orders.length,
-                totalSales: orders.reduce((sum, order) => sum + order.totalAmount, 0), // Using final amount after discounts
+                totalSales: orders.reduce((sum, order) => sum + order.totalAmount, 0),
                 totalDiscount: orders.reduce((sum, order) => {
                     const couponDiscount = order.couponDiscount || 0;
                     const otherDiscounts = order.discount || 0;
@@ -75,7 +75,7 @@ const reportController = {
                 }
                 
                 acc[date].orders++;
-                acc[date].sales += order.totalAmount; // Using final amount after discounts
+                acc[date].sales += order.totalAmount;
                 acc[date].discount += (order.couponDiscount || 0) + (order.discount || 0);
                 acc[date].netRevenue += order.totalAmount;
                 
