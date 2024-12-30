@@ -161,7 +161,7 @@ const reportController = {
                     sum + (item.price * item.quantity), 0);
 
                 worksheet.addRow([
-                    order.orderCode,
+                    order.orderCode.slice(-6),
                     order.createdAt.toLocaleDateString(),
                     order.userId ? `${order.userId.firstName || ''} ${order.userId.lastName || ''}` : 'N/A',
                     order.items.length,
@@ -221,7 +221,7 @@ const reportController = {
             const { startDate, endDate } = req.query;
 
             // Validate and parse dates
-            const start = startDate ? new Date(startDate + 'T00:00:00.000Z') : new Date(new Date().setDate(new Date().getDate() - 30));
+            const start = startDate ? new Date(startDate + 'T23:59:59.999Z') : new Date(new Date().setDate(new Date().getDate() - 30));
             const end = endDate ? new Date(endDate + 'T23:59:59.999Z') : new Date();
             const today = new Date();
 
@@ -332,7 +332,7 @@ const reportController = {
                 const totalDiscount = (order.couponDiscount || 0) + (order.discount || 0);
 
                 doc.fontSize(9)
-                   .text(order.orderCode, columns.orderID.x, row)
+                   .text(order.orderCode.slice(-6), columns.orderID.x, row)
                    .text(order.createdAt.toLocaleDateString(), columns.date.x, row)
                    .text(order.userId ? `${order.userId.firstName || ''} ${order.userId.lastName || ''}` : 'N/A', columns.customer.x, row)
                    .text(`₹${originalPrice.toFixed(2)}`, columns.original.x, row)
