@@ -199,24 +199,22 @@
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="p-6 flex justify-end gap-4">
+                                <div class="p-6 flex flex-wrap justify-end gap-4">
                                     <% if (['pending', 'processing'].includes(order.order.status)) { %>
                                         <button onclick="cancelOrder('<%= order._id %>')"
                                                 class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                                             Cancel Order
                                         </button>
                                     <% } %>
-                                    <% if (order.order.status === 'delivered' && !order.return.reason) { %>
+                                    
+                                    <% if (order.order.status === 'delivered' && !order.return.isReturnRequested) { %>
                                         <button onclick="requestReturn('<%= order._id %>')"
                                                 class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
                                             Request Return
                                         </button>
                                     <% } %>
-                                </div>
-
-                                <!-- Add this button in the order details section -->
-                                <div class="flex gap-4 mt-4">
-                                    <% if (order.order.status !== 'cancelled') { %>
+                                    
+                                    <% if (['delivered', 'returned'].includes(order.order.status)) { %>
                                         <button onclick="downloadInvoice('<%= order._id %>')"
                                                 class="px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors">
                                             <i class="fas fa-file-pdf mr-2"></i>Download Invoice

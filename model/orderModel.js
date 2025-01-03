@@ -84,14 +84,14 @@ const orderSchema = new mongoose.Schema({
     order:{
         status: {
             type: String,
-            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled','returned', 'refund processing'],
             default: 'pending'
         },
         statusHistory: [{
             status: {
                 type: String,
                 enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 
-                       'returned', 'refund processing'],
+                       'returned', 'refund processing', 'return requested'],
                 required: true
             },
             date: {

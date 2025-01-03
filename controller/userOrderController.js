@@ -187,7 +187,7 @@ const userOrderController = {
 
             // Add to status history
             order.order.statusHistory.push({
-                status: order.order.status,
+                status: 'return requested',
                 date: new Date(),
                 comment: `Return requested: ${reason}`
             });
@@ -219,162 +219,143 @@ const userOrderController = {
                 return res.status(404).json({ message: 'Order not found' });
             }
 
+            // Only allow invoice download for delivered or returned orders
+            if (!['delivered', 'returned'].includes(order.order.status)) {
+                return res.status(400).json({ 
+                    message: 'Invoice is only available for delivered or returned orders' 
+                });
+            }
+
             // Create PDF document
             const doc = new PDFDocument({ margin: 50 });
 
             // Set response headers
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderCode.slice(-6)}.pdf`);
+            res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderCode}.pdf`);
 
             // Pipe PDF to response
             doc.pipe(res);
 
-            // Add header with company logo and tax invoice text
-            doc.fontSize(20)
-               .text('TAX INVOICE', 50, 45, { align: 'center' })
-               .moveDown();
-
-            // Add company details (left side)
-            doc.fontSize(10)
-               .text('Sold By:', 50, 100)
-               .font('Helvetica-Bold')
-               .text('ONYX FASHION STORE', 50, 115)
-               .font('Helvetica')
-               .text('123 Fashion Street', 50, 130)
-               .text('Kerala, India - 682001', 50, 145)
-               .text('Phone: +91 9876543210', 50, 160)
-               .text('Email: support@onyx.com', 50, 175)
-               .text('GSTIN: 32ABCDE1234F1Z5', 50, 190);
-
-            // Add Billing Details (right side)
-            doc.fontSize(10)
-               .text('Billing Address:', 300, 100)
-               .font('Helvetica-Bold')
-               .text(`${order.shippingAddress.fullName}`, 300, 115)
-               .font('Helvetica')
-               .text(order.shippingAddress.addressLine1, 300, 130)
-               .text(order.shippingAddress.addressLine2, 300, 145)
-               .text(`${order.shippingAddress.city}, ${order.shippingAddress.state}`, 300, 160)
-               .text(`PIN: ${order.shippingAddress.pincode}`, 300, 175)
-               .text(`Phone: ${order.shippingAddress.mobileNumber}`, 300, 190);
-
-            // Add Order Details
-            doc.fontSize(10)
-               .text('Order Details:', 50, 230)
-               .text(`Order ID: ${order.orderCode}`, 50, 245)
-               .text(`Order Date: ${new Date(order.orderDate).toLocaleDateString('en-IN')}`, 50, 260)
-               .text(`Payment Method: ${order.payment.method.toUpperCase()}`, 50, 275);
-
-            // Add Items Table
-            const tableTop = 320;
-            doc.font('Helvetica-Bold');
-
-            // Define column positions and widths
-            const columns = {
-                item: { x: 50, width: 200 },
-                qty: { x: 270, width: 50 },
-                gross: { x: 340, width: 70 },
-                discount: { x: 420, width: 70 },
-                amount: { x: 500, width: 70 }
-            };
-
-            // Table Headers
-            doc.fontSize(10)
-               .text('Item Name', columns.item.x, tableTop, { width: columns.item.width })
-               .text('Qty', columns.qty.x, tableTop, { width: columns.qty.width, align: 'center' })
-               .text('Gross', columns.gross.x, tableTop, { width: columns.gross.width, align: 'right' })
-               .text('Discount', columns.discount.x, tableTop, { width: columns.discount.width, align: 'right' })
-               .text('Amount', columns.amount.x, tableTop, { width: columns.amount.width, align: 'right' });
-
-            // Underline
-            doc.moveTo(50, tableTop + 15)
-               .lineTo(550, tableTop + 15)
-               .stroke();
-
-            // Reset font
-            doc.font('Helvetica');
-
-            // Add items
-            let y = tableTop + 30;
+            // Generate separate invoice for each item
             order.items.forEach((item, index) => {
-                // Add new page if needed
-                if (y > 700) {
-                    doc.addPage();
-                    y = 50;
+                if (index > 0) {
+                    doc.addPage(); // Add new page for each item except first
                 }
 
+                // Calculate tax amounts (18% GST)
+                const TAX_RATE = 0.18;
+                const itemBasePrice = item.price / (1 + TAX_RATE);
+                const itemTaxAmount = item.price - itemBasePrice;
+                const totalBaseAmount = itemBasePrice * item.quantity;
+                const totalTaxAmount = itemTaxAmount * item.quantity;
+                const totalAmount = item.subtotal;
+
+                // Add header with company logo and tax invoice text
+                doc.fontSize(20)
+                   .text('TAX INVOICE', { align: 'center' })
+                   .moveDown();
+
+                // Add company details (left side)
                 doc.fontSize(10)
-                   .text(item.product.productName, columns.item.x, y, { width: columns.item.width })
-                   .text(item.quantity.toString(), columns.qty.x, y, { width: columns.qty.width, align: 'center' })
-                   .text(`₹${item.price.toFixed(2)}`, columns.gross.x, y, { width: columns.gross.width, align: 'right' })
-                   .text(`₹${(order.coupon.discount || 0).toFixed(2)}`, columns.discount.x, y, { width: columns.discount.width, align: 'right' })
-                   .text(`₹${order.totalAmount.toFixed(2)}`, columns.amount.x, y, { width: columns.amount.width, align: 'right' });
+                   .text('Sold By:', 50)
+                   .font('Helvetica-Bold')
+                   .text('ONYX FASHION STORE')
+                   .font('Helvetica')
+                   .text('123 Fashion Street')
+                   .text('Kerala, India - 682001')
+                   .text('Phone: +91 9876543210')
+                   .text('Email: support@onyx.com')
+                   .text('GSTIN: 32ABCDE1234F1Z5');
 
-                y += 20;
+                // Add Invoice Details (right side)
+                doc.fontSize(10)
+                   .text(`Invoice Number: ${order.orderCode}-${index + 1}`, 300, doc.y - 90)
+                   .text(`Order Date: ${new Date(order.orderDate).toLocaleDateString('en-IN')}`, 300)
+                   .text(`Invoice Date: ${new Date().toLocaleDateString('en-IN')}`, 300);
+
+                // Add Billing Details
+                doc.moveDown()
+                   .text('Billing Address:')
+                   .font('Helvetica-Bold')
+                   .text(`${order.shippingAddress.fullName}`)
+                   .font('Helvetica')
+                   .text(order.shippingAddress.addressLine1)
+                   .text(order.shippingAddress.addressLine2 || '')
+                   .text(`${order.shippingAddress.city}, ${order.shippingAddress.state}`)
+                   .text(`PIN: ${order.shippingAddress.pincode}`)
+                   .text(`Phone: ${order.shippingAddress.mobileNumber}`)
+                   .moveDown();
+
+                // Add Product Details Table
+                doc.font('Helvetica-Bold');
+                const tableTop = doc.y + 20;
+
+                // Table Headers
+                doc.text('Product Details', 50, tableTop)
+                   .text('HSN', 250, tableTop)
+                   .text('Qty', 300, tableTop)
+                   .text('Rate', 350, tableTop)
+                   .text('Amount', 450, tableTop);
+
+                // Underline
+                doc.moveTo(50, tableTop + 15)
+                   .lineTo(550, tableTop + 15)
+                   .stroke();
+
+                // Product Details
+                doc.font('Helvetica')
+                   .text(item.product.productName, 50, tableTop + 30)
+                   .text('6203', 250, tableTop + 30)
+                   .text(item.quantity.toString(), 300, tableTop + 30)
+                   .text(`₹${itemBasePrice.toFixed(2)}`, 350, tableTop + 30)
+                   .text(`₹${totalBaseAmount.toFixed(2)}`, 450, tableTop + 30);
+
+                // Add Tax Details
+                const taxTop = tableTop + 80;
+                doc.moveTo(50, taxTop).lineTo(550, taxTop).stroke()
+                   .font('Helvetica-Bold')
+                   .text('Tax Details', 50, taxTop + 20)
+                   .font('Helvetica');
+
+                // CGST and SGST (9% each)
+                const cgst = totalTaxAmount / 2;
+                doc.text('CGST @ 9%', 350, taxTop + 40)
+                   .text(`₹${cgst.toFixed(2)}`, 450, taxTop + 40)
+                   .text('SGST @ 9%', 350, taxTop + 60)
+                   .text(`₹${cgst.toFixed(2)}`, 450, taxTop + 60);
+
+                // Total Amount
+                doc.moveTo(50, taxTop + 90).lineTo(550, taxTop + 90).stroke()
+                   .font('Helvetica-Bold')
+                   .text('Total Amount:', 350, taxTop + 110)
+                   .text(`₹${totalAmount.toFixed(2)}`, 450, taxTop + 110)
+                   .moveDown();
+
+                // Add Footer (within the page)
+                const footerTop = doc.page.height - 120;
+                
+                // Footer Border Top
+                doc.moveTo(50, footerTop).lineTo(550, footerTop).stroke();
+
+                // Footer Content
+                doc.fontSize(8)
+                   .font('Helvetica')
+                   .text('Terms & Conditions:', 50, footerTop + 10)
+                   .text('1. This is a computer generated invoice.', 50, footerTop + 25)
+                   .text('2. All disputes are subject to Kerala jurisdiction.', 50, footerTop + 35)
+                   .text('3. E. & O. E.', 50, footerTop + 45);
+
+                // Company Details in Footer
+                doc.fontSize(8)
+                   .text('ONYX FASHION STORE', 350, footerTop + 10)
+                   .text('123 Fashion Street, Kerala - 682001', 350, footerTop + 25)
+                   .text('Email: support@onyx.com | Phone: +91 9876543210', 350, footerTop + 35)
+                   .text('GSTIN: 32ABCDE1234F1Z5', 350, footerTop + 45);
+
+                // Footer Border Bottom
+                doc.moveTo(50, footerTop + 70).lineTo(550, footerTop + 70).stroke();
+
             });
-
-            // Add line for total
-            y += 10;
-            doc.moveTo(50, y).lineTo(550, y).stroke();
-            y += 20;
-
-            // Add Totals section
-            doc.fontSize(10);
-            let totalY = y;
-
-            // Update totals section alignment
-            doc.text('Cart Total:', columns.discount.x, totalY, { width: columns.discount.width, align: 'left' })
-               .text(`₹${order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}`, 
-                     columns.amount.x, totalY, { width: columns.amount.width, align: 'right' });
-            totalY += 20;
-
-            if (order.coupon.discount) {
-                doc.text('Coupon Discount:', columns.discount.x, totalY, { width: columns.discount.width, align: 'left' })
-                   .text(`-₹${order.coupon.discount.toFixed(2)}`, columns.amount.x, totalY, { width: columns.amount.width, align: 'right' });
-                totalY += 20;
-            }
-
-            if (order.discount) {
-                doc.text('Other Discounts:', columns.discount.x, totalY, { width: columns.discount.width, align: 'left' })
-                   .text(`-₹${order.discount.toFixed(2)}`, columns.amount.x, totalY, { width: columns.amount.width, align: 'right' });
-                totalY += 20;
-            }
-
-            // Total Amount with right alignment
-            doc.font('Helvetica-Bold')
-               .text('Total Amount:', columns.discount.x, totalY, { width: columns.discount.width, align: 'left' })
-               .text(`₹${order.totalAmount.toFixed(2)}`, columns.amount.x, totalY, { width: columns.amount.width, align: 'right' });
-
-            // Add footer
-            doc.fontSize(8)
-               .font('Helvetica')
-               .text(
-                    'This is a computer generated invoice and does not require a physical signature.',
-                    50,
-                    doc.page.height - 50,
-                    { align: 'center' }
-                );
-
-            // Add Terms and Conditions
-            doc.fontSize(8)
-               .text(
-                    'Terms & Conditions:',
-                    50,
-                    doc.page.height - 80,
-                    { align: 'left' }
-               )
-               .text(
-                    '1. All items are sold as per our standard terms and conditions.',
-                    50,
-                    doc.page.height - 70,
-                    { align: 'left' }
-               )
-               .text(
-                    '2. This invoice must be produced for any returns or exchanges.',
-                    50,
-                    doc.page.height - 60,
-                    { align: 'left' }
-               );
 
             // Finalize PDF
             doc.end();
@@ -388,5 +369,12 @@ const userOrderController = {
         }
     }
 };
+
+// Helper function to convert number to words
+function numberToWords(number) {
+    // Add your number to words conversion logic here
+    // You can use a library like 'number-to-words' or implement your own
+    return number.toString(); // Placeholder return
+}
 
 export default userOrderController; 
