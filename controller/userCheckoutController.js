@@ -173,7 +173,9 @@ const userCheckoutController = {
                 });
             }
 
-            // Create order
+            // Create order with appropriate initial status
+            const initialStatus = paymentMethod === 'cod' ? 'processing' : 'pending';
+            
             const order = await orderSchema.create({
                 userId,
                 items: orderItems,
@@ -193,14 +195,16 @@ const userCheckoutController = {
                 },
                 payment: {
                     method: paymentMethod,
-                    paymentStatus: paymentMethod === 'cod' ? 'pending' : 'completed'
+                    paymentStatus: paymentMethod === 'cod' ? 'processing' : 'completed'
                 },
                 order: {
-                    status: 'pending',
+                    status: initialStatus,
                     statusHistory: [{
-                        status: 'pending',
+                        status: initialStatus,
                         date: new Date(),
-                        comment: `Order placed with ${paymentMethod.toUpperCase()} payment`
+                        comment: paymentMethod === 'cod' ? 
+                            'Order confirmed with Cash on Delivery' : 
+                            'Order placed, awaiting payment'
                     }]
                 }
             });
@@ -555,9 +559,9 @@ const userCheckoutController = {
                     }
                 },
                 order: {
-                    status: 'pending',
+                    status: 'processing',
                     statusHistory: [{
-                        status: 'pending',
+                        status: 'processing',
                         date: new Date(),
                         comment: 'Order placed with Razorpay payment'
                     }]
@@ -706,9 +710,9 @@ const userCheckoutController = {
                     }
                 },
                 order: {
-                    status: 'pending',
+                    status: 'processing',
                     statusHistory: [{
-                        status: 'pending',
+                        status: 'processing',
                         date: new Date(),
                         comment: 'Order placed using wallet payment'
                     }]

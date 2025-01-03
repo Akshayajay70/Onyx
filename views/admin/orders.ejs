@@ -107,17 +107,34 @@
                                                         Reject
                                                     </button>
                                                 </div>
-                                            <% } else if (!['cancelled', 'returned', 'delivered'].includes(order.order.status)) { %>
+                                            <% } else if (['pending', 'processing', 'shipped'].includes(order.order.status)) { %>
                                                 <select onchange="updateOrderStatus('<%= order._id %>', this.value)"
                                                         class="form-select rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                                     <option value="" disabled selected>Update Status</option>
-                                                    <option value="processing" <%= order.order.status === 'processing' ? 'selected' : '' %>>Processing</option>
-                                                    <option value="shipped" <%= order.order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                                                    <option value="delivered" <%= order.order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                                                    <option value="cancelled" <%= order.order.status === 'cancelled' ? 'selected' : '' %>>Cancel Order</option>
+                                                    
+                                                    <% if (order.order.status === 'pending') { %>
+                                                        <option value="cancelled">Cancel Order</option>
+                                                    <% } else if (order.order.status === 'processing') { %>
+                                                        <option value="shipped">Ship Order</option>
+                                                        <option value="delivered">Mark as Delivered</option>
+                                                        <option value="cancelled">Cancel Order</option>
+                                                    <% } else if (order.order.status === 'shipped') { %>
+                                                        <option value="delivered">Mark as Delivered</option>
+                                                        <option value="cancelled">Cancel Order</option>
+                                                    <% } %>
                                                 </select>
-                                            <% } else { %>
-                                                <span class="text-gray-500">No actions available</span>
+                                            <% } else if (['cancelled', 'delivered', 'returned', 'refund processing'].includes(order.order.status)) { %>
+                                                <span class="text-gray-500 italic">
+                                                    <% if (order.order.status === 'cancelled') { %>
+                                                        Order cancelled
+                                                    <% } else if (order.order.status === 'delivered') { %>
+                                                        Order completed
+                                                    <% } else if (order.order.status === 'returned') { %>
+                                                        Order returned
+                                                    <% } else if (order.order.status === 'refund processing') { %>
+                                                        Refund in progress
+                                                    <% } %>
+                                                </span>
                                             <% } %>
                                         </td>
                                         
@@ -300,40 +317,74 @@
                 closeModal();
             }
         });
-        async function updateOrderStatus(orderId, status) {
-            // First show confirmation dialog
-            const result = await Swal.fire({
-                title: 'Update Order Status?',
-                html: `Are you sure you want to change the order status to <b>${status.charAt(0).toUpperCase() + status.slice(1)}</b>?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#000000',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, update it!',
-                cancelButtonText: 'No, cancel',
-                reverseButtons: true
-            });
-
-            // If user confirms, proceed with the update
-            if (result.isConfirmed) {
-                try {
-                    // Show loading state
-                    Swal.fire({
-                        title: 'Updating Status',
-                        text: 'Please wait...',
-                        allowOutsideClick: false,
-                        showConfirmButton: false,
-                        willOpen: () => {
-                            Swal.showLoading();
+        async function updateOrderStatus(orderId, newStatus) {
+            if (newStatus === 'cancelled') {
+                // Handle cancellation with reason
+                const { value: cancelReason } = await Swal.fire({
+                    title: 'Cancellation Reason',
+                    input: 'text',
+                    inputLabel: 'Please provide a reason for cancellation',
+                    inputPlaceholder: 'Enter cancellation reason...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444',
+                    cancelButtonColor: '#6B7280',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to provide a reason!';
                         }
-                    });
+                    }
+                });
 
+                if (!cancelReason) {
+                    // Reset the select element if cancellation was aborted
+                    document.querySelector(`select[onchange*="${orderId}"]`).value = "";
+                    return;
+                }
+
+                try {
                     const response = await fetch(`/admin/orders/${orderId}/status`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ status })
+                        body: JSON.stringify({ 
+                            status: 'cancelled',
+                            adminComment: cancelReason
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Order Cancelled',
+                            text: data.message,
+                            confirmButtonColor: '#000000'
+                        });
+                        window.location.reload();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to cancel order',
+                        confirmButtonColor: '#000000'
+                    });
+                    // Reset the select element on error
+                    document.querySelector(`select[onchange*="${orderId}"]`).value = "";
+                }
+            } else {
+                // Handle regular status updates
+                try {
+                    const response = await fetch(`/admin/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: newStatus })
                     });
 
                     const data = await response.json();
@@ -345,8 +396,6 @@
                             text: data.message,
                             confirmButtonColor: '#000000'
                         });
-                        
-                        // Reload page to show updated status
                         window.location.reload();
                     } else {
                         throw new Error(data.message);
@@ -355,16 +404,12 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: error.message || 'Failed to update order status',
+                        text: error.message || 'Failed to update status',
                         confirmButtonColor: '#000000'
                     });
-                    
-                    // Reset select to previous value
-                    window.location.reload();
+                    // Reset the select element on error
+                    document.querySelector(`select[onchange*="${orderId}"]`).value = "";
                 }
-            } else {
-                // If user cancels, reset select to previous value
-                window.location.reload();
             }
         }
 

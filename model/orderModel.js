@@ -65,7 +65,7 @@ const orderSchema = new mongoose.Schema({
         },
         paymentStatus: {
             type: String,
-            enum: ['pending', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
+            enum: ['pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
             default: 'pending'
         },
         walletTransaction: {
@@ -84,7 +84,7 @@ const orderSchema = new mongoose.Schema({
     order:{
         status: {
             type: String,
-            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled','returned', 'refund processing'],
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
             default: 'pending'
         },
         statusHistory: [{
@@ -99,7 +99,7 @@ const orderSchema = new mongoose.Schema({
                 default: Date.now
             },
             comment: String
-        }],
+        }]
     },
     return: {
         isReturnRequested: {
