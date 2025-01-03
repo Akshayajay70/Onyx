@@ -86,13 +86,22 @@
                         </label>
 
                         <!-- COD Payment Option -->
-                        <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                            <input type="radio" name="paymentMethod" value="cod" checked>
+                        <label id="codOption" 
+                               class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all duration-300"
+                               data-final-total="<%= finalTotal %>">
+                            <input type="radio" 
+                                   name="paymentMethod" 
+                                   value="cod" 
+                                   id="codPayment"
+                                   onchange="handlePaymentMethodChange()">
                             <div class="flex flex-col">
                                 <span class="flex items-center gap-2">
                                     <i class="fas fa-money-bill"></i> Cash on Delivery
+                                    <span id="codAvailability" class="text-xs px-2 py-1 rounded hidden"></span>
                                 </span>
-                                <span class="text-sm text-gray-500">Pay when you receive the order</span>
+                                <span class="text-sm text-gray-500" id="codMessage">
+                                    Pay when you receive the order
+                                </span>
                             </div>
                         </label>
 
@@ -437,6 +446,9 @@
                     discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
 
                     closeCouponModal();
+
+                    const newTotal = parseFloat(document.getElementById('finalTotal').textContent);
+                    updatePaymentMethodsAfterCoupon(newTotal);
                 } else {
                     // Error notification
                     Swal.fire({
@@ -478,6 +490,8 @@
                     document.getElementById('finalTotal').textContent = cartTotal.toFixed(2);
                     document.getElementById('appliedCouponInfo').classList.add('hidden');
 
+                    const originalTotal = parseFloat(document.getElementById('finalTotal').textContent);
+                    updatePaymentMethodsAfterCoupon(originalTotal);
                 } else {
                     throw new Error(data.message || 'Failed to remove coupon');
                 }
@@ -588,8 +602,12 @@
                 }
 
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-                const couponCode = document.getElementById('appliedCouponCode')?.textContent;
                 const finalAmount = parseFloat(document.getElementById('finalTotal').textContent);
+
+                // Validate COD payment method
+                if (paymentMethod === 'cod' && finalAmount > 1000) {
+                    throw new Error('Cash on Delivery is not available for orders above ₹1,000. Please choose a different payment method.');
+                }
 
                 let response;
                 
@@ -607,7 +625,7 @@
                         body: JSON.stringify({
                             addressId: selectedAddress.value,
                             paymentMethod: 'cod',
-                            couponCode: couponCode
+                            couponCode: document.getElementById('appliedCouponCode')?.textContent
                         })
                     });
                     const data = await response.json();
@@ -783,6 +801,45 @@
                 }
             }
         }
+
+        function updateCODAvailability(finalAmount) {
+            const codOption = document.getElementById('codOption');
+            const codPayment = document.getElementById('codPayment');
+            const codAvailability = document.getElementById('codAvailability');
+            const codMessage = document.getElementById('codMessage');
+
+            if (finalAmount > 1000) {
+                codOption.classList.add('opacity-60');
+                codOption.classList.remove('hover:bg-gray-50');
+                codPayment.disabled = true;
+                codAvailability.classList.remove('hidden');
+                codAvailability.classList.add('bg-red-100', 'text-red-800');
+                codAvailability.textContent = 'Not Available';
+                codMessage.textContent = 'Not available for orders above ₹1,000';
+                
+                // If COD was selected, switch to a different payment method
+                if (codPayment.checked) {
+                    document.querySelector('input[name="paymentMethod"][value="online"]').checked = true;
+                }
+            } else {
+                codOption.classList.remove('opacity-60');
+                codOption.classList.add('hover:bg-gray-50');
+                codPayment.disabled = false;
+                codAvailability.classList.add('hidden');
+                codMessage.textContent = 'Pay when you receive the order';
+            }
+        }
+
+        // Update COD availability when coupon is applied or removed
+        function updatePaymentMethodsAfterCoupon(finalAmount) {
+            updateCODAvailability(finalAmount);
+        }
+
+        // Initial update
+        document.addEventListener('DOMContentLoaded', function() {
+            const finalTotal = parseFloat(document.getElementById('codOption').dataset.finalTotal);
+            updateCODAvailability(finalTotal);
+        });
     </script>
 </body>
 </html> 

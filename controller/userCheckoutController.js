@@ -77,12 +77,28 @@ const userCheckoutController = {
                 });
             }
 
+            // Calculate total after any applied coupon
+            let couponDiscount = 0;
+            const appliedCouponCode = req.session.appliedCoupon;
+            if (appliedCouponCode) {
+                const coupon = await Coupon.findOne({ code: appliedCouponCode });
+                if (coupon) {
+                    couponDiscount = Math.min(
+                        (total * coupon.discountPercentage) / 100,
+                        coupon.maximumDiscount || Infinity
+                    );
+                }
+            }
+            const finalTotal = total - couponDiscount;
+
             res.render('user/checkout', {
                 addresses,
                 cartItems,
                 total,
+                finalTotal,
                 user: req.session.user,
-                wallet
+                wallet,
+                appliedCouponCode
             });
         } catch (error) {
             console.error('Checkout page error:', error);
@@ -95,8 +111,8 @@ const userCheckoutController = {
 
     placeOrder: async (req, res) => {
         try {
-            const userId = req.session.user;
             const { addressId, paymentMethod, couponCode } = req.body;
+            const userId = req.session.user;
 
             // Get cart and validate
             const cart = await cartSchema.findOne({ userId })
@@ -109,21 +125,26 @@ const userCheckoutController = {
                 });
             }
 
-            // Calculate cart total and coupon discount
-            const cartTotal = cart.items.reduce(
-                (sum, item) => sum + (item.quantity * item.price), 
-                0
-            );
-            
+            // Calculate total amount with coupon discount
+            const cartTotal = cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
             let couponDiscount = 0;
             if (couponCode) {
                 const coupon = await Coupon.findOne({ code: couponCode });
                 if (coupon) {
-                    couponDiscount = (cartTotal * coupon.discountPercentage) / 100;
-                    if (coupon.maximumDiscount) {
-                        couponDiscount = Math.min(couponDiscount, coupon.maximumDiscount);
-                    }
+                    couponDiscount = Math.min(
+                        (cartTotal * coupon.discountPercentage) / 100,
+                        coupon.maximumDiscount || Infinity
+                    );
                 }
+            }
+            const finalAmount = cartTotal - couponDiscount;
+
+            // Validate COD payment method
+            if (paymentMethod === 'cod' && finalAmount > 1000) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cash on Delivery is not available for orders above ₹1,000. Please choose a different payment method.'
+                });
             }
 
             // Prepare initial items
