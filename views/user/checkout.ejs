@@ -66,48 +66,46 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">Payment Method</h2>
                     
                     <div class="space-y-4">
-                        <h3 class="font-medium text-gray-800">Payment Method</h3>
-                        <div class="space-y-3">
-                            <!-- Wallet Payment Option -->
-                            <label class="flex items-center gap-3 p-3 border rounded-lg <%= wallet.balance >= total ? 'hover:bg-gray-50' : 'opacity-60' %>">
-                                <input type="radio" name="paymentMethod" value="wallet" 
-                                       <%= wallet.balance >= total ? '' : 'disabled' %>>
-                                <div class="flex flex-col">
-                                    <span class="flex items-center gap-2">
-                                        <i class="fas fa-wallet"></i> Pay using Wallet
-                                        <% if (wallet.balance >= total) { %>
-                                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                                                Sufficient Balance
-                                            </span>
-                                        <% } %>
-                                    </span>
-                                    <span class="text-sm text-gray-500">
-                                        Available: ₹<%= wallet.balance.toFixed(2) %>
-                                    </span>
-                                </div>
-                            </label>
+                        <!-- Wallet Payment Option -->
+                        <label class="flex items-center gap-3 p-3 border rounded-lg <%= wallet.balance >= total ? 'hover:bg-gray-50' : 'opacity-60' %>">
+                            <input type="radio" name="paymentMethod" value="wallet" 
+                                   <%= wallet.balance >= total ? '' : 'disabled' %>>
+                            <div class="flex flex-col">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-wallet"></i> Pay using Wallet
+                                    <% if (wallet.balance >= total) { %>
+                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                            Sufficient Balance
+                                        </span>
+                                    <% } %>
+                                </span>
+                                <span class="text-sm text-gray-500">
+                                    Available: ₹<%= wallet.balance.toFixed(2) %>
+                                </span>
+                            </div>
+                        </label>
 
-                            <!-- Other payment methods -->
-                            <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                                <input type="radio" name="paymentMethod" value="cod" checked>
-                                <div class="flex flex-col">
-                                    <span class="flex items-center gap-2">
-                                        <i class="fas fa-money-bill"></i> Cash on Delivery
-                                    </span>
-                                    <span class="text-sm text-gray-500">Pay when you receive the order</span>
-                                </div>
-                            </label>
+                        <!-- COD Payment Option -->
+                        <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="cod" checked>
+                            <div class="flex flex-col">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-money-bill"></i> Cash on Delivery
+                                </span>
+                                <span class="text-sm text-gray-500">Pay when you receive the order</span>
+                            </div>
+                        </label>
 
-                            <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                                <input type="radio" name="paymentMethod" value="online">
-                                <div class="flex flex-col">
-                                    <span class="flex items-center gap-2">
-                                        <i class="fas fa-credit-card"></i> Online Payment
-                                    </span>
-                                    <span class="text-sm text-gray-500">Pay using Card/UPI/Netbanking</span>
-                                </div>
-                            </label>
-                        </div>
+                        <!-- Online Payment Option -->
+                        <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                            <input type="radio" name="paymentMethod" value="online">
+                            <div class="flex flex-col">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-credit-card"></i> Online Payment
+                                </span>
+                                <span class="text-sm text-gray-500">Pay using Card/UPI/Netbanking</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -129,13 +127,18 @@
                                 <div class="flex-1">
                                     <h4 class="font-medium"><%= item.product.productName %></h4>
                                     <p class="text-gray-500 text-sm">Qty: <%= item.quantity %></p>
-                                    <p class="text-gray-800">₹<%= item.subtotal %></p>
+                                    <p class="text-gray-800">₹<%= item.price.toFixed(2) %></p>
+                                    <% if (item.discountedPrice && item.discountedPrice < item.price) { %>
+                                        <p class="text-green-600 text-sm">
+                                            Discounted: ₹<%= item.discountedPrice.toFixed(2) %>
+                                        </p>
+                                    <% } %>
                                 </div>
                             </div>
                         <% }); %>
                     </div>
 
-                    <!-- Add this before the Price Breakdown section -->
+                    <!-- Coupon Section -->
                     <div class="mb-6">
                         <button 
                             onclick="openCouponModal()"
@@ -164,17 +167,17 @@
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span>Subtotal:</span>
-                            <span>₹<span id="subtotal"><%= total %></span></span>
+                            <span>₹<span id="subtotal"><%= total.toFixed(2) %></span></span>
                         </div>
                         
                         <div id="discountRow" class="flex justify-between <%= locals.discount ? '' : 'hidden' %>">
                             <span>Discount:</span>
-                            <span class="text-green-500">-₹<span id="discountAmount"><%= locals.discount || 0 %></span></span>
+                            <span class="text-green-500">-₹<span id="discountAmount"><%= (locals.discount || 0).toFixed(2) %></span></span>
                         </div>
                         
                         <div class="flex justify-between font-bold">
                             <span>Total Amount:</span>
-                            <span>₹<span id="finalTotal"><%= total - (locals.discount || 0) %></span></span>
+                            <span>₹<span id="finalTotal"><%= (total - (locals.discount || 0)).toFixed(2) %></span></span>
                         </div>
                     </div>
 
@@ -585,28 +588,18 @@
                 }
 
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-                // Get coupon code if applied
                 const couponCode = document.getElementById('appliedCouponCode')?.textContent;
+                const finalAmount = parseFloat(document.getElementById('finalTotal').textContent);
 
+                let response;
+                
                 if (paymentMethod === 'wallet') {
-                    // Handle wallet payment
-                    const data = await processWalletPayment(selectedAddress.value);
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Order Placed Successfully!',
-                        text: 'Payment completed using wallet balance',
-                        confirmButtonText: 'View Order',
-                        confirmButtonColor: '#000000'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = `/orders`;
-                        } else {
-                            window.location.href = '/orders';
-                        }
-                    });
+                    response = await processWalletPayment(selectedAddress.value);
+                    if (response.success) {
+                        window.location.href = `/order-success/${response.orderId}`;
+                    }
                 } else if (paymentMethod === 'cod') {
-                    // Add couponCode to the request body for COD
-                    const response = await fetch('/checkout/place-order', {
+                    response = await fetch('/checkout/place-order', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -617,27 +610,18 @@
                             couponCode: couponCode
                         })
                     });
-
                     const data = await response.json();
                     if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Order Placed Successfully!',
-                            confirmButtonText: 'View Order',
-                            confirmButtonColor: '#000000'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = `/orders`;
-                            }
-                        });
+                        window.location.href = `/order-success/${data.orderId}`;
                     } else {
                         throw new Error(data.message);
                     }
                 } else if (paymentMethod === 'online') {
-                    // Create Razorpay order
                     const data = await createRazorpayOrder(selectedAddress.value);
+                    if (!data.success) {
+                        throw new Error(data.message);
+                    }
 
-                    // Initialize Razorpay
                     const options = {
                         key: data.key,
                         amount: data.order.amount,
@@ -661,17 +645,7 @@
 
                                 const verifyData = await verifyResponse.json();
                                 if (verifyData.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Order Placed Successfully!',
-                                        text: 'Payment completed',
-                                        confirmButtonText: 'View Order',
-                                        confirmButtonColor: '#000000'
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            window.location.href = `/orders`;
-                                        }
-                                    });
+                                    window.location.href = `/order-success/${verifyData.orderId}`;
                                 } else {
                                     throw new Error(verifyData.message);
                                 }
@@ -685,7 +659,7 @@
                             }
                         },
                         prefill: {
-                            name: "<%= user.name %>",
+                            name: "<%= user.firstName %> <%= user.lastName %>",
                             email: "<%= user.email %>",
                             contact: "<%= user.phone %>"
                         },

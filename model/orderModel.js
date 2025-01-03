@@ -6,6 +6,10 @@ const orderSchema = new mongoose.Schema({
         ref: 'users',
         required: true
     },
+    orderCode: {
+        type: String,
+        unique: true
+    },
     items: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
@@ -21,6 +25,10 @@ const orderSchema = new mongoose.Schema({
             type: Number,
             required: true
         },
+        discountedPrice: {
+            type: Number,
+            default: 0
+        },
         subtotal: {
             type: Number,
             required: true
@@ -29,6 +37,16 @@ const orderSchema = new mongoose.Schema({
     totalAmount: {
         type: Number,
         required: true
+    },
+    coupon: {
+        code: {
+            type: String,
+            default: null
+        },
+        discount: {
+            type: Number,
+            default: 0
+        }
     },
     shippingAddress: {
         fullName: String,
@@ -39,81 +57,95 @@ const orderSchema = new mongoose.Schema({
         state: String,
         pincode: Number
     },
-    paymentMethod: {
-        type: String,
-        enum: ['cod', 'online', 'razorpay', 'wallet'],
-        required: true
-    },
-    walletTransaction: {
-        transactionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Wallet.transactions'
-        },
-        amount: Number
-    },
-    paymentStatus: {
-        type: String,
-        enum: ['pending', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
-        default: 'pending'
-    },
-    orderStatus: {
-        type: String,
-        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
-        default: 'pending'
-    },
-    statusHistory: [{
-        status: {
+    payment: {
+        method: {
             type: String,
-            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 
-                   'returned', 'refund processing'],
+            enum: ['cod', 'online', 'razorpay', 'wallet'],
             required: true
         },
-        date: {
-            type: Date,
-            default: Date.now
+        paymentStatus: {
+            type: String,
+            enum: ['pending', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
+            default: 'pending'
         },
-        comment: String
-    }],
-    cancellationReason: {
-        type: String
+        walletTransaction: {
+            transactionId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Wallet.transactions'
+            },
+            amount: Number
+        },
+        razorpayTransaction: {
+            razorpayOrderId: String,
+            razorpayPaymentId: String,
+            razorpaySignature: String
+        }
     },
-    returnReason: {
-        type: String,
-        default: null
+    order:{
+        status: {
+            type: String,
+            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
+            default: 'pending'
+        },
+        statusHistory: [{
+            status: {
+                type: String,
+                enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 
+                       'returned', 'refund processing'],
+                required: true
+            },
+            date: {
+                type: Date,
+                default: Date.now
+            },
+            comment: String
+        }],
     },
-    returnRequestDate: {
-        type: Date,
-        default: null
+    cancellation: {
+        isCancelled: {
+            type: Boolean,
+            default: false
+        },
+        reason: {
+            type: String,
+            default: null
+        },
+        cancellationDate: {
+            type: Date,
+            default: null
+        }
     },
-    returnStatus: {
-        type: String,
-        enum: ['pending', 'processing', 'approved', 'rejected', null],
-        default: null
-    },
-    returnAdminComment: {
-        type: String,
-        default: null
-    },
-    isReturnAccepted: {
-        type: Boolean,
-        default: false
+    return: {
+        isReturnRequested: {
+            type: Boolean,
+            default: false
+        },
+        reason: {
+            type: String,
+            default: null
+        },
+        requestDate: {
+            type: Date,
+            default: null
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending'
+        },
+        adminComment: {
+            type: String,
+            default: null
+        },
+        isReturnAccepted: {
+            type: Boolean,
+            default: false
+        }
     },
     orderDate: {
         type: Date,
         default: Date.now
     },
-    couponCode: {
-        type: String,
-        default: null
-    },
-    couponDiscount: {
-        type: Number,
-        default: 0
-    },
-    orderCode: {
-        type: String,
-        unique: true
-    }
 }, {timestamps: true}
 );
 

@@ -107,5 +107,7 @@ route.get('/change-password', userMiddlewares.checkSession, userController.getCh
 
 route.post('/change-password', userMiddlewares.checkSession, userController.changePassword);
 
+route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, userOrderController.generateInvoice);
+
 export default route;
 
