@@ -150,7 +150,7 @@ const userOrderController = {
             }
 
             // Check if return is already requested
-            if (order.return.reason) {
+            if (order.return.isReturnRequested) {
                 return res.status(400).json({
                     success: false,
                     message: 'Return already requested for this order'
@@ -176,43 +176,21 @@ const userOrderController = {
             }
 
             // Update order with return details
-            order.return.reason = reason;
-            order.return.requestDate = new Date();
-            order.return.status = 'pending';
-            order.order.status = 'refund processing';
-            order.payment.paymentStatus = 'refund processing';
+            order.return = {
+                isReturnRequested: true,
+                reason: reason,
+                requestDate: new Date(),
+                status: 'pending',
+                adminComment: null,
+                isReturnAccepted: false
+            };
 
             // Add to status history
-            order.statusHistory.push({
-                status: 'refund processing',
+            order.order.statusHistory.push({
+                status: order.order.status,
                 date: new Date(),
                 comment: `Return requested: ${reason}`
             });
-
-            // Process refund if payment was made
-            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
-                order.payment.paymentStatus === 'completed') {
-                
-                // Find or create wallet
-                let wallet = await Wallet.findOne({ userId });
-                if (!wallet) {
-                    wallet = await Wallet.create({ userId, balance: 0 });
-                }
-
-                // Add refund to wallet
-                wallet.balance += order.totalAmount;
-                wallet.transactions.push({
-                    type: 'credit',
-                    amount: order.totalAmount,
-                    description: `Refund for returned order #${order.orderCode}`,
-                    orderId: order._id,
-                    date: new Date()
-                });
-
-                await wallet.save();
-                
-                order.paymentStatus = 'refunded';
-            }
 
             await order.save();
 
@@ -225,7 +203,7 @@ const userOrderController = {
             console.error('Return request error:', error);
             res.status(500).json({
                 success: false,
-                message: error || 'Error processing return request'
+                message: error.message || 'Error processing return request'
             });
         }
     },

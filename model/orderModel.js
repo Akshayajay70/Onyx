@@ -101,20 +101,6 @@ const orderSchema = new mongoose.Schema({
             comment: String
         }],
     },
-    cancellation: {
-        isCancelled: {
-            type: Boolean,
-            default: false
-        },
-        reason: {
-            type: String,
-            default: null
-        },
-        cancellationDate: {
-            type: Date,
-            default: null
-        }
-    },
     return: {
         isReturnRequested: {
             type: Boolean,
