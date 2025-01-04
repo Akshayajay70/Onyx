@@ -683,6 +683,36 @@
                         },
                         theme: {
                             color: "#000000"
+                        },
+                        modal: {
+                            ondismiss: async function() {
+                                try {
+                                    const response = await fetch('/checkout/payment-failed', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            error: { description: 'Payment cancelled by user' },
+                                            razorpay_order_id: options.order_id
+                                        })
+                                    });
+                                    const data = await response.json();
+                                    
+                                    if (!data.success) {
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Payment Not Completed',
+                                            text: 'Your order has been saved. You can retry the payment from your orders page.',
+                                            confirmButtonColor: '#000000'
+                                        }).then(() => {
+                                            window.location.href = '/orders';
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.error('Error handling payment failure:', error);
+                                }
+                            }
                         }
                     };
 

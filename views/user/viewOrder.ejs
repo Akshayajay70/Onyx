@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
@@ -218,6 +219,13 @@
                                         <button onclick="downloadInvoice('<%= order._id %>')"
                                                 class="px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors">
                                             <i class="fas fa-file-pdf mr-2"></i>Download Invoice
+                                        </button>
+                                    <% } %>
+
+                                    <% if (order.payment.method === 'razorpay' && order.payment.paymentStatus === 'failed') { %>
+                                        <button onclick="retryPayment('<%= order._id %>')"
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                            <i class="fas fa-sync-alt mr-2"></i>Retry Payment
                                         </button>
                                     <% } %>
                                 </div>
@@ -435,6 +443,81 @@
                     icon: 'error',
                     title: 'Error',
                     text: 'Failed to download invoice',
+                    confirmButtonColor: '#000000'
+                });
+            }
+        }
+
+        async function retryPayment(orderId) {
+            try {
+                const response = await fetch(`/orders/${orderId}/retry-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    const options = {
+                        key: data.key,
+                        amount: data.order.amount,
+                        currency: data.order.currency,
+                        order_id: data.order.id,
+                        name: "Onyx Fashion Store",
+                        description: "Order Payment Retry",
+                        handler: async function (response) {
+                            try {
+                                const verifyResponse = await fetch(`/orders/${orderId}/verify-retry-payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature,
+                                        orderId: orderId
+                                    })
+                                });
+
+                                const verifyData = await verifyResponse.json();
+                                if (verifyData.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Payment Successful',
+                                        text: 'Your payment has been processed successfully',
+                                        confirmButtonColor: '#000000'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    throw new Error(verifyData.message);
+                                }
+                            } catch (error) {
+                                throw error;
+                            }
+                        },
+                        prefill: {
+                            name: data.orderDetails.name,
+                            email: data.orderDetails.email,
+                            contact: data.orderDetails.contact
+                        },
+                        theme: {
+                            color: "#000000"
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Failed to process payment',
                     confirmButtonColor: '#000000'
                 });
             }

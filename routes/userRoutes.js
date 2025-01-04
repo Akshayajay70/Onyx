@@ -69,6 +69,10 @@ route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderCon
 
 route.post('/orders/:orderId/return', userMiddlewares.checkSession, userOrderController.requestReturn);
 
+route.post('/orders/:orderId/retry-payment', userMiddlewares.checkSession, userOrderController.retryPayment);
+
+route.post('/orders/:orderId/verify-retry-payment', userMiddlewares.checkSession, userOrderController.verifyRetryPayment);
+
 route.get('/forgot-password', userMiddlewares.isLogin, userController.getForgotPassword);
 
 route.post('/forgot-password/send-otp', userController.sendForgotPasswordOTP);
@@ -108,6 +112,8 @@ route.get('/change-password', userMiddlewares.checkSession, userController.getCh
 route.post('/change-password', userMiddlewares.checkSession, userController.changePassword);
 
 route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, userOrderController.generateInvoice);
+
+route.post('/checkout/payment-failed', userMiddlewares.checkSession, userCheckoutController.handlePaymentFailure);
 
 export default route;
 

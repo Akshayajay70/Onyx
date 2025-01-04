@@ -414,53 +414,66 @@ const userCheckoutController = {
                 });
             }
 
-            // Calculate cart total and coupon discount
-            const cartTotal = cart.items.reduce(
-                (sum, item) => sum + (item.quantity * item.price), 
-                0
-            );
-            
+            // Get address
+            const address = await addressSchema.findOne({
+                _id: addressId,
+                userId
+            });
+
+            if (!address) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery address not found'
+                });
+            }
+
+            // Calculate total with coupon discount
+            const cartTotal = cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
             let couponDiscount = 0;
             if (couponCode) {
                 const coupon = await Coupon.findOne({ code: couponCode });
                 if (coupon) {
-                    couponDiscount = (cartTotal * coupon.discountPercentage) / 100;
-                    if (coupon.maximumDiscount) {
-                        couponDiscount = Math.min(couponDiscount, coupon.maximumDiscount);
-                    }
+                    couponDiscount = Math.min(
+                        (cartTotal * coupon.discountPercentage) / 100,
+                        coupon.maximumDiscount || Infinity
+                    );
                 }
             }
-
-            // Prepare initial items
-            const initialItems = cart.items.map(item => ({
-                product: item.productId._id,
-                quantity: item.quantity,
-                price: item.price
-            }));
-
-            // Calculate proportional discounts
-            const orderItems = calculateProportionalDiscounts(initialItems, couponDiscount);
-
-            // Calculate final total amount
-            const totalAmount = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+            const finalAmount = cartTotal - couponDiscount;
 
             // Create Razorpay order
             const razorpayOrder = await razorpay.orders.create({
-                amount: Math.round(totalAmount * 100), // Convert to paise
+                amount: Math.round(finalAmount * 100), // Convert to paise
                 currency: "INR",
-                receipt: `ord_${Date.now()}`
+                receipt: `order_${Date.now()}`
             });
 
             // Store order details in session
             req.session.pendingOrder = {
-                addressId,
-                items: orderItems,
-                totalAmount,
-                coupon: couponCode ? {
-                    code: couponCode,
-                    discount: couponDiscount
-                } : null,
-                razorpayOrderId: razorpayOrder.id
+                razorpayOrderId: razorpayOrder.id,
+                orderData: {
+                    userId,
+                    items: cart.items.map(item => ({
+                        product: item.productId._id,
+                        quantity: item.quantity,
+                        price: item.price,
+                        subtotal: item.quantity * item.price
+                    })),
+                    totalAmount: finalAmount,
+                    coupon: couponCode ? {
+                        code: couponCode,
+                        discount: couponDiscount
+                    } : {},
+                    shippingAddress: {
+                        fullName: address.fullName,
+                        mobileNumber: address.mobileNumber,
+                        addressLine1: address.addressLine1,
+                        addressLine2: address.addressLine2,
+                        city: address.city,
+                        state: address.state,
+                        pincode: address.pincode
+                    }
+                }
             };
 
             res.json({
@@ -484,7 +497,8 @@ const userCheckoutController = {
             const {
                 razorpay_order_id,
                 razorpay_payment_id,
-                razorpay_signature
+                razorpay_signature,
+                orderId
             } = req.body;
 
             // Verify signature
@@ -501,54 +515,68 @@ const userCheckoutController = {
                 });
             }
 
-            // Get pending order from session
+            // Handle payment retry case
+            if (orderId) {
+                const order = await orderSchema.findOne({ 
+                    _id: orderId,
+                    userId,
+                    'payment.method': 'razorpay',
+                    'payment.paymentStatus': 'pending'
+                });
+
+                if (!order) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Order not found or already processed'
+                    });
+                }
+
+                // Update order with payment details
+                order.payment.paymentStatus = 'completed';
+                order.payment.razorpayTransaction = {
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    razorpaySignature: razorpay_signature
+                };
+                order.order.status = 'processing';
+                order.order.statusHistory.push({
+                    status: 'processing',
+                    date: new Date(),
+                    comment: 'Payment completed successfully'
+                });
+
+                await order.save();
+
+                return res.json({
+                    success: true,
+                    message: 'Payment verified successfully',
+                    orderId: order.orderCode
+                });
+            }
+
+            // Handle new order case
             const pendingOrder = req.session.pendingOrder;
-            if (!pendingOrder) {
+            if (!pendingOrder || pendingOrder.razorpayOrderId !== razorpay_order_id) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Order details not found'
+                    message: 'Invalid order session'
                 });
             }
 
-            // Get shipping address
-            const address = await addressSchema.findOne({
-                _id: pendingOrder.addressId,
-                userId
-            });
+            // Get cart and validate
+            const cart = await cartSchema.findOne({ userId })
+                .populate('items.productId');
 
-            if (!address) {
+            if (!cart || cart.items.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Shipping address not found'
+                    message: 'Cart is empty'
                 });
             }
 
-            // Calculate final amounts
-            const items = pendingOrder.items.map(item => ({
-                product: item.product,
-                quantity: item.quantity,
-                price: item.price,
-                discountedPrice: item.discountedPrice || item.price,
-                subtotal: item.quantity * (item.discountedPrice || item.price)
-            }));
-
-            const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
-
-            // Create order
+            // Create order with completed payment status
             const order = await orderSchema.create({
-                userId,
-                items,
-                totalAmount: Math.round(totalAmount),
-                coupon: pendingOrder.coupon || {},
-                shippingAddress: {
-                    fullName: address.fullName,
-                    mobileNumber: address.mobileNumber,
-                    addressLine1: address.addressLine1,
-                    addressLine2: address.addressLine2,
-                    city: address.city,
-                    state: address.state,
-                    pincode: address.pincode
-                },
+                ...pendingOrder.orderData,
                 payment: {
                     method: 'razorpay',
                     paymentStatus: 'completed',
@@ -563,47 +591,32 @@ const userCheckoutController = {
                     statusHistory: [{
                         status: 'processing',
                         date: new Date(),
-                        comment: 'Order placed with Razorpay payment'
+                        comment: 'Order placed and payment completed'
                     }]
                 }
             });
 
             // Update product stock
-            for (const item of items) {
+            for (const item of cart.items) {
                 await productSchema.findByIdAndUpdate(
-                    item.product,
+                    item.productId._id,
                     { $inc: { stock: -item.quantity } }
                 );
             }
 
             // Clear cart
-            await cartSchema.findOneAndUpdate(
-                { userId },
-                { $set: { items: [], totalAmount: 0 } }
-            );
+            await cartSchema.findByIdAndUpdate(cart._id, {
+                items: [],
+                totalAmount: 0
+            });
 
-            // Update coupon usage if applicable
-            if (pendingOrder.coupon?.code) {
-                await Coupon.findOneAndUpdate(
-                    { code: pendingOrder.coupon.code },
-                    {
-                        $inc: { usedCouponCount: 1 },
-                        $push: {
-                            usedBy: {
-                                userId,
-                                orderId: order._id
-                            }
-                        }
-                    }
-                );
-            }
-
-            // Clear pending order from session
+            // Clear session data
             delete req.session.pendingOrder;
+            delete req.session.appliedCoupon;
 
             res.json({
                 success: true,
-                message: 'Payment verified and order placed successfully',
+                message: 'Order placed successfully',
                 orderId: order.orderCode
             });
 
@@ -773,6 +786,83 @@ const userCheckoutController = {
             res.status(500).json({
                 success: false,
                 message: 'Error processing wallet payment'
+            });
+        }
+    },
+
+    handlePaymentFailure: async (req, res) => {
+        try {
+            const { error, razorpay_order_id } = req.body;
+            const userId = req.session.user;
+            const pendingOrder = req.session.pendingOrder;
+
+            if (!pendingOrder) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid order session'
+                });
+            }
+
+            // Create or update order with failed status
+            const orderData = {
+                ...pendingOrder.orderData,
+                payment: {
+                    method: 'razorpay',
+                    paymentStatus: 'failed',
+                    razorpayTransaction: {
+                        razorpayOrderId: razorpay_order_id
+                    }
+                },
+                order: {
+                    status: 'pending',
+                    statusHistory: [{
+                        status: 'pending',
+                        date: new Date(),
+                        comment: 'Payment failed: ' + (error.description || 'Payment was not completed')
+                    }]
+                }
+            };
+
+            let order;
+            if (pendingOrder.orderId) {
+                // Update existing failed order
+                order = await orderSchema.findByIdAndUpdate(
+                    pendingOrder.orderId,
+                    orderData,
+                    { new: true }
+                );
+            } else {
+                // Create new failed order
+                order = await orderSchema.create(orderData);
+            }
+
+            // Clear the cart after creating the order
+            const cart = await cartSchema.findOne({ userId });
+            if (cart) {
+                await cartSchema.findByIdAndUpdate(cart._id, {
+                    items: [],
+                    totalAmount: 0
+                });
+            }
+
+            // Do NOT update product stock for failed payments
+            // The stock will be updated only when payment is successful
+
+            // Clear the pending order from session
+            delete req.session.pendingOrder;
+
+            res.json({
+                success: false,
+                message: 'Payment failed',
+                orderId: order.orderCode,
+                error: error.description || 'Payment was not completed'
+            });
+
+        } catch (error) {
+            console.error('Handle payment failure error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error handling payment failure'
             });
         }
     }

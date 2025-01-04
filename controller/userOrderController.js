@@ -3,6 +3,8 @@ import Wallet from '../model/walletModel.js';
 import productSchema from '../model/productModel.js';
 import userSchema from '../model/userModel.js';
 import PDFDocument from 'pdfkit';
+import razorpay from '../config/razorpay.js';
+import crypto from 'crypto';
 
 
 
@@ -365,6 +367,239 @@ const userOrderController = {
             res.status(500).json({ 
                 message: 'Error generating invoice',
                 error: error.message 
+            });
+        }
+    },
+
+    retryPayment: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+            const userId = req.session.user;
+
+            // Find the order with pending status
+            const order = await orderSchema.findOne({
+                _id: orderId,
+                userId,
+                'payment.method': 'razorpay',
+                'order.status': 'pending',
+                'payment.paymentStatus': 'failed'
+            });
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found or payment retry not available'
+                });
+            }
+
+            // Create new Razorpay order
+            const razorpayOrder = await razorpay.orders.create({
+                amount: Math.round(order.totalAmount * 100), // Convert to paise
+                currency: "INR",
+                receipt: `retry_${orderId}`
+            });
+
+            // Store order details in session for verification
+            req.session.pendingOrder = {
+                orderId: order._id,
+                razorpayOrderId: razorpayOrder.id,
+                orderData: {
+                    userId,
+                    items: order.items,
+                    totalAmount: order.totalAmount,
+                    coupon: order.coupon || {},
+                    shippingAddress: order.shippingAddress
+                }
+            };
+
+            // Update order with new Razorpay order ID
+            await orderSchema.findByIdAndUpdate(orderId, {
+                'payment.razorpayTransaction.razorpayOrderId': razorpayOrder.id,
+                'payment.paymentStatus': 'failed',
+                'order.statusHistory': [
+                    ...order.order.statusHistory,
+                    {
+                        status: 'pending',
+                        date: new Date(),
+                        comment: 'Payment retry initiated'
+                    }
+                ]
+            });
+
+            res.json({
+                success: true,
+                key: process.env.RAZORPAY_KEY_ID,
+                order: razorpayOrder,
+                orderDetails: {
+                    amount: order.totalAmount,
+                    email: order.userId.email,
+                    contact: order.shippingAddress.mobileNumber,
+                    name: order.shippingAddress.fullName
+                }
+            });
+
+        } catch (error) {
+            console.error('Retry payment error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error processing payment retry'
+            });
+        }
+    },
+
+    verifyRetryPayment: async (req, res) => {
+        try {
+            const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, error } = req.body;
+            const userId = req.session.user;
+
+            // If there's a payment error, update order with failed status
+            if (error) {
+                await orderSchema.findByIdAndUpdate(orderId, {
+                    'payment.paymentStatus': 'failed',
+                    'order.status': 'pending',
+                    $push: {
+                        'order.statusHistory': {
+                            status: 'pending',
+                            date: new Date(),
+                            comment: 'Payment retry failed: ' + (error.description || 'Payment was not completed')
+                        }
+                    }
+                });
+
+                return res.status(400).json({
+                    success: false,
+                    message: 'Payment failed',
+                    error: error.description || 'Payment was not completed'
+                });
+            }
+
+            // Verify the Razorpay signature
+            const sign = razorpay_order_id + "|" + razorpay_payment_id;
+            const expectedSign = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+                .update(sign.toString())
+                .digest("hex");
+
+            if (razorpay_signature !== expectedSign) {
+                await orderSchema.findByIdAndUpdate(orderId, {
+                    'payment.paymentStatus': 'failed',
+                    'order.status': 'pending',
+                    $push: {
+                        'order.statusHistory': {
+                            status: 'pending',
+                            date: new Date(),
+                            comment: 'Invalid payment signature'
+                        }
+                    }
+                });
+
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid payment signature'
+                });
+            }
+
+            // Find the order and populate product details
+            const order = await orderSchema.findOne({ 
+                _id: orderId,
+                userId,
+                'payment.method': 'razorpay'
+            }).populate({
+                path: 'items.product',
+                model: 'Product'
+            });
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            // Update product stock
+            try {
+                for (const item of order.items) {
+                    const product = await productSchema.findById(item.product._id);
+                    if (!product) {
+                        throw new Error(`Product not found: ${item.product._id}`);
+                    }
+                    
+                    if (product.stock < item.quantity) {
+                        throw new Error(`Insufficient stock for ${product.productName}`);
+                    }
+
+                    product.stock = product.stock - item.quantity;
+                    await product.save();
+                }
+            } catch (error) {
+                // If stock update fails, maintain failed payment status
+                await orderSchema.findByIdAndUpdate(orderId, {
+                    'payment.paymentStatus': 'failed',
+                    'order.status': 'pending',
+                    $push: {
+                        'order.statusHistory': {
+                            status: 'pending',
+                            date: new Date(),
+                            comment: `Stock update failed: ${error.message}`
+                        }
+                    }
+                });
+
+                return res.status(400).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
+            // Update order status on successful payment
+            const updatedOrder = await orderSchema.findByIdAndUpdate(
+                orderId,
+                {
+                    $set: {
+                        'payment.paymentStatus': 'completed',
+                        'payment.razorpayTransaction.razorpayPaymentId': razorpay_payment_id,
+                        'payment.razorpayTransaction.razorpaySignature': razorpay_signature,
+                        'order.status': 'processing',
+                    },
+                    $push: {
+                        'order.statusHistory': {
+                            status: 'processing',
+                            date: new Date(),
+                            comment: 'Payment completed successfully'
+                        }
+                    }
+                },
+                { new: true }
+            );
+
+            if (!updatedOrder) {
+                throw new Error('Failed to update order status');
+            }
+
+            res.json({
+                success: true,
+                message: 'Payment successful'
+            });
+
+        } catch (error) {
+            console.error('Verify retry payment error:', error);
+            
+            // Update order with failed status on any other error
+            await orderSchema.findByIdAndUpdate(orderId, {
+                'payment.paymentStatus': 'failed',
+                'order.status': 'pending',
+                $push: {
+                    'order.statusHistory': {
+                        status: 'pending',
+                        date: new Date(),
+                        comment: `Payment verification failed: ${error.message}`
+                    }
+                }
+            });
+
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Error verifying payment'
             });
         }
     }

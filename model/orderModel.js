@@ -65,8 +65,8 @@ const orderSchema = new mongoose.Schema({
         },
         paymentStatus: {
             type: String,
-            enum: ['pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
-            default: 'pending'
+            enum: ['processing', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
+            default: null
         },
         walletTransaction: {
             transactionId: {
@@ -117,7 +117,7 @@ const orderSchema = new mongoose.Schema({
         status: {
             type: String,
             enum: ['pending', 'approved', 'rejected'],
-            default: 'pending'
+            default: null
         },
         adminComment: {
             type: String,
