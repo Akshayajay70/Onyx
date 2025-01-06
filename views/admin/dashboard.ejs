@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,6 +10,7 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
 
   <body class="mybg-green text-white min-h-screen flex flex-col">
@@ -120,6 +120,121 @@
           <canvas id="salesChart"></canvas>
         </div>
       </section>
+
+      <!-- Top Selling Sections Container -->
+      <div class="flex flex-col lg:flex-row gap-6 mb-8">
+          <!-- Top Selling Products Section -->
+          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-6 flex-1 border border-zinc-700">
+              <div class="flex justify-between items-center mb-6">
+                  <div>
+                      <h2 class="text-xl font-bold text-white">Top Selling Products</h2>
+                      <p class="text-zinc-400 text-sm mt-1">Best performing products by sales</p>
+                  </div>
+              </div>
+              <div class="space-y-4 top-products-container">
+                  <% topProducts.forEach((product, index) => { %>
+                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-xl overflow-hidden flex items-center 
+                                  transform transition-all duration-300 hover:scale-[1.02] hover:from-zinc-700 hover:to-zinc-800
+                                  border border-zinc-600/50 hover:border-zinc-500 shadow-lg group">
+                          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b <%= 
+                              index === 0 ? 'from-yellow-500 to-amber-600' : 
+                              index === 1 ? 'from-slate-400 to-slate-500' :
+                              'from-amber-700 to-amber-800'
+                          %>"></div>
+                          <div class="relative w-24 h-24 flex-shrink-0 m-3">
+                              <img src="<%= product.imageUrl %>" 
+                                   alt="<%= product.productName %>" 
+                                   class="w-full h-full object-cover rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300">
+                              <div class="absolute -top-2 -left-2 <%= 
+                                  index === 0 ? 'bg-gradient-to-br from-yellow-500 to-amber-600' : 
+                                  index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
+                                  'bg-gradient-to-br from-amber-700 to-amber-800'
+                              %> text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                                  <%= index + 1 %>
+                              </div>
+                          </div>
+                          <div class="flex-1 p-4">
+                              <div class="flex justify-between items-start">
+                                  <div>
+                                      <h3 class="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors duration-300">
+                                          <%= product.productName %>
+                                      </h3>
+                                      <p class="text-zinc-400 text-sm font-medium"><%= product.brand %></p>
+                                      <p class="text-zinc-400 text-sm mt-2">
+                                          ₹<%= product.totalRevenue.toLocaleString() %>
+                                      </p>
+                                  </div>
+                                  <div class="text-right">
+                                      <div class="flex items-center justify-end mt-2">
+                                          <svg class="w-4 h-4 text-emerald-400 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                              <path d="M16 3H8C6.34315 3 5 4.34315 5 6V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V6C19 4.34315 17.6569 3 16 3Z M9 7H15 M9 11H15 M9 15H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                          </svg>
+                                          <span class="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                                              <%= product.totalQuantity %> units
+                                          </span>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  <% }); %>
+              </div>
+          </section>
+
+          <!-- Top Categories Section -->
+          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-6 flex-1 border border-zinc-700">
+              <div class="flex justify-between items-center mb-6">
+                  <div>
+                      <h2 class="text-xl font-bold text-white">Top Categories</h2>
+                      <p class="text-zinc-400 text-sm mt-1">Best performing categories by sales</p>
+                  </div>
+              </div>
+              <div class="space-y-4 top-categories-container">
+                  <% topCategories.forEach((category, index) => { %>
+                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-xl overflow-hidden
+                                  transform transition-all duration-300 hover:scale-[1.02] hover:from-zinc-700 hover:to-zinc-800
+                                  border border-zinc-600/50 hover:border-zinc-500 shadow-lg group p-4">
+                          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b <%= 
+                              index === 0 ? 'from-yellow-500 to-amber-600' : 
+                              index === 1 ? 'from-slate-400 to-slate-500' :
+                              'from-amber-700 to-amber-800'
+                          %>"></div>
+                          <div class="flex items-center">
+                              <div class="<%= 
+                                  index === 0 ? 'bg-gradient-to-br from-yellow-500 to-amber-600' : 
+                                  index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
+                                  'bg-gradient-to-br from-amber-700 to-amber-800'
+                              %> w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-lg mr-4">
+                                  <%= index + 1 %>
+                              </div>
+                              <div class="flex-1">
+                                  <div class="flex justify-between items-start">
+                                      <div>
+                                          <h3 class="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors duration-300">
+                                              <%= category.categoryName %>
+                                          </h3>
+                                          <p class="text-zinc-400 text-sm mt-2">
+                                              ₹<%= category.totalRevenue.toLocaleString() %>
+                                          </p>
+                                      </div>
+                                      <div class="text-right">
+                                          <div class="flex items-center justify-end mt-2">
+                                              <svg class="w-4 h-4 text-emerald-400 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                  <path d="M20 7H10C8.89543 7 8 7.89543 8 9V19C8 20.1046 8.89543 21 10 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z M14 3H4C2.89543 3 2 3.89543 2 5V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                              </svg>
+                                              <span class="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                                                  <%= category.totalQuantity %> units
+                                              </span>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  <% }); %>
+              </div>
+          </section>
+      </div>
     </main>
 
     <script>
@@ -324,12 +439,22 @@
           const endDate = document.getElementById('endDate').value;
 
           if (!startDate || !endDate) {
-              alert('Please select both start and end dates');
+              Swal.fire({
+                  icon: 'warning',
+                  title: 'Missing Dates',
+                  text: 'Please select both start and end dates',
+                  confirmButtonColor: '#3085d6'
+              });
               return;
           }
 
           if (new Date(endDate) < new Date(startDate)) {
-              alert('End date must be after start date');
+              Swal.fire({
+                  icon: 'error',
+                  title: 'Invalid Date Range',
+                  text: 'End date must be after start date',
+                  confirmButtonColor: '#3085d6'
+              });
               return;
           }
 
@@ -340,12 +465,10 @@
                   btn.classList.add('bg-gray-200', 'text-gray-800');
               });
 
-              // Fetch data with custom date range
               const response = await fetch(`/admin/dashboard/data?timeFrame=custom&startDate=${startDate}&endDate=${endDate}`);
               if (!response.ok) throw new Error('Network response was not ok');
               const data = await response.json();
 
-              // Update statistics and chart
               updateDashboard(data);
           } catch (error) {
               console.error('Error fetching custom date range data:', error);
@@ -426,8 +549,69 @@
                       }
                   }
               }
-          });
+          });         
       }
+
+      function updateToggleStyle(type) {
+          const sortByUnits = document.getElementById(type === 'product' ? 'sortByUnits' : 'categorySortByUnits');
+          const sortByRevenue = document.getElementById(type === 'product' ? 'sortByRevenue' : 'categorySortByRevenue');
+          
+          // Update Units button
+          if (sortByUnits.getAttribute('data-active') === 'true') {
+              sortByUnits.classList.add('bg-emerald-500', 'text-white');
+              sortByUnits.classList.remove('text-zinc-300', 'hover:text-white');
+          } else {
+              sortByUnits.classList.remove('bg-emerald-500', 'text-white');
+              sortByUnits.classList.add('text-zinc-300', 'hover:text-white');
+          }
+          
+          // Update Revenue button
+          if (sortByRevenue.getAttribute('data-active') === 'true') {
+              sortByRevenue.classList.add('bg-emerald-500', 'text-white');
+              sortByRevenue.classList.remove('text-zinc-300', 'hover:text-white');
+          } else {
+              sortByRevenue.classList.remove('bg-emerald-500', 'text-white');
+              sortByRevenue.classList.add('text-zinc-300', 'hover:text-white');
+          }
+      }
+
+      async function updateSort(type, sortBy) {
+          try {
+              // Update active states
+              const unitsBtn = document.getElementById(type === 'product' ? 'sortByUnits' : 'categorySortByUnits');
+              const revenueBtn = document.getElementById(type === 'product' ? 'sortByRevenue' : 'categorySortByRevenue');
+              
+              unitsBtn.setAttribute('data-active', sortBy === 'units');
+              revenueBtn.setAttribute('data-active', sortBy === 'revenue');
+              updateToggleStyle(type);
+
+              const timeFrame = document.querySelector('.timeframe-btn.bg-gray-700')?.dataset.timeframe || 'yearly';
+              const startDate = document.getElementById('startDate').value;
+              const endDate = document.getElementById('endDate').value;
+              
+              // Store the sort preferences
+              localStorage.setItem(`${type}Sort`, sortBy);
+              
+              let url = `/admin/dashboard/data?timeFrame=${timeFrame}&${type}Sort=${sortBy}`;
+              if (startDate && endDate) {
+                  url += `&startDate=${startDate}&endDate=${endDate}`;
+              }
+              
+              const response = await fetch(url);
+              if (!response.ok) throw new Error('Network response was not ok');
+              const data = await response.json();
+              updateDashboard(data);
+          } catch (error) {
+              console.error(`Error updating ${type} sort:`, error);
+          }
+      }
+
+
+
+
     </script>
   </body>
 </html>
+
+
+
