@@ -239,7 +239,7 @@ const userCheckoutController = {
                 );
             }
 
-            res.status(200).json({
+            res.json({
                 success: true,
                 message: 'Order placed successfully',
                 orderId: order.orderCode

@@ -614,7 +614,18 @@
                 if (paymentMethod === 'wallet') {
                     response = await processWalletPayment(selectedAddress.value);
                     if (response.success) {
-                        window.location.href = `/order-success/${response.orderId}`;
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Order Placed Successfully!',
+                            text: `Order ID: ${response.orderId}`,
+                            confirmButtonColor: '#000000',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: true
+                        });
+                        window.location.href = `/orders?success=true&orderId=${response.orderId}`;
+                    } else {
+                        throw new Error(response.message);
                     }
                 } else if (paymentMethod === 'cod') {
                     response = await fetch('/checkout/place-order', {
@@ -630,7 +641,16 @@
                     });
                     const data = await response.json();
                     if (data.success) {
-                        window.location.href = `/order-success/${data.orderId}`;
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Order Placed Successfully!',
+                            text: `Order ID: ${data.orderId}`,
+                            confirmButtonColor: '#000000',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: true
+                        });
+                        window.location.href = `/orders?success=true&orderId=${data.orderId}`;
                     } else {
                         throw new Error(data.message);
                     }
@@ -663,7 +683,19 @@
 
                                 const verifyData = await verifyResponse.json();
                                 if (verifyData.success) {
-                                    window.location.href = `/order-success/${verifyData.orderId}`;
+                                    // Show success alert before redirecting
+                                    await Swal.fire({
+                                        icon: 'success',
+                                        title: 'Order Placed Successfully!',
+                                        text: `Order ID: ${verifyData.orderId}`,
+                                        confirmButtonColor: '#000000',
+                                        timer: 2000,
+                                        timerProgressBar: true,
+                                        showConfirmButton: true
+                                    });
+                                    
+                                    // Redirect to orders page
+                                    window.location.href = `/orders?success=true&orderId=${verifyData.orderId}`;
                                 } else {
                                     throw new Error(verifyData.message);
                                 }
@@ -869,6 +901,25 @@
         document.addEventListener('DOMContentLoaded', function() {
             const finalTotal = parseFloat(document.getElementById('codOption').dataset.finalTotal);
             updateCODAvailability(finalTotal);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for success parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const orderId = urlParams.get('orderId');
+            
+            if (success === 'true' && orderId) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Order Placed Successfully!',
+                    text: `Your order (${orderId}) has been placed successfully.`,
+                    confirmButtonColor: '#000000'
+                });
+                
+                // Clean up URL without refreshing the page
+                window.history.replaceState({}, document.title, '/orders');
+            }
         });
     </script>
 </body>
