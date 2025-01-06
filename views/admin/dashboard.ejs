@@ -21,21 +21,7 @@
         class="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
       >
         <h1 class="text-2xl font-semibold text-gray-200">Sales Summary</h1>
-        <div class="flex items-center space-x-4 mt-4 md:mt-0">
-          <select
-            id="yearSelect"
-            class="px-4 py-2 text-gray-800 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-          </select>
-          <button
-            onclick="downloadReport()"
-            class="px-4 py-2 text-black bg-white rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            Download
-          </button>
-        </div>
+        
       </header>
 
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -136,10 +122,6 @@
       </section>
     </main>
 
-    <footer class="text-sm py-4 mt-auto text-center text-white">
-      © 2024 Onyx. All Rights Reserved.
-    </footer>
-
     <script>
       // Improved mobile sidebar toggle functionality
       document.addEventListener("DOMContentLoaded", function () {
@@ -225,12 +207,19 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: true,
+                            display: false,
                             position: 'top',
                             labels: {
                                 color: 'white',
                                 padding: 20,
                                 font: { size: 14 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '₹ ' + context.parsed.y.toLocaleString('en-IN');
+                                }
                             }
                         }
                     },
@@ -240,7 +229,15 @@
                             grid: { color: 'rgba(255, 255, 255, 0.1)' },
                             ticks: {
                                 color: 'white',
-                                font: { size: 12 }
+                                font: { size: 12 },
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return '₹ ' + (value/1000000).toFixed(1) + 'M';
+                                    } else if (value >= 1000) {
+                                        return '₹ ' + (value/1000).toFixed(1) + 'K';
+                                    }
+                                    return '₹ ' + value.toLocaleString('en-IN');
+                                }
                             }
                         },
                         x: {
@@ -266,7 +263,7 @@
         data: {
           labels: initialChartData.map(data => data.time),
           datasets: [{
-            label: 'Revenue',
+            label: 'Revenue (₹)',
             data: initialChartData.map(data => data.revenue),
             borderColor: 'rgb(75, 192, 192)',
             tension: 0.1,
@@ -278,13 +275,18 @@
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: true,
+              display: false,
               position: 'top',
               labels: {
                 color: 'white',
                 padding: 20,
-                font: {
-                  size: 14
+                font: { size: 14 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '₹ ' + context.parsed.y.toLocaleString('en-IN');
                 }
               }
             }
@@ -292,18 +294,22 @@
           scales: {
             y: {
               beginAtZero: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
+              grid: { color: 'rgba(255, 255, 255, 0.1)' },
               ticks: {
                 color: 'white',
-                font: { size: 12 }
+                font: { size: 12 },
+                callback: function(value) {
+                  if (value >= 1000000) {
+                    return '₹ ' + (value/1000000).toFixed(1) + 'M';
+                  } else if (value >= 1000) {
+                    return '₹ ' + (value/1000).toFixed(1) + 'K';
+                  }
+                  return '₹ ' + value.toLocaleString('en-IN');
+                }
               }
             },
             x: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
+              grid: { color: 'rgba(255, 255, 255, 0.1)' },
               ticks: {
                 color: 'white',
                 font: { size: 12 }
@@ -312,12 +318,6 @@
           }
         }
       });
-
-      // Download report function
-      function downloadReport() {
-        // Implement download functionality here
-        alert('Download functionality will be implemented soon');
-      }
 
       async function applyCustomDateRange() {
           const startDate = document.getElementById('startDate').value;
@@ -372,7 +372,7 @@
               data: {
                   labels: data.chartData.map(item => item.time),
                   datasets: [{
-                      label: 'Revenue',
+                      label: 'Revenue (₹)',
                       data: data.chartData.map(item => item.revenue),
                       borderColor: 'rgb(75, 192, 192)',
                       tension: 0.1,
@@ -384,12 +384,19 @@
                   maintainAspectRatio: false,
                   plugins: {
                       legend: {
-                          display: true,
+                          display: false,
                           position: 'top',
                           labels: {
                               color: 'white',
                               padding: 20,
                               font: { size: 14 }
+                          }
+                      },
+                      tooltip: {
+                          callbacks: {
+                              label: function(context) {
+                                  return '₹ ' + context.parsed.y.toLocaleString('en-IN');
+                              }
                           }
                       }
                   },
@@ -399,7 +406,15 @@
                           grid: { color: 'rgba(255, 255, 255, 0.1)' },
                           ticks: {
                               color: 'white',
-                              font: { size: 12 }
+                              font: { size: 12 },
+                              callback: function(value) {
+                                  if (value >= 1000000) {
+                                      return '₹ ' + (value/1000000).toFixed(1) + 'M';
+                                  } else if (value >= 1000) {
+                                      return '₹ ' + (value/1000).toFixed(1) + 'K';
+                                  }
+                                  return '₹ ' + value.toLocaleString('en-IN');
+                              }
                           }
                       },
                       x: {
