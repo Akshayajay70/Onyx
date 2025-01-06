@@ -51,7 +51,6 @@
                 <th class="py-3 px-4">S.No</th>
                 <th class="py-3 px-4">Name</th>
                 <th class="py-3 px-4">Email</th>
-                <th class="py-3 px-4">Mobile</th>
                 <th class="py-3 px-4">Status</th>
                 <th class="py-3 px-4">Action</th>
               </tr>
@@ -63,7 +62,6 @@
                     <td class="py-3 px-4"><%= index + 1 %></td>
                     <td class="py-3 px-4"><%= user.firstName %> <%= user.lastName %></td>
                     <td class="py-3 px-4"><%= user.email %></td>
-                    <td class="py-3 px-4"><%= user.mobileNumber || "N/A" %></td>
                     <td class="py-3 px-4">
                       <span class="px-2 py-1 rounded-full text-sm <%= user.isVerified ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500' %>">
                         <%= user.isVerified ? 'Verified' : 'Not Verified' %>
@@ -93,8 +91,33 @@
           </table>
 
           <!-- Pagination -->
-          <div class="flex justify-center space-x-2 mt-4">
-            <!-- Add pagination if needed -->
+          <div class="mt-6 flex justify-center pagination-container">
+            <nav class="flex items-center gap-2" aria-label="Pagination">
+                <% if (pagination.hasPrevPage) { %>
+                    <a href="?page=<%= pagination.prevPage %>" 
+                       class="px-3 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors">
+                        Previous
+                    </a>
+                <% } %>
+
+                <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                    <a href="?page=<%= i %>"
+                       class="px-3 py-2 rounded-md <%= pagination.currentPage === i ? 'bg-emerald-500 text-white' : 'bg-zinc-700 text-white hover:bg-zinc-600' %> transition-colors">
+                        <%= i %>
+                    </a>
+                <% } %>
+
+                <% if (pagination.hasNextPage) { %>
+                    <a href="?page=<%= pagination.nextPage %>"
+                       class="px-3 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors">
+                        Next
+                    </a>
+                <% } %>
+            </nav>
+          </div>
+
+          <div class="mt-4 text-center text-sm text-gray-400">
+            Showing page <%= pagination.currentPage %> of <%= pagination.totalPages %>
           </div>
         </div>
       </main>
@@ -185,6 +208,58 @@
           icon: 'error'
         });
       }
+    });
+
+    async function fetchPage(page) {
+        try {
+            utils.toggleLoading(true);
+
+            const response = await fetch(`/admin/userList?page=${page}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch users');
+
+            const html = await response.text();
+
+            // Create a temporary container
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+
+            // Update the table body
+            const newTableBody = temp.querySelector('tbody');
+            document.querySelector('tbody').innerHTML = newTableBody.innerHTML;
+
+            // Update the pagination
+            const newPagination = temp.querySelector('.pagination-container');
+            document.querySelector('.pagination-container').innerHTML = newPagination.innerHTML;
+
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            await utils.showAlert({
+                title: 'Error',
+                text: 'Failed to fetch users',
+                icon: 'error'
+            });
+        } finally {
+            utils.toggleLoading(false);
+        }
+    }
+
+    // Update your pagination links to use fetchPage
+    document.addEventListener('DOMContentLoaded', () => {
+        const paginationContainer = document.querySelector('.pagination-container');
+        if (paginationContainer) {
+            paginationContainer.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (e.target.tagName === 'A') {
+                    const page = new URLSearchParams(e.target.href.split('?')[1]).get('page');
+                    fetchPage(page);
+                }
+            });
+        }
     });
     </script>
   </body>

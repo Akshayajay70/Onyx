@@ -151,6 +151,30 @@
                     </table>
                 </div>
             </div>
+            <div class="mt-6 flex justify-center pagination-container">
+                <nav class="flex items-center gap-2" aria-label="Pagination">
+                    <% if (pagination.hasPrevPage) { %>
+                        <a href="?page=<%= pagination.prevPage %>" 
+                           class="px-3 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors">
+                            Previous
+                        </a>
+                    <% } %>
+
+                    <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                        <a href="?page=<%= i %>"
+                           class="px-3 py-2 rounded-md <%= pagination.currentPage === i ? 'bg-emerald-500 text-white' : 'bg-zinc-700 text-white hover:bg-zinc-600' %> transition-colors">
+                            <%= i %>
+                        </a>
+                    <% } %>
+
+                    <% if (pagination.hasNextPage) { %>
+                        <a href="?page=<%= pagination.nextPage %>"
+                           class="px-3 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors">
+                            Next
+                        </a>
+                    <% } %>
+                </nav>
+            </div>
         </div>
     </div>
     <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
@@ -461,6 +485,57 @@
                 }
             }
         }
+
+        async function fetchPage(page) {
+            try {
+
+                const response = await fetch(`/admin/orders?page=${page}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch orders');
+
+                const html = await response.text();
+
+                // Create a temporary container
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                // Update the table body
+                const newTableBody = temp.querySelector('tbody');
+                document.querySelector('tbody').innerHTML = newTableBody.innerHTML;
+
+                // Update the pagination
+                const newPagination = temp.querySelector('.pagination-container');
+                document.querySelector('.pagination-container').innerHTML = newPagination.innerHTML;
+
+                // Close loading indicator
+                Swal.close();
+
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to fetch orders',
+                    confirmButtonColor: '#000000'
+                });
+            }
+        }
+
+        // Update your pagination links to use fetchPage
+        document.addEventListener('DOMContentLoaded', () => {
+            const paginationContainer = document.querySelector('.pagination-container');
+            paginationContainer.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (e.target.tagName === 'A') {
+                    const page = new URLSearchParams(e.target.href.split('?')[1]).get('page');
+                    fetchPage(page);
+                }
+            });
+        });
     </script>
 </body>
 </html> 

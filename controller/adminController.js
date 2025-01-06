@@ -23,13 +23,54 @@ const getLogout = (req, res) => {
     });
 }
 
-// Get the list of all users
+// Get the list of all users with pagination
 const getUserList = async (req, res) => {
     try {
-        const userList = await User.find(); // Fetch all users from the database
-        res.render('admin/userList', { userList }); // Render a view to display the users
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10; // Users per page
+        const skip = (page - 1) * limit;
+
+        // Get total count for pagination
+        const totalUsers = await User.countDocuments();
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        const userList = await User.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        // If it's an AJAX request, return partial view
+        if (req.xhr) {
+            return res.render('admin/userList', {
+                userList,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    hasNextPage: page < totalPages,
+                    hasPrevPage: page > 1,
+                    nextPage: page + 1,
+                    prevPage: page - 1
+                }
+            });
+        }
+
+        // Regular page load
+        res.render('admin/userList', {
+            userList,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                nextPage: page + 1,
+                prevPage: page - 1
+            }
+        });
     } catch (error) {
         console.error(error);
+        if (req.xhr) {
+            return res.status(500).json({ error: 'Failed to fetch users' });
+        }
         res.status(500).send('Server error');
     }
 };
