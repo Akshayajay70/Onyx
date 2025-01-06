@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body class="mybg-green text-white min-h-screen flex flex-col">
@@ -23,12 +23,14 @@
         <h1 class="text-2xl font-semibold text-gray-200">Sales Summary</h1>
         <div class="flex items-center space-x-4 mt-4 md:mt-0">
           <select
+            id="yearSelect"
             class="px-4 py-2 text-gray-800 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <option value="2024">2024</option>
             <option value="2023">2023</option>
           </select>
           <button
+            onclick="downloadReport()"
             class="px-4 py-2 text-black bg-white rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             Download
@@ -36,23 +38,101 @@
         </div>
       </header>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Cards with improved accessibility and consistent styling -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Revenue Card -->
         <div
-          class="p-6 bg-zinc-800 rounded-lg shadow-md flex flex-col items-center"
+          class="p-6 bg-zinc-800 rounded-lg shadow-md"
         >
           <h2 class="text-gray-400 text-lg">Revenue</h2>
-          <div class="flex items-center justify-between mt-2 w-full">
-            <p class="text-xl font-bold">₹ 7,825</p>
-            <p class="text-orange-500 font-semibold">+22%</p>
+          <div class="flex items-center justify-between mt-2">
+            <p class="text-xl font-bold revenue-value">₹ <%= totalRevenue.toLocaleString() %></p>
+            <p class="growth-percentage text-sm font-semibold text-gray-400">
+              <%= growthPercentage %>%
+            </p>
           </div>
-          <div
-            class="w-full h-16 bg-gray-600 mt-4 rounded-md"
-            role="img"
-            aria-label="Revenue chart"
-          ></div>
         </div>
-        <!-- Repeat for other cards -->
+
+        <!-- Orders Card -->
+        <div
+          class="p-6 bg-zinc-800 rounded-lg shadow-md"
+        >
+          <h2 class="text-gray-400 text-lg">Total Orders</h2>
+          <p class="text-xl font-bold total-orders mt-2"><%= totalOrders %></p>
+        </div>
+
+        <!-- Completed Orders Card -->
+        <div
+          class="p-6 bg-zinc-800 rounded-lg shadow-md"
+        >
+          <h2 class="text-gray-400 text-lg">Completed Orders</h2>
+          <p class="text-xl font-bold completed-orders mt-2"><%= completedOrders %></p>
+        </div>
+
+        <!-- Completion Rate Card -->
+        <div
+          class="p-6 bg-zinc-800 rounded-lg shadow-md"
+        >
+          <h2 class="text-gray-400 text-lg">Completion Rate</h2>
+          <p class="text-xl font-bold completion-rate mt-2">
+            <%= Math.round((completedOrders / totalOrders) * 100) || 0 %>%
+          </p>
+        </div>
+      </section>
+
+      <!-- Time Frame and Date Filter -->
+      <div class="flex flex-wrap justify-end items-center gap-4 mb-4">
+          <!-- Time Frame Buttons -->
+          <div class="flex space-x-2">
+              <button onclick="changeTimeFrame('daily')" 
+                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'daily' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      data-timeframe="daily">
+                  Daily
+              </button>
+              <button onclick="changeTimeFrame('weekly')" 
+                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'weekly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      data-timeframe="weekly">
+                  Weekly
+              </button>
+              <button onclick="changeTimeFrame('monthly')" 
+                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'monthly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      data-timeframe="monthly">
+                  Monthly
+              </button>
+              <button onclick="changeTimeFrame('yearly')" 
+                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'yearly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      data-timeframe="yearly">
+                  Yearly
+              </button>
+          </div>
+
+          <!-- Custom Date Range -->
+          <div class="flex items-center space-x-2">
+              <input 
+                  type="date" 
+                  id="startDate" 
+                  class="px-3 py-2 rounded-md text-gray-800 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+              <span class="text-white">to</span>
+              <input 
+                  type="date" 
+                  id="endDate" 
+                  class="px-3 py-2 rounded-md text-gray-800 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+              <button 
+                  onclick="applyCustomDateRange()"
+                  class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                  Apply
+              </button>
+          </div>
+      </div>
+
+      <!-- Sales Chart -->
+      <section class="bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Sales Summary</h2>
+        <div class="relative" style="min-height: 400px; max-height: 70vh;">
+          <canvas id="salesChart"></canvas>
+        </div>
       </section>
     </main>
 
@@ -93,6 +173,246 @@
           });
         }
       });
+
+      let salesChart;
+
+      async function changeTimeFrame(timeFrame) {
+        try {
+            // Update button styles
+            document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                if (btn.dataset.timeframe === timeFrame) {
+                    btn.classList.remove('bg-gray-200', 'text-gray-800');
+                    btn.classList.add('bg-gray-700', 'text-white');
+                } else {
+                    btn.classList.remove('bg-gray-700', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-800');
+                }
+            });
+
+            // Fetch new data
+            const response = await fetch(`/admin/dashboard/data?timeFrame=${timeFrame}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+
+            // Update statistics
+            document.querySelector('.revenue-value').textContent = `₹ ${data.totalRevenue.toLocaleString()}`;
+            document.querySelector('.growth-percentage').textContent = `${data.growthPercentage}%`;
+            document.querySelector('.total-orders').textContent = data.totalOrders;
+            document.querySelector('.completed-orders').textContent = data.completedOrders;
+            document.querySelector('.completion-rate').textContent = 
+                `${Math.round((data.completedOrders / data.totalOrders) * 100) || 0}%`;
+
+            // Update chart
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.chartData.map(item => item.time),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.chartData.map(item => item.revenue),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: 'white',
+                                padding: 20,
+                                font: { size: 14 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: {
+                                color: 'white',
+                                font: { size: 12 }
+                            }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: {
+                                color: 'white',
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+      }
+
+      // Initialize chart with current data
+      const initialChartData = <%- chartData %>;
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: initialChartData.map(data => data.time),
+          datasets: [{
+            label: 'Revenue',
+            data: initialChartData.map(data => data.revenue),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: 'white',
+                padding: 20,
+                font: {
+                  size: 14
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: 'white',
+                font: { size: 12 }
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: 'white',
+                font: { size: 12 }
+              }
+            }
+          }
+        }
+      });
+
+      // Download report function
+      function downloadReport() {
+        // Implement download functionality here
+        alert('Download functionality will be implemented soon');
+      }
+
+      async function applyCustomDateRange() {
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+
+          if (!startDate || !endDate) {
+              alert('Please select both start and end dates');
+              return;
+          }
+
+          if (new Date(endDate) < new Date(startDate)) {
+              alert('End date must be after start date');
+              return;
+          }
+
+          try {
+              // Reset timeframe button styles
+              document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                  btn.classList.remove('bg-gray-700', 'text-white');
+                  btn.classList.add('bg-gray-200', 'text-gray-800');
+              });
+
+              // Fetch data with custom date range
+              const response = await fetch(`/admin/dashboard/data?timeFrame=custom&startDate=${startDate}&endDate=${endDate}`);
+              if (!response.ok) throw new Error('Network response was not ok');
+              const data = await response.json();
+
+              // Update statistics and chart
+              updateDashboard(data);
+          } catch (error) {
+              console.error('Error fetching custom date range data:', error);
+          }
+      }
+
+      function updateDashboard(data) {
+          // Update statistics
+          document.querySelector('.revenue-value').textContent = `₹ ${data.totalRevenue.toLocaleString()}`;
+          document.querySelector('.growth-percentage').textContent = `${data.growthPercentage}%`;
+          document.querySelector('.total-orders').textContent = data.totalOrders;
+          document.querySelector('.completed-orders').textContent = data.completedOrders;
+          document.querySelector('.completion-rate').textContent = 
+              `${Math.round((data.completedOrders / data.totalOrders) * 100) || 0}%`;
+
+          // Update chart
+          if (salesChart) {
+              salesChart.destroy();
+          }
+
+          const ctx = document.getElementById('salesChart').getContext('2d');
+          salesChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                  labels: data.chartData.map(item => item.time),
+                  datasets: [{
+                      label: 'Revenue',
+                      data: data.chartData.map(item => item.revenue),
+                      borderColor: 'rgb(75, 192, 192)',
+                      tension: 0.1,
+                      fill: false
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                      legend: {
+                          display: true,
+                          position: 'top',
+                          labels: {
+                              color: 'white',
+                              padding: 20,
+                              font: { size: 14 }
+                          }
+                      }
+                  },
+                  scales: {
+                      y: {
+                          beginAtZero: true,
+                          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                          ticks: {
+                              color: 'white',
+                              font: { size: 12 }
+                          }
+                      },
+                      x: {
+                          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                          ticks: {
+                              color: 'white',
+                              font: { size: 12 }
+                          }
+                      }
+                  }
+              }
+          });
+      }
     </script>
   </body>
 </html>

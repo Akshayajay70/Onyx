@@ -16,6 +16,8 @@ router.post('/login', adminController.postAdmin);
 
 router.get('/dashboard', adminMiddleware.checkSession, adminController.getDashboard)
 
+router.get('/dashboard/data', adminMiddleware.checkSession, adminController.getDashboardData);
+
 router.get('/logout', adminMiddleware.checkSession, adminController.getLogout);
 
 // User listing Routes
