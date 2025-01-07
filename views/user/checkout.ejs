@@ -596,12 +596,19 @@
 
         async function placeOrder() {
             try {
+                // Check if address is selected
                 const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
                 if (!selectedAddress) {
                     throw new Error('Please select a delivery address');
                 }
 
-                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                // Check if payment method is selected
+                const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+                if (!selectedPayment) {
+                    throw new Error('Please select a payment method');
+                }
+
+                const paymentMethod = selectedPayment.value;
                 const finalAmount = parseFloat(document.getElementById('finalTotal').textContent);
 
                 // Validate COD payment method
