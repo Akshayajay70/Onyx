@@ -5,6 +5,15 @@ import Wallet from '../model/walletModel.js';
 const adminOrderController = {
     getOrders: async (req, res) => {
         try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = 10; // Orders per page
+            const skip = (page - 1) * limit;
+
+            // Get total orders count
+            const totalOrders = await orderSchema.countDocuments();
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            // Get paginated orders
             const orders = await orderSchema.find()
                 .populate({
                     path: 'userId',
@@ -15,7 +24,9 @@ const adminOrderController = {
                     select: 'productName imageUrl price'
                 })
                 .lean()
-                .sort({ orderDate: -1 });
+                .sort({ orderDate: -1 })
+                .skip(skip)
+                .limit(limit);
 
             // Format order items with additional details
             orders.forEach(order => {
@@ -32,7 +43,18 @@ const adminOrderController = {
                 }));
             });
 
-            res.render('admin/orders', { orders, admin: req.session.admin });
+            res.render('admin/orders', { 
+                orders, 
+                admin: req.session.admin,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    hasNextPage: page < totalPages,
+                    hasPrevPage: page > 1,
+                    nextPage: page + 1,
+                    prevPage: page - 1
+                }
+            });
         } catch (error) {
             console.error('Admin get orders error:', error);
             res.status(500).render('error', {
