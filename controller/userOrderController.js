@@ -241,16 +241,27 @@ const userOrderController = {
             // Generate separate invoice for each item
             order.items.forEach((item, index) => {
                 if (index > 0) {
-                    doc.addPage(); // Add new page for each item except first
+                    doc.addPage();
                 }
 
-                // Calculate tax amounts (18% GST)
+                // Calculate base prices and taxes
                 const TAX_RATE = 0.18;
-                const itemBasePrice = item.price / (1 + TAX_RATE);
-                const itemTaxAmount = item.price - itemBasePrice;
-                const totalBaseAmount = itemBasePrice * item.quantity;
-                const totalTaxAmount = itemTaxAmount * item.quantity;
-                const totalAmount = item.subtotal;
+                const CGST_RATE = 0.09;
+                const SGST_RATE = 0.09;
+
+                // Pre-tax calculations
+                const preTaxPrice = item.price / (1 + TAX_RATE);
+                const preTaxTotal = preTaxPrice * item.quantity;
+                
+                // Tax calculations
+                const cgstAmount = preTaxTotal * CGST_RATE;
+                const sgstAmount = preTaxTotal * SGST_RATE;
+                const totalTax = cgstAmount + sgstAmount;
+
+                // Discount calculations (if applicable)
+                const originalTotal = preTaxTotal + totalTax;
+                const finalAmount = item.subtotal; // This is already the discounted total
+                const totalDiscount = originalTotal - finalAmount;
 
                 // Add header with company logo and tax invoice text
                 doc.fontSize(20)
@@ -288,50 +299,80 @@ const userOrderController = {
                    .text(`Phone: ${order.shippingAddress.mobileNumber}`)
                    .moveDown();
 
-                // Add Product Details Table
+                // Product Details Table
                 doc.font('Helvetica-Bold');
                 const tableTop = doc.y + 20;
 
                 // Table Headers
                 doc.text('Product Details', 50, tableTop)
-                   .text('HSN', 250, tableTop)
-                   .text('Qty', 300, tableTop)
-                   .text('Rate', 350, tableTop)
-                   .text('Amount', 450, tableTop);
+                    .text('HSN', 200, tableTop)
+                    .text('Qty', 250, tableTop)
+                    .text('Pre-tax Rate', 300, tableTop)
+                    .text('Taxable Amount', 400, tableTop)
+                    .text('Total', 500, tableTop);
 
                 // Underline
                 doc.moveTo(50, tableTop + 15)
-                   .lineTo(550, tableTop + 15)
-                   .stroke();
+                    .lineTo(550, tableTop + 15)
+                    .stroke();
 
                 // Product Details
                 doc.font('Helvetica')
-                   .text(item.product.productName, 50, tableTop + 30)
-                   .text('6203', 250, tableTop + 30)
-                   .text(item.quantity.toString(), 300, tableTop + 30)
-                   .text(`₹${itemBasePrice.toFixed(2)}`, 350, tableTop + 30)
-                   .text(`₹${totalBaseAmount.toFixed(2)}`, 450, tableTop + 30);
+                    .text(item.product.productName, 50, tableTop + 30)
+                    .text('6203', 200, tableTop + 30)
+                    .text(item.quantity.toString(), 250, tableTop + 30)
+                    .text(`₹${preTaxPrice.toFixed(2)}`, 300, tableTop + 30)
+                    .text(`₹${preTaxTotal.toFixed(2)}`, 400, tableTop + 30)
+                    .text(`₹${originalTotal.toFixed(2)}`, 500, tableTop + 30);
 
-                // Add Tax Details
-                const taxTop = tableTop + 80;
-                doc.moveTo(50, taxTop).lineTo(550, taxTop).stroke()
-                   .font('Helvetica-Bold')
-                   .text('Tax Details', 50, taxTop + 20)
-                   .font('Helvetica');
+                // Price Breakdown
+                const summaryTop = tableTop + 80;
+                doc.moveTo(50, summaryTop).lineTo(550, summaryTop).stroke()
+                    .font('Helvetica-Bold')
+                    .text('Price Breakdown', 50, summaryTop + 20)
+                    .font('Helvetica');
 
-                // CGST and SGST (9% each)
-                const cgst = totalTaxAmount / 2;
-                doc.text('CGST @ 9%', 350, taxTop + 40)
-                   .text(`₹${cgst.toFixed(2)}`, 450, taxTop + 40)
-                   .text('SGST @ 9%', 350, taxTop + 60)
-                   .text(`₹${cgst.toFixed(2)}`, 450, taxTop + 60);
+                // Detailed Summary
+                let currentY = summaryTop + 40;
+                
+                // Pre-tax amount
+                doc.text('Pre-tax Amount:', 350, currentY)
+                    .text(`₹${preTaxTotal.toFixed(2)}`, 500, currentY);
+                currentY += 20;
 
-                // Total Amount
-                doc.moveTo(50, taxTop + 90).lineTo(550, taxTop + 90).stroke()
-                   .font('Helvetica-Bold')
-                   .text('Total Amount:', 350, taxTop + 110)
-                   .text(`₹${totalAmount.toFixed(2)}`, 450, taxTop + 110)
-                   .moveDown();
+                // Tax details
+                doc.text('CGST @ 9%:', 350, currentY)
+                    .text(`₹${cgstAmount.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                doc.text('SGST @ 9%:', 350, currentY)
+                    .text(`₹${sgstAmount.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                // Subtotal after tax
+                doc.text('Total (Inc. Tax):', 350, currentY)
+                    .text(`₹${originalTotal.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                // Discount (if applicable)
+                if (totalDiscount > 0) {
+                    doc.text('Discount Applied:', 350, currentY)
+                        .text(`-₹${totalDiscount.toFixed(2)}`, 500, currentY);
+                    currentY += 20;
+                }
+
+                // Final amount
+                doc.moveTo(350, currentY).lineTo(550, currentY).stroke();
+                currentY += 10;
+                doc.font('Helvetica-Bold')
+                    .text('Final Amount:', 350, currentY)
+                    .text(`₹${finalAmount.toFixed(2)}`, 500, currentY);
+
+                // Amount in words
+                currentY += 40;
+                doc.font('Helvetica')
+                    .text('Amount in Words:', 50, currentY)
+                    .text(`${numberToWords(Math.round(finalAmount))} Rupees Only`, 150, currentY);
 
                 // Add Footer (within the page)
                 const footerTop = doc.page.height - 120;
