@@ -126,6 +126,30 @@
 
     <!------------- Footer ------------>
     <%- include("../partials/footer") %>
+    <!-- OTP Modal -->
+    <div id="otpModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+            <h3 class="text-xl font-semibold mb-4">Enter OTP</h3>
+            <p class="text-sm text-gray-600 mb-4">Please enter the OTP sent to your email</p>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+            </div>
+
+            <button id="verifyOtp" class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800">
+                Verify OTP
+            </button>
+            
+            <div class="text-center mt-4">
+                <button id="resendOtp" class="text-blue-600 hover:underline">Resend OTP</button>
+            </div>
+        </div>
+    </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('signup-form');
@@ -243,8 +267,35 @@
                 return;
             }
 
-            // If all validations pass, submit the form
-            this.submit();
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        email,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Show OTP modal
+                    document.getElementById('otpModal').classList.remove('hidden');
+                    document.getElementById('otpModal').classList.add('flex');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
         });
 
         // Add password input event listener for real-time validation
@@ -307,6 +358,74 @@
             // Clean up URL after showing the alert
             window.history.replaceState({}, document.title, window.location.pathname);
         }
+
+        // Add OTP input handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length === 1) {
+                    if (index < otpInputs.length - 1) otpInputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value) {
+                    if (index > 0) otpInputs[index - 1].focus();
+                }
+            });
+        });
+
+        // Handle OTP verification
+        document.getElementById('verifyOtp').addEventListener('click', async function() {
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            const email = document.getElementById('email').value;
+            
+            try {
+                const response = await fetch('/validate-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userOtp: otp, email })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = data.redirectUrl;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Handle resend OTP
+        document.getElementById('resendOtp').addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            try {
+                const response = await fetch('/resend-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+                Swal.fire({
+                    icon: data.success ? 'success' : 'error',
+                    title: data.success ? 'Success' : 'Error',
+                    text: data.message
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
     });
     </script>
   </body>

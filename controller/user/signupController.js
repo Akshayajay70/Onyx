@@ -55,21 +55,26 @@ const postSignUp = async (req, res) => {
         }, 180000);
 
         await sendOTPEmail(email, otp);
-        res.render('user/otp');
+        res.json({ 
+            success: true, 
+            message: 'OTP sent successfully',
+            email: email
+        });
     } catch (error) {
-        res.render('user/signup', {
-            message: 'Signup failed',
-            alertType: "error",
+        res.status(500).json({
+            success: false,
+            message: 'Signup failed'
         });
     }
 }
+
 const postOtp = async (req, res) => {
     try {
-        const { userOtp } = req.body;
-        const user = await userSchema.findOne({ otp: userOtp });
+        const { userOtp, email } = req.body;
+        const user = await userSchema.findOne({ email, otp: userOtp });
 
         if (!user) {
-            return res.status(400).json({ error: 'Invalid OTP' });
+            return res.status(400).json({ success: false, message: 'Invalid OTP' });
         }
 
         if (Date.now() > user.otpExpiresAt) {
@@ -97,8 +102,12 @@ const postOtp = async (req, res) => {
                 $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
             });
 
-            req.session.user = user._id; // Store user ID in session
-            return res.redirect('/home')
+            req.session.user = user._id;
+            return res.json({ 
+                success: true, 
+                message: 'OTP verified successfully',
+                redirectUrl: '/home'
+            });
         } else {
             return res.status(400).json({ error: 'Invalid OTP' });
         }
