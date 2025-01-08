@@ -121,8 +121,15 @@ const postOtp = async (req, res) => {
 
 const postResendOtp = async (req, res) => {
     try {
-        const user = await userSchema.findOne({ isVerified: false });
-        if (!user) return res.status(400).json({ error: 'User not found' });
+        const { email } = req.body;
+        const user = await userSchema.findOne({ email, isVerified: false });
+        
+        if (!user) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'User not found or already verified' 
+            });
+        }
 
         const otp = generateOTP();
         user.otp = otp;
@@ -130,10 +137,18 @@ const postResendOtp = async (req, res) => {
         user.otpAttempts = 0;
         await user.save();
 
-        await sendOTPEmail(user.email, otp);
-        res.status(200).json({ message: 'OTP resent' });
+        await sendOTPEmail(email, otp);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'OTP has been sent to your email' 
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Resend failed' });
+        console.error('Resend OTP error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to resend OTP' 
+        });
     }
 }
 
