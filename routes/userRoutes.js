@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import signupController from '../controller/user/signupController.js';
 import userController from '../controller/userController.js';
 import productController from '../controller/user/viewProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
@@ -13,17 +14,17 @@ import couponController from '../controller/user/couponController.js';
 
 const route = Router();
 
-route.get('/signup', userMiddlewares.isLogin, userController.getSignUp);
+route.get('/signup', userMiddlewares.isLogin, signupController.getSignUp);
 
-route.post('/signup', userController.postSignUp);
+route.post('/signup', signupController.postSignUp);
 
-route.post('/validate-otp', userController.postOtp);
+route.post('/validate-otp', signupController.postOtp);
 
-route.post('/resend-otp', userController.postResendOtp);
+route.post('/resend-otp', signupController.postResendOtp);
 
-route.get('/login', userMiddlewares.isLogin, userController.getLogin);
+route.get('/login', userMiddlewares.isLogin, signupController.getLogin);
 
-route.post('/login', userController.postLogin);
+route.post('/login', signupController.postLogin);
 
 route.get('/', userController.getHome)
 
