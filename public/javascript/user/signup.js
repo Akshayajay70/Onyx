@@ -174,16 +174,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('otpModal').classList.remove('hidden');
                 document.getElementById('otpModal').classList.add('flex');
             } else {
-                // Show server-side error in the appropriate field
-                if (data.message.includes('email')) {
-                    showError('emailError', data.message);
-                } else {
-                    // Show general error below the form
-                    const generalError = document.createElement('p');
-                    generalError.className = 'text-[#9B1C1C] text-xs mt-2 text-center';
-                    generalError.textContent = data.message;
-                    form.appendChild(generalError);
-                }
+                document.getElementById('generalError').textContent = data.message;
+                document.getElementById('generalError').classList.remove('hidden');
             }
         } catch (error) {
             console.error('Error:', error);

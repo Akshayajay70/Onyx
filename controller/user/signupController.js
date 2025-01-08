@@ -12,8 +12,54 @@ const postSignUp = async (req, res) => {
     try {
         const { firstName, lastName, email, password } = req.body;
         
-        const trimmedFirstName = firstName.trim();
-        const trimmedLastName = lastName.trim();
+        // Validate first name
+        if (!firstName || !/^[a-zA-Z]{3,10}$/.test(firstName.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'First name should contain only letters (3-10 characters)'
+            });
+        }
+
+        // Validate last name
+        if (!lastName || !/^[a-zA-Z]{1,10}$/.test(lastName.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Last name should contain only letters (1-10 characters)'
+            });
+        }
+
+        // Validate email
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please enter a valid email address'
+            });
+        }
+
+        // Validate password
+        const validatePassword = (pwd) => {
+            if (pwd.length < 8 || pwd.length > 12) {
+                return { isValid: false, message: 'Password must be between 8 and 12 characters long' };
+            }
+            if (!/[A-Z]/.test(pwd)) {
+                return { isValid: false, message: 'Password must contain at least one uppercase letter' };
+            }
+            if (!/[a-z]/.test(pwd)) {
+                return { isValid: false, message: 'Password must contain at least one lowercase letter' };
+            }
+            if (!/[0-9]/.test(pwd)) {
+                return { isValid: false, message: 'Password must contain at least one number' };
+            }
+            return { isValid: true };
+        };
+
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({
+                success: false,
+                message: passwordValidation.message
+            });
+        }
 
         // Check if user exists
         const existingUser = await userSchema.findOne({ email });
@@ -21,13 +67,13 @@ const postSignUp = async (req, res) => {
         if (existingUser && !existingUser.isVerified) {
             await userSchema.deleteOne({ _id: existingUser._id });
         } else if (existingUser) {
-            let message = existingUser.email === email ? "Email already registered" : "Phone number already registered";
-            if (!existingUser.password) {
-                message = "This email is linked to a Google login. Please log in with Google.";
-            }
-            return res.render('user/signup', {
-                message,
-                alertType: "error",
+            const message = !existingUser.password 
+                ? "This email is linked to a Google login. Please log in with Google."
+                : "Email already registered";
+                
+            return res.status(400).json({
+                success: false,
+                message
             });
         }
 
@@ -35,8 +81,8 @@ const postSignUp = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newUser = new userSchema({
-            firstName: trimmedFirstName,
-            lastName: trimmedLastName,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
             email,
             password: hashedPassword,
             otp,
@@ -61,6 +107,7 @@ const postSignUp = async (req, res) => {
             email: email
         });
     } catch (error) {
+        console.error('Signup error:', error);
         res.status(500).json({
             success: false,
             message: 'Signup failed'
