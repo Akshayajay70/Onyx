@@ -15,10 +15,7 @@ const isLogin  = (req, res, next)=>{
     }
 }
 
-export const restrictManualAccess = (req, res, next) => {
-    next();
-};
-
-
-
-export default { isLogin, checkSession, restrictManualAccess }
+export default { 
+    isLogin, 
+    checkSession 
+}

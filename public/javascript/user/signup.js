@@ -154,6 +154,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (hasErrors) return;
 
+        // Show loading spinner
+        const loadingSpinner = document.getElementById('loading-spinner');
+        loadingSpinner.classList.remove('hidden');
+
         // If no errors, proceed with form submission
         try {
             const response = await fetch('/signup', {
@@ -170,7 +174,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const data = await response.json();
+            
+            // Hide loading spinner
+            loadingSpinner.classList.add('hidden');
+
             if (data.success) {
+                // Show OTP modal
                 document.getElementById('otpModal').classList.remove('hidden');
                 document.getElementById('otpModal').classList.add('flex');
             } else {
@@ -178,7 +187,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('generalError').classList.remove('hidden');
             }
         } catch (error) {
+            // Hide loading spinner
+            loadingSpinner.classList.add('hidden');
+            
             console.error('Error:', error);
+            document.getElementById('generalError').textContent = 'Something went wrong! Please try again.';
+            document.getElementById('generalError').classList.remove('hidden');
         }
     });
 
@@ -197,22 +211,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-
-  // Remove the EJS templating code and replace with URL parameter handling
-  const urlParams = new URLSearchParams(window.location.search);
-  const message = urlParams.get('message');
-  const alertType = urlParams.get('alertType');
-
-  // Show alert if message exists in URL parameters
-  if (message) {
-    Swal.fire({
-      icon: alertType || 'error',
-      title: alertType === 'success' ? 'Success' : 'Error',
-      text: message,
-      timer: 3000,
-      timerProgressBar: true
-    });
-  }
 
     // Add OTP input handling
     const otpInputs = document.querySelectorAll('.otp-input');
@@ -235,8 +233,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const otp = Array.from(otpInputs).map(input => input.value).join('');
         const email = document.getElementById('email').value;
         const otpError = document.getElementById('otpError');
+        const otpLoadingSpinner = document.getElementById('otp-loading-spinner');
 
         try {
+            // Show loading spinner
+            otpLoadingSpinner.classList.remove('hidden');
+            
             const response = await fetch('/validate-otp', {
                 method: 'POST',
                 headers: {
@@ -246,6 +248,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const data = await response.json();
+            
+            // Hide loading spinner
+            otpLoadingSpinner.classList.add('hidden');
+
             if (data.success) {
                 window.location.href = data.redirectUrl;
             } else {
@@ -258,6 +264,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 otpInputs[0].focus();
             }
         } catch (error) {
+            // Hide loading spinner
+            otpLoadingSpinner.classList.add('hidden');
+            
             console.error('Error:', error);
             otpError.textContent = 'Failed to verify OTP';
             otpError.classList.remove('hidden');
@@ -270,10 +279,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const resendButton = this;
         const resendMessage = document.getElementById('resendMessage');
         const otpError = document.getElementById('otpError');
+        const resendTimer = document.getElementById('resendTimer');
+        const loadingSpinner = document.getElementById('loading-spinner');
 
         try {
             // Disable button immediately to prevent multiple clicks
             resendButton.disabled = true;
+            
+            // Show loading spinner
+            loadingSpinner.classList.remove('hidden');
             
             const response = await fetch('/resend-otp', {
                 method: 'POST',
@@ -284,6 +298,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             const data = await response.json();
+
+            // Hide loading spinner
+            loadingSpinner.classList.add('hidden');
 
             // Clear previous error message
             otpError.classList.add('hidden');
@@ -296,14 +313,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 // Start countdown timer
                 let timeLeft = 60;
+                resendTimer.classList.remove('hidden');
                 const countdownInterval = setInterval(() => {
-                    resendButton.textContent = `Resend OTP (${timeLeft}s)`;
+                    resendTimer.textContent = `Resend available in ${timeLeft}s`;
                     timeLeft--;
 
                     if (timeLeft < 0) {
                         clearInterval(countdownInterval);
                         resendButton.disabled = false;
-                        resendButton.textContent = 'Resend OTP';
+                        resendTimer.classList.add('hidden');
                         resendMessage.classList.add('hidden');
                     }
                 }, 1000);
@@ -313,6 +331,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
         } catch (error) {
+            // Hide loading spinner
+            loadingSpinner.classList.add('hidden');
+            
             console.error('Error:', error);
             resendMessage.textContent = 'Failed to resend OTP';
             resendMessage.classList.remove('hidden');

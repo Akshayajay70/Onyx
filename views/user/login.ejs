@@ -17,7 +17,25 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
   </head>
 
   <body class="bg-gray-300">
@@ -44,6 +62,7 @@
               class="w-full p-3 rounded-lg bg-gray-300 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
+            <p id="emailError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
 
           <!-- Password Input -->
@@ -59,11 +78,12 @@
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
             </button>
+            <p id="passwordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
           
           <!-- Sign up and Forgot Password Links -->
           <div class="flex justify-between text-sm text-gray-500">
-            <a href="/signup" class="hover:underline"> Signup</a>
+            <a href="/signup" class="hover:underline">Signup</a>
             <a href="/forgot-password" class="hover:underline">Forgot Password?</a>
           </div>
           <!-- Submit Button -->
@@ -79,6 +99,13 @@
         <a class="flex justify-center mt-6" href="/auth/google?trigger=login">
           <i class="fa-brands fa-google fa-lg" style="color: #b12020"></i>
         </a>
+
+        <div id="loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+                <div class="loader mb-3"></div>
+                <p class="text-gray-700">Logging in...</p>
+            </div>
+        </div>
       </div>
     </div>
 
@@ -89,6 +116,33 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const passwordToggle = document.querySelector('.fa-eye');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+
+        // Helper function to show error
+        const showError = (element, message) => {
+            element.textContent = message;
+            element.classList.remove('hidden');
+            // Add red border to input
+            element.previousElementSibling.classList.add('border-red-500');
+        };
+
+        // Helper function to hide error
+        const hideError = (element) => {
+            element.classList.add('hidden');
+            // Remove red border from input
+            element.previousElementSibling.classList.remove('border-red-500');
+        };
+
+        // Clear errors when typing
+        document.getElementById('email').addEventListener('input', () => {
+            hideError(emailError);
+        });
+
+        document.getElementById('password').addEventListener('input', () => {
+            hideError(passwordError);
+        });
 
         // Toggle password visibility
         passwordToggle.addEventListener('click', function() {
@@ -105,65 +159,69 @@
         });
 
         // Form validation and submission
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            let hasErrors = false;
+
+            // Clear previous errors
+            hideError(emailError);
+            hideError(passwordError);
 
             // Validation
-            if (!email || !password) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validation Error',
-                    text: 'All fields are required'
-                });
-                return;
+            if (!email) {
+                showError(emailError, 'Email is required');
+                hasErrors = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError(emailError, 'Please enter a valid email address');
+                hasErrors = true;
             }
 
-            // Email validation
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Email',
-                    text: 'Please enter a valid email address'
-                });
-                return;
+            if (!password) {
+                showError(passwordError, 'Password is required');
+                hasErrors = true;
             }
 
-            // If validation passes, submit the form
-            this.submit();
+            if (hasErrors) return;
+
+            // Show loading spinner
+            loadingSpinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                // Hide loading spinner
+                loadingSpinner.classList.add('hidden');
+
+                if (data.success) {
+                    window.location.href = data.redirectUrl || '/home';
+                } else {
+                    // Show error message in appropriate field
+                    if (data.message.toLowerCase().includes('email')) {
+                        showError(emailError, data.message);
+                    } else if (data.message.toLowerCase().includes('password')) {
+                        showError(passwordError, data.message);
+                    } else {
+                        // If message doesn't specifically mention email or password
+                        showError(emailError, data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                loadingSpinner.classList.add('hidden');
+                showError(emailError, 'Something went wrong. Please try again.');
+            }
         });
-
-        // Show alert messages if they exist
-        <% if (locals.message && locals.alertType) { %>
-            Swal.fire({
-                icon: '<%= alertType === "error" ? "error" : "success" %>',
-                title: '<%= alertType === "error" ? "Error" : "Success" %>',
-                text: '<%= message %>',
-                timer: 5000,
-                timerProgressBar: true
-            });
-        <% } %>
-
-        // Get URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const message = urlParams.get('message');
-        const alertType = urlParams.get('alertType');
-
-        // Show alert if message exists in URL parameters
-        if (message) {
-            Swal.fire({
-                icon: alertType || 'error',
-                title: alertType === 'success' ? 'Success' : 'Error',
-                text: message,
-                timer: 5000,
-                timerProgressBar: true
-            });
-            
-            // Clean up URL after showing the alert
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
     });
     </script>
   </body>

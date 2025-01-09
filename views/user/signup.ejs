@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="tailwindcss/output.css" />
     <title>User Signup</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -14,6 +12,30 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+
+    <style>
+      .loader {
+        border: 4px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 4px solid #3498db;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
   </head>
 
   <body class="bg-gray-300">
@@ -49,7 +71,10 @@
               minlength="3"
               maxlength="50"
             />
-            <p id="firstNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+            <p
+              id="firstNameError"
+              class="text-[#9B1C1C] text-xs mt-1 hidden"
+            ></p>
           </div>
 
           <!-- Last Name Input -->
@@ -63,7 +88,10 @@
               minlength="1"
               maxlength="50"
             />
-            <p id="lastNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+            <p
+              id="lastNameError"
+              class="text-[#9B1C1C] text-xs mt-1 hidden"
+            ></p>
           </div>
 
           <!-- Email Input -->
@@ -92,7 +120,10 @@
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
             </button>
-            <p id="passwordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+            <p
+              id="passwordError"
+              class="text-[#9B1C1C] text-xs mt-1 hidden"
+            ></p>
           </div>
 
           <!-- Confirm Password Input -->
@@ -109,7 +140,10 @@
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
             </button>
-            <p id="confirmPasswordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+            <p
+              id="confirmPasswordError"
+              class="text-[#9B1C1C] text-xs mt-1 hidden"
+            ></p>
           </div>
           <!-- Login Links -->
           <div class="flex justify-between text-sm text-gray-500">
@@ -125,7 +159,10 @@
         </form>
 
         <!-- General Error Message -->
-        <p id="generalError" class="text-[#9B1C1C] text-xs mt-2 text-center"></p>
+        <p
+          id="generalError"
+          class="text-[#9B1C1C] text-xs mt-2 text-center"
+        ></p>
 
         <!-- Google Sign in -->
         <div id="google-auth-div">
@@ -140,6 +177,17 @@
           >
             <i class="fa-brands fa-google fa-lg" style="color: #b12020"></i>
           </a>
+        </div>
+
+        <!-- Add this right after your form -->
+        <div
+          id="loading-spinner"
+          class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+            <div class="loader mb-3"></div>
+            <p class="text-gray-700">Sending OTP...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -202,7 +250,16 @@
           <button id="resendOtp" class="text-blue-600 hover:underline">
             Resend OTP
           </button>
+          <div id="resendTimer" class="text-sm text-gray-600 mt-1 hidden"></div>
           <p id="resendMessage" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+        </div>
+
+        <!-- OTP Verification Loading Spinner -->
+        <div id="otp-loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+            <div class="loader mb-3"></div>
+            <p class="text-gray-700">Verifying OTP...</p>
+          </div>
         </div>
       </div>
     </div>
