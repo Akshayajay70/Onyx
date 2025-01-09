@@ -1,99 +1,76 @@
-<footer class="mybg-green text-slate-300 py-8">
-  <div class="container mx-auto px-6">
-    <!-- Logo Section -->
-    <div class="text-center mb-8">
-      <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-16 mx-auto" />
+<footer class="mybg-green relative overflow-hidden">
+  <!-- Decorative Dots (Optional) -->
+  <div class="absolute top-0 right-0 w-24 h-24 opacity-10">
+    <div class="grid grid-cols-3 gap-2">
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+      <div class="w-2 h-2 bg-white rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8 sm:py-12">
+    <!-- Top Section -->
+    <div class="flex flex-col items-center mb-12">
+      <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-12 sm:h-16 mb-6" />
+      <div class="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm text-slate-400">
+        <a href="/home" class="hover:text-white transition-colors">Home</a>
+        <span class="hidden sm:block text-slate-600">•</span>
+        <a href="/shop" class="hover:text-white transition-colors">Shop</a>
+        <span class="hidden sm:block text-slate-600">•</span>
+        <a href="#" class="hover:text-white transition-colors">About</a>
+        <span class="hidden sm:block text-slate-600">•</span>
+        <a href="#" class="hover:text-white transition-colors">Contact</a>
+      </div>
     </div>
 
-    <!-- Navigation Sections -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-      <!-- Shop Section -->
-      <div>
-        <h2 class="font-semibold text-white mb-3">SHOP</h2>
-        <ul>
-          <li><a href="#" class="hover:text-slate-100 block">Men</a></li>
-          <li><a href="#" class="hover:text-slate-100 block">Women</a></li>
-        </ul>
+    <!-- Middle Section - Contact & Social (Visible on all screens) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto mb-12">
+      <!-- Contact Info -->
+      <div class="flex flex-col items-center sm:items-end space-y-3">
+        <a href="mailto:onyxwatches1@gmail.com" 
+           class="flex items-center text-slate-400 hover:text-white transition-colors group">
+          <span class="text-sm">onyxwatches1@gmail.com</span>
+          <i class="far fa-envelope ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+        </a>
+        <a href="tel:+918888888888" 
+           class="flex items-center text-slate-400 hover:text-white transition-colors group">
+          <span class="text-sm">+91 8888888888</span>
+          <i class="fas fa-phone ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+        </a>
       </div>
 
-      <!-- Support Section -->
-      <div>
-        <h2 class="font-semibold text-white mb-3">SUPPORT</h2>
-        <ul>
-          <li>
-            <a href="#" class="hover:text-slate-100 block">Order Status</a>
-          </li>
-          <li>
-            <a href="#" class="hover:text-slate-100 block">Product Support</a>
-          </li>
-          <li>
-            <a href="#" class="hover:text-slate-100 block"
-              >Shipping & Return Policy</a
-            >
-          </li>
-          <li>
-            <a href="#" class="hover:text-slate-100 block"
-              >Complaint Registration</a
-            >
-          </li>
-        </ul>
+      <!-- Social Links -->
+      <div class="flex justify-center sm:justify-start gap-6">
+        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+          <i class="fab fa-instagram text-2xl hover:scale-110 transition-transform"></i>
+        </a>
+        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+          <i class="fab fa-facebook text-2xl hover:scale-110 transition-transform"></i>
+        </a>
+        <a href="#" class="text-slate-400 hover:text-white transition-colors">
+          <i class="fab fa-twitter text-2xl hover:scale-110 transition-transform"></i>
+        </a>
       </div>
+    </div>
 
-      <!-- About Us Section -->
-      <div>
-        <h2 class="font-semibold text-white mb-3">ABOUT US</h2>
-        <ul>
-          <li><a href="#" class="hover:text-slate-100 block">Contact Us</a></li>
-          <li>
-            <a href="#" class="hover:text-slate-100 block">Privacy Policy</a>
-          </li>
-          <li>
-            <a href="#" class="hover:text-slate-100 block">Terms of Use</a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Contact Section -->
-      <div>
-        <h2 class="font-semibold text-white mb-3">CONTACT</h2>
-        <ul>
-          <li>
-            <a
-              href="mailto:onyxwatches@gmail.com"
-              class="hover:text-slate-100 block"
-              >Email: onyxwatches1@gmail.com</a
-            >
-          </li>
-          <li>
-            <a href="tel:+918888888888" class="hover:text-slate-100 block"
-              >Phone: +91 8888888888</a
-            >
-          </li>
-        </ul>
-      </div>
-
-      <!-- Social Media Section -->
-      <div>
-        <h2 class="font-semibold text-white mb-3">CONNECT WITH US</h2>
-        <div class="flex justify-start space-x-4">
-          <a href="#" class="hover:text-slate-100"
-            ><i class="fab fa-instagram"></i
-          ></a>
-          <a href="#" class="hover:text-slate-100"
-            ><i class="fab fa-facebook"></i
-          ></a>
-          <a href="#" class="hover:text-slate-100"
-            ><i class="fab fa-twitter"></i
-          ></a>
+    <!-- Bottom Section -->
+    <div class="border-t border-slate-700/30 pt-6">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-slate-400 text-xs order-2 sm:order-1">
+          &copy; 2024 Onyx. All rights reserved.
+        </p>
+        <div class="flex gap-6 order-1 sm:order-2">
+          <a href="#" class="text-slate-400 hover:text-white text-xs transition-colors">Privacy Policy</a>
+          <a href="#" class="text-slate-400 hover:text-white text-xs transition-colors">Terms of Service</a>
         </div>
       </div>
-    </div>
-
-    <!-- Copyright Section -->
-    <div class="mt-8 border-t border-slate-600 pt-6 text-center">
-      <p class="text-sm text-slate-500">
-        &copy; 2024 Onyx. All Rights Reserved.
-      </p>
     </div>
   </div>
 </footer>
