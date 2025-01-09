@@ -5,180 +5,340 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Onyx - Personal Information</title>
     <link rel="stylesheet" href="tailwindcss/output.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
-  <body class="bg-gray-100">
+  <body class="bg-gray-50">
     <!-- nav -->
     <%- include("../partials/nav") %>
-    <div class="h-10"></div>
+    
     <!-- Main Content -->
-    <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
-      <!-- Sidebar -->
-      <%- include("../partials/profileSidebar") %>
-      <!-- Personal Information Form -->
-      <section class="w-full md:w-3/4 bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-6 text-gray-800">
-          Personal Information
-        </h2>
-        <form id="profileForm" class="space-y-6">
-          <div class="flex flex-col space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 mb-2"
-                for="firstName"
-              >
-                First Name
-              </label>
-              <input
-                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
-                id="firstName"
-                type="text"
-                placeholder="Enter your first name"
-                name="firstName"
-                value="<%= user.firstName %>"
-              />
+    <main class="min-h-screen py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="md:hidden mb-8">
+          <h1 class="text-2xl font-bold text-gray-900">Personal Information</h1>
+          <p class="mt-1 text-sm text-gray-500">Update your personal details</p>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8">
+          <!-- Sidebar -->
+          <%- include("../partials/profileSidebar") %>
+
+          <!-- Personal Information Form -->
+          <section class="flex-1 bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+            <div class="hidden md:block mb-8">
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Personal Information
+              </h1>
+              <p class="mt-2 text-gray-600">Manage and update your profile details</p>
             </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 mb-2"
-                for="lastName"
-              >
-                Last Name
-              </label>
-              <input
-                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-black focus:border-transparent transition"
-                id="lastName"
-                type="text"
-                placeholder="Enter your last name"
-                name="lastName"
-                value="<%= user.lastName %>"
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-gray-700 mb-2"
-                for="email"
-              >
-                Email Address
-              </label>
-              <input
-                class="w-full border border-gray-300 rounded-lg p-3 bg-gray-100 cursor-not-allowed"
-                id="email"
-                type="email"
-                name="email"
-                value="<%= user.email %>"
-                readonly
-                disabled
-              />
-            </div>
-          </div>
-          <div class="flex justify-center mt-6">
-            <button
-              class="bg-black text-white rounded-lg py-3 px-6 hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              type="submit"
-            >
-              Update Profile
-            </button>
-          </div>
-        </form>
-      </section>
+
+            <form id="profileForm" class="space-y-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- First Name -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-700" for="firstName">
+                    First Name
+                  </label>
+                  <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <i class="fas fa-user text-gray-400 group-hover:text-gray-500 transition-colors"></i>
+                    </div>
+                    <input
+                      class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+                      id="firstName"
+                      type="text"
+                      placeholder="Enter your first name"
+                      name="firstName"
+                      value="<%= user.firstName %>"
+                    />
+                  </div>
+                </div>
+
+                <!-- Last Name -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-700" for="lastName">
+                    Last Name
+                  </label>
+                  <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <i class="fas fa-user text-gray-400 group-hover:text-gray-500 transition-colors"></i>
+                    </div>
+                    <input
+                      class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+                      id="lastName"
+                      type="text"
+                      placeholder="Enter your last name"
+                      name="lastName"
+                      value="<%= user.lastName %>"
+                    />
+                  </div>
+                </div>
+
+                <!-- Email Address -->
+                <div class="space-y-2 md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700" for="email">
+                    Email Address
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    <input
+                      class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed"
+                      id="email"
+                      type="email"
+                      name="email"
+                      value="<%= user.email %>"
+                      readonly
+                      disabled
+                    />
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2 flex items-center gap-2">
+                    <i class="fas fa-info-circle"></i>
+                    Email address cannot be changed
+                  </p>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="flex justify-end pt-4">
+                <button
+                  class="px-8 py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-700 focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                  type="submit"
+                >
+                  <span>Update Profile</span>
+                  <i class="fas fa-arrow-right text-sm"></i>
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </div>
     </main>
+
     <!-- Footer -->
     <%- include("../partials/footer") %>
 
-    <script>
-      document
-        .getElementById("profileForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
+    <!-- Modal Backdrop -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 opacity-0"></div>
 
+    <!-- Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-90 opacity-0 translate-y-4">
+        <!-- Success Template -->
+        <div id="successAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+            <i class="fas fa-check text-2xl text-green-600"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Success!</h3>
+          <p class="text-gray-600 text-center mb-6">Profile updated successfully</p>
+          <button onclick="hideAlert()" class="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+            Continue
+          </button>
+        </div>
+
+        <!-- Error Template -->
+        <div id="errorAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+            <i class="fas fa-exclamation text-2xl text-red-600"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Error</h3>
+          <p id="errorMessage" class="text-gray-600 text-center mb-6">Something went wrong</p>
+          <button onclick="hideAlert()" class="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+            Try Again
+          </button>
+        </div>
+
+        <!-- Loading Template -->
+        <div id="loadingAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 mb-6">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-black"></div>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Updating Profile</h3>
+          <p class="text-gray-600 text-center">Please wait...</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Keep track of original values
+      const originalValues = {
+        firstName: document.getElementById("firstName").value,
+        lastName: document.getElementById("lastName").value
+      };
+
+      function showAlert(type, message = '') {
+        const modal = document.getElementById('alertModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const modalContent = modal.querySelector('div > div');
+        
+        // Hide all alert types
+        document.getElementById('successAlert').classList.add('hidden');
+        document.getElementById('errorAlert').classList.add('hidden');
+        document.getElementById('loadingAlert').classList.add('hidden');
+        
+        // Show selected alert type
+        const alertElement = document.getElementById(`${type}Alert`);
+        alertElement.classList.remove('hidden');
+        
+        if (message && type === 'error') {
+          document.getElementById('errorMessage').textContent = message;
+        }
+        
+        // Show modal with animation
+        modal.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => {
+          backdrop.classList.remove('opacity-0');
+          modalContent.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
+        }, 50);
+      }
+
+      function hideAlert() {
+        const modal = document.getElementById('alertModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const modalContent = modal.querySelector('div > div');
+        
+        // Hide with animation
+        backdrop.classList.add('opacity-0');
+        modalContent.classList.add('scale-90', 'opacity-0', 'translate-y-4');
+        
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          backdrop.classList.add('hidden');
+        }, 300);
+      }
+
+      function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+      }
+
+      function validateName(name, isFirstName = true) {
+        const nameRegex = /^[A-Za-z]+$/;
+        const minLength = isFirstName ? 3 : 1;
+        const fieldName = isFirstName ? 'First name' : 'Last name';
+        
+        if (!name || name.trim().length === 0) {
+          return `${fieldName} is required`;
+        }
+        if (name.trim().length < minLength || name.trim().length > 10) {
+          return `${fieldName} must be between ${minLength} and 10 characters`;
+        }
+        if (!nameRegex.test(name.trim())) {
+          return `${fieldName} can only contain letters`;
+        }
+        return null;
+      }
+
+      function hasChanges(firstName, lastName) {
+        const capitalizedFirstName = capitalizeFirstLetter(firstName.trim());
+        const capitalizedLastName = capitalizeFirstLetter(lastName.trim());
+        
+        return capitalizedFirstName !== originalValues.firstName || 
+               capitalizedLastName !== originalValues.lastName;
+      }
+
+      document.getElementById("profileForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
+        const email = document.getElementById("email").value;
+
+        // Check if there are any changes
+        if (!hasChanges(firstName, lastName)) {
+          showAlert('error', 'No changes detected');
+          return;
+        }
+
+        // Frontend validation
+        const firstNameError = validateName(firstName, true);
+        const lastNameError = validateName(lastName, false);
+
+        if (firstNameError || lastNameError) {
+          showAlert('error', firstNameError || lastNameError);
+          return;
+        }
+
+        try {
+          showAlert('loading');
+
+          // Capitalize first letters before sending
+          const capitalizedFirstName = capitalizeFirstLetter(firstName.trim());
+          const capitalizedLastName = capitalizeFirstLetter(lastName.trim());
+
+          const response = await fetch('/profile/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              firstName: capitalizedFirstName,
+              lastName: capitalizedLastName,
+              email
+            }),
+          });
+
+          if (response.ok) {
+            hideAlert();
+            setTimeout(() => {
+              showAlert('success');
+              // Update input values and original values
+              document.getElementById("firstName").value = capitalizedFirstName;
+              document.getElementById("lastName").value = capitalizedLastName;
+              originalValues.firstName = capitalizedFirstName;
+              originalValues.lastName = capitalizedLastName;
+            }, 300);
+          } else {
+            const data = await response.json();
+            hideAlert();
+            setTimeout(() => {
+              showAlert('error', data.message || 'Error updating profile');
+            }, 300);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          hideAlert();
+          setTimeout(() => {
+            showAlert('error', 'An error occurred while updating your profile');
+          }, 300);
+        }
+      });
+
+      // Optional: Real-time validation and update button state
+      const inputs = ['firstName', 'lastName'];
+      const submitButton = document.querySelector('button[type="submit"]');
+      
+      inputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        input.addEventListener('input', function() {
+          const isFirstName = inputId === 'firstName';
+          const error = validateName(this.value, isFirstName);
+          
+          // Update input styles based on validation
+          if (error) {
+            this.classList.add('border-red-300', 'focus:ring-red-500');
+            this.classList.remove('border-gray-200', 'focus:ring-black');
+          } else {
+            this.classList.remove('border-red-300', 'focus:ring-red-500');
+            this.classList.add('border-gray-200', 'focus:ring-black');
+          }
+
+          // Update button state based on changes
           const firstName = document.getElementById("firstName").value;
           const lastName = document.getElementById("lastName").value;
-          const email = document.getElementById("email").value;
-
-          // Check for empty spaces
-          if (!firstName.trim()) {
-            Swal.fire({
-              icon: "error",
-              title: "Invalid First Name",
-              text: "First name cannot be just spaces",
-            });
-            return;
+          
+          if (hasChanges(firstName, lastName)) {
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitButton.removeAttribute('disabled');
+          } else {
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            submitButton.setAttribute('disabled', 'disabled');
           }
-
-          if (!lastName.trim()) {
-            Swal.fire({
-              icon: "error",
-              title: "Invalid Last Name",
-              text: "Last name cannot be just spaces",
-            });
-            return;
-          }
-
-          // Validate fields (excluding email since it's read-only)
-          if (!firstName || !lastName) {
-            Swal.fire({
-              icon: "error",
-              title: "Required Fields",
-              text: "Please fill in all the required fields",
-            });
-            return;
-          }
-
-          try {
-            // Show loading state
-            Swal.fire({
-              title: 'Updating Profile...',
-              allowOutsideClick: false,
-              didOpen: () => {
-                Swal.showLoading();
-              }
-            });
-
-            const response = await fetch('/profile/update', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                email
-              }),
-            });
-
-            if (response.ok) {
-              await Swal.fire({
-                icon: "success",
-                title: "Success!",
-                text: "Profile updated successfully",
-                timer: 1500,
-              });
-              window.location.reload();
-            } else {
-              const data = await response.json();
-              Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: data.message || "Error updating profile",
-              });
-            }
-          } catch (error) {
-            console.error("Error:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Error",
-              text: "An error occurred while updating your profile",
-            });
-          }
-         });
+        });
+      });
     </script>
   </body>
 </html>

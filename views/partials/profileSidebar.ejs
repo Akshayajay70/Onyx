@@ -1,76 +1,281 @@
-<aside class="w-full md:w-1/4 bg-white p-6 rounded-lg shadow-md">
-    <h2 class="text-xl font-bold mb-6 text-gray-800">My Account</h2>
-    <ul class="space-y-4">
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          href="/profile"
-        >
-          <i class="fas fa-user text-gray-600 group-hover:text-black"></i>
-          <span class="text-gray-600 group-hover:text-black"
-            >Personal Information</span
-          >
-        </a>
-      </li>
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          href="/address"
-        >
-          <i
-            class="fas fa-map-marker-alt text-gray-600 group-hover:text-black"
-          ></i>
-          <span class="text-gray-600 group-hover:text-black">Address</span>
-        </a>
-      </li>
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          href="/orders"
-        >
-          <i class="fas fa-box text-gray-600 group-hover:text-black"></i>
-          <span class="text-gray-600 group-hover:text-black">Orders</span>
-        </a>
-      </li>
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          href="/wallet"
-        >
-          <i class="fas fa-wallet text-gray-600 group-hover:text-black"></i>
-          <span class="text-gray-600 group-hover:text-black">Wallet</span>
-        </a>
-      </li>
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          href="/coupons"
-        >
-          <i
-            class="fas fa-ticket-alt text-gray-600 group-hover:text-black"
-          ></i>
-          <span class="text-gray-600 group-hover:text-black">Coupons</span>
-        </a>
-      </li>
-      <% if (!user.googleId) { %>
-        <li class="group">
-          <a
-            class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            href="/change-password"
-          >
-            <i class="fas fa-key text-gray-600 group-hover:text-black"></i>
-            <span class="text-gray-600 group-hover:text-black">Change Password</span>
-          </a>
-        </li>
-      <% } %>
-      <li class="group">
-        <a
-          class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors text-red-600 hover:text-red-700"
-          href="/logout"
-        >
-          <i class="fas fa-power-off"></i>
-          <span>Logout</span>
-        </a>
-      </li>
-    </ul>
-  </aside>
+<!-- Mobile Menu Button -->
+<div class="md:hidden w-full px-4 mb-4">
+  <button 
+    onclick="toggleSidebar()"
+    class="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all duration-300"
+  >
+    <div class="flex items-center gap-3">
+      <i class="fas fa-user-circle text-xl"></i>
+      <span class="font-medium">My Account</span>
+    </div>
+    <i class="fas fa-chevron-down text-sm transition-transform duration-300" id="menuArrow"></i>
+  </button>
+</div>
+
+<!-- Mobile Menu (visible only on mobile) -->
+<div id="profileSidebar" class="md:hidden hidden">
+  <div class="px-4 space-y-2">
+    <!-- Personal Info -->
+    <a href="/profile" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-user text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Personal Information</span>
+            <span class="text-sm text-gray-500">Manage your details</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Address -->
+    <a href="/address" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-map-marker-alt text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Address</span>
+            <span class="text-sm text-gray-500">Shipping addresses</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Orders -->
+    <a href="/orders" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-box text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Orders</span>
+            <span class="text-sm text-gray-500">Order history</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Wallet -->
+    <a href="/wallet" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-wallet text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Wallet</span>
+            <span class="text-sm text-gray-500">Balance & transactions</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Coupons -->
+    <a href="/coupons" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-ticket-alt text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Coupons</span>
+            <span class="text-sm text-gray-500">Available offers</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <% if (!user.googleId) { %>
+    <!-- Change Password -->
+    <a href="/change-password" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-key text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Change Password</span>
+            <span class="text-sm text-gray-500">Update your password</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+    <% } %>
+
+    <!-- Logout -->
+    <a href="/logout" class="block bg-gradient-to-r from-red-50 to-red-100 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center group-hover:from-red-200 group-hover:to-red-300 transition-all duration-300">
+            <i class="fas fa-power-off text-red-600"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-red-600">Logout</span>
+            <span class="text-sm text-red-400">Sign out of your account</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-red-400 group-hover:text-red-600 transition-colors"></i>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Desktop Sidebar -->
+<aside class="hidden md:block w-1/4 p-6">
+  <h2 class="text-xl font-bold mb-6 text-gray-800">My Account</h2>
+  
+  <div class="space-y-3">
+    <!-- Personal Info -->
+    <a href="/profile" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-user text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Personal Information</span>
+            <span class="text-sm text-gray-500">Manage your details</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Address -->
+    <a href="/address" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-map-marker-alt text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Address</span>
+            <span class="text-sm text-gray-500">Shipping addresses</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Orders -->
+    <a href="/orders" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-box text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Orders</span>
+            <span class="text-sm text-gray-500">Order history</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Wallet -->
+    <a href="/wallet" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-wallet text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Wallet</span>
+            <span class="text-sm text-gray-500">Balance & transactions</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <!-- Coupons -->
+    <a href="/coupons" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-ticket-alt text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Coupons</span>
+            <span class="text-sm text-gray-500">Available offers</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+
+    <% if (!user.googleId) { %>
+    <!-- Change Password -->
+    <a href="/change-password" class="block bg-gradient-to-r from-white to-gray-50 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+            <i class="fas fa-key text-gray-600 group-hover:text-gray-800"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-900">Change Password</span>
+            <span class="text-sm text-gray-500">Update your password</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 transition-colors"></i>
+      </div>
+    </a>
+    <% } %>
+
+    <!-- Logout -->
+    <a href="/logout" class="block bg-gradient-to-r from-red-50 to-red-100 shadow-sm rounded-lg overflow-hidden group hover:shadow-md transition-all duration-300">
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center group-hover:from-red-200 group-hover:to-red-300 transition-all duration-300">
+            <i class="fas fa-power-off text-red-600"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-red-600">Logout</span>
+            <span class="text-sm text-red-400">Sign out of your account</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-red-400 group-hover:text-red-600 transition-colors"></i>
+      </div>
+    </a>
+  </div>
+</aside>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('profileSidebar');
+    const arrow = document.getElementById('menuArrow');
+    
+    if (sidebar.classList.contains('hidden')) {
+      sidebar.classList.remove('hidden');
+      sidebar.classList.add('block');
+      arrow.classList.add('rotate-180');
+    } else {
+      sidebar.classList.remove('block');
+      sidebar.classList.add('hidden');
+      arrow.classList.remove('rotate-180');
+    }
+  }
+
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    const sidebar = document.getElementById('profileSidebar');
+    const arrow = document.getElementById('menuArrow');
+    
+    if (window.innerWidth >= 768) {
+      sidebar.classList.add('hidden');
+      arrow.classList.remove('rotate-180');
+    }
+  });
+</script>
