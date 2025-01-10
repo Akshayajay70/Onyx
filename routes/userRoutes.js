@@ -3,8 +3,8 @@ import authController from '../controller/user/authController.js';
 import userController from '../controller/userController.js';
 import productController from '../controller/user/viewProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
-import userProfileController from '../controller/userProfileController.js';
-import userAddressController from '../controller/userAddressController.js';
+import profileController from '../controller/user/profileController.js';
+import addressController from '../controller/user/addressController.js';
 import userCartController from '../controller/userCartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
 import userOrderController from '../controller/userOrderController.js';
@@ -52,17 +52,17 @@ route.get('/shop', userMiddlewares.checkSession, userController.getShop);
 
 route.get('/auth/google/callback', authController.getGoogleCallback);
 
-route.get('/profile', userMiddlewares.checkSession, userProfileController.getProfile);
+route.get('/profile', userMiddlewares.checkSession, profileController.getProfile);
 
-route.post('/profile/update', userMiddlewares.checkSession, userProfileController.updateProfile);
+route.post('/profile/update', userMiddlewares.checkSession, profileController.updateProfile);
 
-route.get('/address', userMiddlewares.checkSession, userAddressController.getAddress);
+route.get('/address', userMiddlewares.checkSession, addressController.getAddress);
 
-route.post('/address/add', userMiddlewares.checkSession, userAddressController.addAddress);
+route.post('/address/add', userMiddlewares.checkSession, addressController.addAddress);
 
-route.delete('/address/:id', userMiddlewares.checkSession, userAddressController.deleteAddress);
+route.delete('/address/:id', userMiddlewares.checkSession, addressController.deleteAddress);
 
-route.put('/address/:id', userMiddlewares.checkSession, userAddressController.editAddress);
+route.put('/address/:id', userMiddlewares.checkSession, addressController.editAddress);
 
 route.get('/cart', userMiddlewares.checkSession, userCartController.getCart);
 

@@ -1,4 +1,4 @@
-import userSchema from "../model/userModel.js";
+import userSchema from "../../model/userModel.js";
 
 const getProfile = async (req, res) => {
     try {

@@ -1,5 +1,5 @@
-import addressSchema from '../model/addressModel.js';
-import userSchema from '../model/userModel.js';
+import addressSchema from '../../model/addressModel.js';
+import userSchema from '../../model/userModel.js';
 
 const getAddress = async (req, res) => {
     try {
