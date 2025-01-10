@@ -3,7 +3,7 @@ import orderSchema from '../model/orderModel.js';
 import addressSchema from '../model/addressModel.js';
 import productSchema from '../model/productModel.js';
 import Coupon from '../model/couponModel.js';
-import razorpay from '../config/razorpay.js';
+import razorpay from '../utils/razorpay.js';
 import crypto from 'crypto';
 import Wallet from '../model/walletModel.js';
 

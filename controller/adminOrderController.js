@@ -15,21 +15,22 @@ const adminOrderController = {
 
             // Get paginated orders
             const orders = await orderSchema.find()
-                .populate({
-                    path: 'userId',
-                    select: 'firstName lastName email'
-                })
-                .populate({
-                    path: 'items.product',
-                    select: 'productName imageUrl price'
-                })
+                .populate('userId', 'firstName lastName email')
+                .populate('items.product', 'productName imageUrl price')
                 .lean()
                 .sort({ orderDate: -1 })
                 .skip(skip)
                 .limit(limit);
 
-            // Format order items with additional details
+            // Add a default user object for deleted users
             orders.forEach(order => {
+                if (!order.userId) {
+                    order.userId = {
+                        firstName: 'Deleted',
+                        lastName: 'User',
+                        email: 'N/A'
+                    };
+                }
                 order.items = order.items.map(item => ({
                     ...item,
                     order: {

@@ -3,132 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Coupons - Onyx</title>
+    <title>Onyx - My Coupons</title>
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
     <div class="h-10"></div>
 
     <!-- Main Content -->
-    <main class="container mx-auto flex flex-col md:flex-row py-10 px-6 gap-6">
+    <main class="container mx-auto flex flex-col md:flex-row py-6 md:py-10 px-4 md:px-6 gap-6">
         <!-- Profile Sidebar -->
         <%- include("../partials/profileSidebar") %>
 
         <!-- Coupons Section -->
-        <section class="w-full md:w-3/4">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-6 text-gray-800">Available Coupons</h2>
+        <section class="w-full md:w-3/4 bg-white p-4 md:p-6 rounded-lg shadow-md">
+            <!-- Mobile Header -->
+            <div class="md:hidden mb-8">
+                <h1 class="text-2xl font-bold text-gray-900">My Coupons</h1>
+                <p class="mt-1 text-sm text-gray-500">View and manage your coupons</p>
+            </div>
 
-                <% if (coupons && coupons.length > 0) { %>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <% coupons.forEach(coupon => { %>
-                            <div class="border rounded-lg overflow-hidden bg-gradient-to-r from-gray-50 to-white">
-                                <!-- Coupon Header -->
-                                <div class="p-4 border-b bg-gray-50">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="text-lg font-bold text-gray-800"><%= coupon.code %></h3>
-                                            <p class="text-sm text-gray-600"><%= coupon.description %></p>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="text-2xl font-bold text-green-600">
-                                                <%= coupon.discountPercentage %>%
-                                            </span>
-                                            <p class="text-sm text-gray-500">OFF</p>
-                                        </div>
+            <!-- Desktop Header -->
+            <div class="hidden md:block mb-8">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    My Coupons
+                </h1>
+                <p class="mt-2 text-gray-600">Browse available coupons and discounts</p>
+            </div>
+
+            <% if (coupons && coupons.length > 0) { %>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <% coupons.forEach(coupon => { %>
+                        <div class="group border rounded-xl overflow-hidden bg-gradient-to-r from-gray-50 to-white hover:shadow-lg transition-all duration-300">
+                            <!-- Coupon Header -->
+                            <div class="p-4 md:p-5 border-b bg-gray-50 group-hover:bg-white transition-colors">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900"><%= coupon.code %></h3>
+                                        <p class="mt-1 text-sm text-gray-600"><%= coupon.description %></p>
                                     </div>
-                                </div>
-
-                                <!-- Coupon Details -->
-                                <div class="p-4 space-y-3">
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-tag w-5"></i>
-                                        <span>Min. Purchase: ₹<%= coupon.minimumPurchase %></span>
+                                    <div class="text-right">
+                                        <span class="text-2xl font-bold text-green-600">
+                                            <%= coupon.discountPercentage %>%
+                                        </span>
+                                        <p class="text-sm text-gray-500">OFF</p>
                                     </div>
-                                    
-                                    <% if (coupon.maximumDiscount) { %>
-                                        <div class="flex items-center text-sm text-gray-600">
-                                            <i class="fas fa-circle-info w-5"></i>
-                                            <span>Max Discount: ₹<%= coupon.maximumDiscount %></span>
-                                        </div>
-                                    <% } %>
-
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-clock w-5"></i>
-                                        <span>Valid till: <%= new Date(coupon.expiryDate).toLocaleDateString('en-US', {
-                                            day: 'numeric',
-                                            month: 'short',
-                                            year: 'numeric'
-                                        }) %></span>
-                                    </div>
-
-                                    <% if (coupon.totalCoupon) { %>
-                                        <div class="flex items-center text-sm text-gray-600">
-                                            <i class="fas fa-users w-5"></i>
-                                            <span>
-                                                <%= coupon.totalCoupon - coupon.usedCouponCount %> coupons left
-                                            </span>
-                                        </div>
-                                    <% } %>
-
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-repeat w-5"></i>
-                                        <span>Usage Limit: <%= coupon.userUsageLimit %> per user</span>
-                                    </div>
-                                </div>
-
-                                <!-- Copy Button -->
-                                <div class="p-4 bg-gray-50 border-t">
-                                    <button 
-                                        onclick="copyCouponCode('<%= coupon.code %>')"
-                                        class="w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <i class="fas fa-copy"></i>
-                                        Copy Code
-                                    </button>
                                 </div>
                             </div>
-                        <% }); %>
+
+                            <!-- Coupon Details -->
+                            <div class="p-4 md:p-5 space-y-3">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-tag w-5"></i>
+                                    <span>Min. Purchase: ₹<%= coupon.minimumPurchase %></span>
+                                </div>
+                                
+                                <% if (coupon.maximumDiscount) { %>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-circle-info w-5"></i>
+                                        <span>Max Discount: ₹<%= coupon.maximumDiscount %></span>
+                                    </div>
+                                <% } %>
+
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock w-5"></i>
+                                    <span>Valid till: <%= new Date(coupon.expiryDate).toLocaleDateString('en-US', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    }) %></span>
+                                </div>
+
+                                <% if (coupon.totalCoupon) { %>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-users w-5"></i>
+                                        <span><%= coupon.totalCoupon - coupon.usedCouponCount %> coupons left</span>
+                                    </div>
+                                <% } %>
+
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-repeat w-5"></i>
+                                    <span>Usage Limit: <%= coupon.userUsageLimit %> per user</span>
+                                </div>
+                            </div>
+
+                            <!-- Copy Button -->
+                            <div class="p-4 md:p-5 bg-gray-50 border-t group-hover:bg-white transition-colors">
+                                <button 
+                                    onclick="copyCouponCode('<%= coupon.code %>')"
+                                    class="w-full bg-black text-white py-2.5 px-4 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <i class="fas fa-copy"></i>
+                                    <span>Copy Code</span>
+                                </button>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-12 bg-gray-50 rounded-xl">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-ticket text-4xl"></i>
                     </div>
-                <% } else { %>
-                    <div class="text-center py-8">
-                        <p class="text-gray-500">No coupons available at the moment</p>
-                    </div>
-                <% } %>
-            </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No coupons available</h3>
+                    <p class="text-gray-600">Check back later for new offers</p>
+                </div>
+            <% } %>
         </section>
     </main>
 
     <%- include("../partials/footer") %>
 
+    <div id="toastContainer" class="fixed top-4 right-4 z-50"></div>
+
     <script>
-        function copyCouponCode(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Coupon Code Copied!',
-                    text: `Use code ${code} at checkout`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            }).catch(() => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Failed to copy code',
-                    text: 'Please try again',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-            });
+        async function copyCouponCode(code) {
+            try {
+                // Try using the modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(code);
+                    showToast('success', `Coupon code ${code} copied to clipboard`);
+                    return;
+                }
+
+                // Fallback for mobile devices
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                textArea.style.position = 'fixed';  // Avoid scrolling to bottom
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    document.execCommand('copy');
+                    textArea.remove();
+                    showToast('success', `Coupon code ${code} copied to clipboard`);
+                } catch (err) {
+                    textArea.remove();
+                    // If all else fails, show the code in a toast for manual copying
+                    showToast('info', `Your code is: ${code}`);
+                }
+            } catch (err) {
+                console.error('Copy failed:', err);
+                // Show code in toast for manual copying
+                showToast('info', `Your code is: ${code}`);
+            }
         }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer');
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `
+                flex items-center gap-3 p-4 mb-3 min-w-[300px] max-w-[90vw]
+                rounded-xl shadow-lg transform translate-x-full transition-all duration-300
+                ${type === 'success' ? 'bg-green-50 border border-green-100' : 
+                  type === 'info' ? 'bg-blue-50 border border-blue-100' :
+                  'bg-red-50 border border-red-100'}
+            `;
+
+            // Icon
+            const icon = document.createElement('div');
+            icon.className = `
+                rounded-full p-2 shrink-0
+                ${type === 'success' ? 'bg-green-100 text-green-600' : 
+                  type === 'info' ? 'bg-blue-100 text-blue-600' :
+                  'bg-red-100 text-red-600'}
+            `;
+            icon.innerHTML = `
+                <i class="fas ${
+                    type === 'success' ? 'fa-check' : 
+                    type === 'info' ? 'fa-info' :
+                    'fa-xmark'
+                } text-sm"></i>
+            `;
+
+            // Content
+            const content = document.createElement('div');
+            content.className = 'flex-1 break-words';
+            content.innerHTML = `
+                <h4 class="font-medium ${
+                    type === 'success' ? 'text-green-800' : 
+                    type === 'info' ? 'text-blue-800' :
+                    'text-red-800'
+                }">
+                    ${type === 'success' ? 'Success' : 
+                      type === 'info' ? 'Coupon Code' :
+                      'Error'}
+                </h4>
+                <p class="text-sm ${
+                    type === 'success' ? 'text-green-600' : 
+                    type === 'info' ? 'text-blue-600' :
+                    'text-red-600'
+                }">${message}</p>
+            `;
+
+            // Close button
+            const closeBtn = document.createElement('button');
+            closeBtn.className = `
+                p-2 rounded-lg hover:bg-black/5 transition-colors shrink-0
+                ${type === 'success' ? 'text-green-600' : 
+                  type === 'info' ? 'text-blue-600' :
+                  'text-red-600'}
+            `;
+            closeBtn.innerHTML = '<i class="fas fa-xmark"></i>';
+            closeBtn.onclick = () => removeToast(toast);
+
+            // Assemble toast
+            toast.appendChild(icon);
+            toast.appendChild(content);
+            toast.appendChild(closeBtn);
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full');
+            });
+
+            // Auto remove after 5 seconds (increased from 3 for better readability)
+            setTimeout(() => {
+                removeToast(toast);
+            }, 5000);
+        }
+
+        function removeToast(toast) {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+
+        // Update the click handler for copy buttons
+        document.querySelectorAll('[onclick^="copyCouponCode"]').forEach(button => {
+            const code = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+            button.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Add loading state
+                const originalContent = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="animate-spin">
+                            <i class="fas fa-circle-notch"></i>
+                        </div>
+                        <span>Copying...</span>
+                    </div>
+                `;
+
+                try {
+                    await copyCouponCode(code);
+                } finally {
+                    // Restore button state
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            };
+        });
     </script>
 </body>
 </html> 
