@@ -147,7 +147,7 @@ const userCheckoutController = {
                 });
             }
 
-            // Prepare initial items
+            // Prepare initial items with basic info
             const initialItems = cart.items.map(item => ({
                 product: item.productId._id,
                 quantity: item.quantity,
@@ -155,10 +155,31 @@ const userCheckoutController = {
             }));
 
             // Calculate proportional discounts
-            const orderItems = calculateProportionalDiscounts(initialItems, couponDiscount);
+            const discountedItems = calculateProportionalDiscounts(initialItems, couponDiscount);
 
-            // Calculate final total amount
-            const totalAmount = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+            const totalAmount = discountedItems.reduce((sum, item) => sum + item.subtotal, 0);
+            // Add order status and return fields to each item
+            const orderItems = discountedItems.map(item => ({
+                ...item,
+                order: {
+                    status: paymentMethod === 'cod' ? 'processing' : 'pending',
+                    statusHistory: [{
+                        status: paymentMethod === 'cod' ? 'processing' : 'pending',
+                        date: new Date(),
+                        comment: paymentMethod === 'cod' ? 
+                            'Order confirmed with Cash on Delivery' : 
+                            'Order placed, awaiting payment'
+                    }]
+                },
+                return: {
+                    isReturnRequested: false,
+                    reason: null,
+                    requestDate: null,
+                    status: null,
+                    adminComment: null,
+                    isReturnAccepted: false
+                }
+            }));
 
             // Get address
             const address = await addressSchema.findOne({
@@ -172,9 +193,6 @@ const userCheckoutController = {
                     message: 'Delivery address not found'
                 });
             }
-
-            // Create order with appropriate initial status
-            const initialStatus = paymentMethod === 'cod' ? 'processing' : 'pending';
             
             const order = await orderSchema.create({
                 userId,
@@ -196,16 +214,6 @@ const userCheckoutController = {
                 payment: {
                     method: paymentMethod,
                     paymentStatus: paymentMethod === 'cod' ? 'processing' : 'completed'
-                },
-                order: {
-                    status: initialStatus,
-                    statusHistory: [{
-                        status: initialStatus,
-                        date: new Date(),
-                        comment: paymentMethod === 'cod' ? 
-                            'Order confirmed with Cash on Delivery' : 
-                            'Order placed, awaiting payment'
-                    }]
                 }
             });
 
@@ -448,17 +456,33 @@ const userCheckoutController = {
                 receipt: `order_${Date.now()}`
             });
 
+            // Prepare initial items with basic info
+            const initialItems = cart.items.map(item => ({
+                product: item.productId._id,
+                quantity: item.quantity,
+                price: item.price
+            }));
+
+            // Calculate proportional discounts and prepare order items
+            const discountedItems = calculateProportionalDiscounts(initialItems, couponDiscount);
+            const orderItems = discountedItems.map(item => ({
+                ...item,
+                order: {
+                    status: 'processing',
+                    statusHistory: [{
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'payment completed successfully'
+                    }]
+                }
+            }));
+
             // Store order details in session
             req.session.pendingOrder = {
                 razorpayOrderId: razorpayOrder.id,
                 orderData: {
                     userId,
-                    items: cart.items.map(item => ({
-                        product: item.productId._id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        subtotal: item.quantity * item.price
-                    })),
+                    items: orderItems,
                     totalAmount: finalAmount,
                     coupon: couponCode ? {
                         code: couponCode,
@@ -520,8 +544,7 @@ const userCheckoutController = {
                 const order = await orderSchema.findOne({ 
                     _id: orderId,
                     userId,
-                    'payment.method': 'razorpay',
-                    'payment.paymentStatus': 'pending'
+                    'payment.method': 'razorpay'
                 });
 
                 if (!order) {
@@ -538,11 +561,15 @@ const userCheckoutController = {
                     razorpayPaymentId: razorpay_payment_id,
                     razorpaySignature: razorpay_signature
                 };
-                order.order.status = 'processing';
-                order.order.statusHistory.push({
-                    status: 'processing',
-                    date: new Date(),
-                    comment: 'Payment completed successfully'
+
+                // Update status for all items
+                order.items.forEach(item => {
+                    item.order.status = 'processing';
+                    item.order.statusHistory.push({
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'Payment completed successfully'
+                    });
                 });
 
                 await order.save();
@@ -585,14 +612,6 @@ const userCheckoutController = {
                         razorpayPaymentId: razorpay_payment_id,
                         razorpaySignature: razorpay_signature
                     }
-                },
-                order: {
-                    status: 'processing',
-                    statusHistory: [{
-                        status: 'processing',
-                        date: new Date(),
-                        comment: 'Order placed and payment completed'
-                    }]
                 }
             });
 
@@ -670,7 +689,28 @@ const userCheckoutController = {
             }));
 
             // Calculate proportional discounts
-            const orderItems = calculateProportionalDiscounts(initialItems, couponDiscount);
+            const discountedItems = calculateProportionalDiscounts(initialItems, couponDiscount);
+
+            // Add order status and return fields to each item
+            const orderItems = discountedItems.map(item => ({
+                ...item,
+                order: {
+                    status: 'processing',
+                    statusHistory: [{
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'Order placed using wallet payment'
+                    }]
+                },
+                return: {
+                    isReturnRequested: false,
+                    reason: null,
+                    requestDate: null,
+                    status: null,
+                    adminComment: null,
+                    isReturnAccepted: false
+                }
+            }));
 
             // Calculate final total amount
             const totalAmount = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
@@ -721,14 +761,6 @@ const userCheckoutController = {
                     walletTransaction: {
                         amount: totalAmount
                     }
-                },
-                order: {
-                    status: 'processing',
-                    statusHistory: [{
-                        status: 'processing',
-                        date: new Date(),
-                        comment: 'Order placed using wallet payment'
-                    }]
                 }
             });
 
@@ -803,16 +835,9 @@ const userCheckoutController = {
                 });
             }
 
-            // Create or update order with failed status
-            const orderData = {
-                ...pendingOrder.orderData,
-                payment: {
-                    method: 'razorpay',
-                    paymentStatus: 'failed',
-                    razorpayTransaction: {
-                        razorpayOrderId: razorpay_order_id
-                    }
-                },
+            // Update order items with pending status
+            const orderItems = pendingOrder.orderData.items.map(item => ({
+                ...item,
                 order: {
                     status: 'pending',
                     statusHistory: [{
@@ -820,6 +845,19 @@ const userCheckoutController = {
                         date: new Date(),
                         comment: 'Payment failed: ' + (error.description || 'Payment was not completed')
                     }]
+                }
+            }));
+
+            // Create or update order with failed status
+            const orderData = {
+                ...pendingOrder.orderData,
+                items: orderItems,
+                payment: {
+                    method: 'razorpay',
+                    paymentStatus: 'failed',
+                    razorpayTransaction: {
+                        razorpayOrderId: razorpay_order_id
+                    }
                 }
             };
 
@@ -844,9 +882,6 @@ const userCheckoutController = {
                     totalAmount: 0
                 });
             }
-
-            // Do NOT update product stock for failed payments
-            // The stock will be updated only when payment is successful
 
             // Clear the pending order from session
             delete req.session.pendingOrder;

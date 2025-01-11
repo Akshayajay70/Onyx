@@ -32,7 +32,54 @@ const orderSchema = new mongoose.Schema({
         subtotal: {
             type: Number,
             required: true
-        }
+        },
+        order:{
+            status: {
+                type: String,
+                enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
+                default: 'pending'
+            },
+            statusHistory: [{
+                status: {
+                    type: String,
+                    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 
+                           'returned', 'refund processing', 'return requested'],
+                    required: true
+                },
+                date: {
+                    type: Date,
+                    default: Date.now
+                },
+                comment: String
+            }]
+        },
+        return: {
+            isReturnRequested: {
+                type: Boolean,
+                default: false
+            },
+            reason: {
+                type: String,
+                default: null
+            },
+            requestDate: {
+                type: Date,
+                default: null
+            },
+            status: {
+                type: String,
+                enum: ['pending', 'approved', 'rejected'],
+                default: null
+            },
+            adminComment: {
+                type: String,
+                default: null
+            },
+            isReturnAccepted: {
+                type: Boolean,
+                default: false
+            }
+        },
     }],
     totalAmount: {
         type: Number,
@@ -79,53 +126,6 @@ const orderSchema = new mongoose.Schema({
             razorpayOrderId: String,
             razorpayPaymentId: String,
             razorpaySignature: String
-        }
-    },
-    order:{
-        status: {
-            type: String,
-            enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refund processing'],
-            default: 'pending'
-        },
-        statusHistory: [{
-            status: {
-                type: String,
-                enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 
-                       'returned', 'refund processing', 'return requested'],
-                required: true
-            },
-            date: {
-                type: Date,
-                default: Date.now
-            },
-            comment: String
-        }]
-    },
-    return: {
-        isReturnRequested: {
-            type: Boolean,
-            default: false
-        },
-        reason: {
-            type: String,
-            default: null
-        },
-        requestDate: {
-            type: Date,
-            default: null
-        },
-        status: {
-            type: String,
-            enum: ['pending', 'approved', 'rejected'],
-            default: null
-        },
-        adminComment: {
-            type: String,
-            default: null
-        },
-        isReturnAccepted: {
-            type: Boolean,
-            default: false
         }
     },
     orderDate: {

@@ -52,10 +52,13 @@ router.post('/product/delete/:id', adminMiddleware.checkSession, adminProductCon
 router.post('/product/toggle-status/:id', adminMiddleware.checkSession, adminProductController.toggleProductStatus);
 
 //Order Routes
-
 router.get('/orders', adminMiddleware.checkSession, adminOrderController.getOrders);
 
 router.post('/orders/:orderId/status', adminMiddleware.checkSession, adminOrderController.updateOrderStatus);
+
+router.post('/orders/:orderId/items/:productId/status', adminMiddleware.checkSession, adminOrderController.updateItemStatus);
+
+router.post('/orders/:orderId/items/:productId/return', adminMiddleware.checkSession, adminOrderController.handleReturnRequest);
 
 // Coupon Routes
 router.get('/coupon', adminMiddleware.checkSession, adminCouponController.getCoupons);

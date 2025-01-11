@@ -78,9 +78,9 @@ route.post('/checkout/place-order', userMiddlewares.checkSession, userCheckoutCo
 
 route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders);
 
-route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
+// route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
 
-route.post('/orders/:orderId/return', userMiddlewares.checkSession, userOrderController.requestReturn);
+// route.post('/orders/:orderId/return', userMiddlewares.checkSession, userOrderController.requestReturn);
 
 route.post('/orders/:orderId/retry-payment', userMiddlewares.checkSession, userOrderController.retryPayment);
 
@@ -115,6 +115,10 @@ route.get('/coupons', userMiddlewares.checkSession, couponController.getCoupons)
 route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, userOrderController.generateInvoice);
 
 route.post('/checkout/payment-failed', userMiddlewares.checkSession, userCheckoutController.handlePaymentFailure);
+
+route.post('/orders/:orderId/items/:productId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrderItem);
+
+route.post('/orders/:orderId/items/:productId/return', userMiddlewares.checkSession, userOrderController.requestReturnItem);
 
 export default route;
 

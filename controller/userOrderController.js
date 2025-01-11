@@ -12,16 +12,13 @@ const userOrderController = {
     getOrders: async (req, res) => {
         try {
             const user = await userSchema.findById(req.session.user);
-
             const userId = req.session.user;
             const page = parseInt(req.query.page) || 1;
-            const limit = 5; // Orders per page
+            const limit = 5;
             
-            // Get total orders count
             const totalOrders = await orderSchema.countDocuments({ userId });
             const totalPages = Math.ceil(totalOrders / limit);
             
-            // Get paginated orders
             const orders = await orderSchema.find({ userId })
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
@@ -42,178 +39,12 @@ const userOrderController = {
         }
     },
 
-    cancelOrder: async (req, res) => {
+    generateInvoice: async (req, res) => {
         try {
             const { orderId } = req.params;
             const userId = req.session.user;
 
             const order = await orderSchema.findOne({ _id: orderId, userId })
-                .populate('items.product');
-
-            if (!order) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Order not found'
-                });
-            }
-
-            if (!['pending', 'processing'].includes(order.order.status)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Order cannot be cancelled at this stage'
-                });
-            }
-
-            // Update product stock
-            try {
-                for (const item of order.items) {
-                    const product = await productSchema.findById(item.product._id);
-                    if (product) {
-                        product.stock += item.quantity;
-                        await product.save();
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating product stock:', error);
-                throw new Error('Failed to update product stock');
-            }
-
-            // Update order status
-            order.order.status = 'cancelled';
-            order.order.statusHistory.push({
-                status: 'cancelled',
-                date: new Date(),
-                comment: 'Order cancelled by user'
-            });
-
-            // Process refund if payment was made
-            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
-                order.payment.paymentStatus === 'completed') {
-                
-                // Find or create wallet
-                let wallet = await Wallet.findOne({ userId });
-                if (!wallet) {
-                    wallet = await Wallet.create({ userId, balance: 0 });
-                }
-
-                // Add refund to wallet
-                wallet.balance += order.totalAmount;
-                wallet.transactions.push({
-                    type: 'credit',
-                    amount: order.totalAmount,
-                    description: `Refund for cancelled order #${order._id}`,
-                    orderId: order._id,
-                    date: new Date()
-                });
-
-                await wallet.save();
-                order.payment.paymentStatus = 'refunded';
-            } else {
-                order.payment.paymentStatus = 'cancelled';
-            }
-
-            await order.save();
-
-            res.json({
-                success: true,
-                message: 'Order cancelled successfully'
-            });
-
-        } catch (error) {
-            console.error('Cancel order error:', error);
-            res.status(500).json({
-                success: false,
-                message: error.message || 'Error cancelling order'
-            });
-        }
-    },
-
-    requestReturn: async (req, res) => {
-        try {
-            const { orderId } = req.params;
-            const { reason } = req.body;
-            const userId = req.session.user;
-
-            const order = await orderSchema.findOne({ _id: orderId, userId });
-
-            if (!order) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Order not found'
-                });
-            }
-
-            // Validate order status
-            if (order.order.status !== 'delivered') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Only delivered orders can be returned'
-                });
-            }
-
-            // Check if return is already requested
-            if (order.return.isReturnRequested) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Return already requested for this order'
-                });
-            }
-
-            // Check return window (7 days)
-            let deliveryDate;
-            const deliveryStatus = order.order.statusHistory.find(h => h.status === 'delivered');
-            
-            if (deliveryStatus && deliveryStatus.date) {
-                deliveryDate = deliveryStatus.date;
-            } else {
-                deliveryDate = order.updatedAt;
-            }
-
-            const daysSinceDelivery = Math.floor((Date.now() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24));
-            if (daysSinceDelivery > 7) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Return window has expired (7 days from delivery)'
-                });
-            }
-
-            // Update order with return details
-            order.return = {
-                isReturnRequested: true,
-                reason: reason,
-                requestDate: new Date(),
-                status: 'pending',
-                adminComment: null,
-                isReturnAccepted: false
-            };
-
-            // Add to status history
-            order.order.statusHistory.push({
-                status: 'return requested',
-                date: new Date(),
-                comment: `Return requested: ${reason}`
-            });
-
-            await order.save();
-
-            res.json({
-                success: true,
-                message: 'Return request submitted successfully'
-            });
-
-        } catch (error) {
-            console.error('Return request error:', error);
-            res.status(500).json({
-                success: false,
-                message: error.message || 'Error processing return request'
-            });
-        }
-    },
-
-    generateInvoice: async (req, res) => {
-        try {
-            const orderId = req.params.orderId;
-            const order = await orderSchema.findById(orderId)
                 .populate('userId')
                 .populate('items.product');
 
@@ -221,12 +52,6 @@ const userOrderController = {
                 return res.status(404).json({ message: 'Order not found' });
             }
 
-            // Only allow invoice download for delivered or returned orders
-            if (!['delivered', 'returned'].includes(order.order.status)) {
-                return res.status(400).json({ 
-                    message: 'Invoice is only available for delivered or returned orders' 
-                });
-            }
 
             // Create PDF document
             const doc = new PDFDocument({ margin: 50 });
@@ -234,8 +59,6 @@ const userOrderController = {
             // Set response headers
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderCode}.pdf`);
-
-            // Pipe PDF to response
             doc.pipe(res);
 
             // Generate separate invoice for each item
@@ -417,14 +240,14 @@ const userOrderController = {
             const { orderId } = req.params;
             const userId = req.session.user;
 
-            // Find the order with pending status
+            // Find the order with failed payment status
             const order = await orderSchema.findOne({
                 _id: orderId,
                 userId,
                 'payment.method': 'razorpay',
-                'order.status': 'pending',
-                'payment.paymentStatus': 'failed'
-            });
+                'payment.paymentStatus': 'failed',
+                'items.order.status': 'pending' 
+            }).populate('userId');
 
             if (!order) {
                 return res.status(404).json({
@@ -437,34 +260,19 @@ const userOrderController = {
             const razorpayOrder = await razorpay.orders.create({
                 amount: Math.round(order.totalAmount * 100), // Convert to paise
                 currency: "INR",
-                receipt: `retry_${orderId}`
+                receipt: `retry_${order.orderCode}`
             });
-
-            // Store order details in session for verification
-            req.session.pendingOrder = {
-                orderId: order._id,
-                razorpayOrderId: razorpayOrder.id,
-                orderData: {
-                    userId,
-                    items: order.items,
-                    totalAmount: order.totalAmount,
-                    coupon: order.coupon || {},
-                    shippingAddress: order.shippingAddress
-                }
-            };
 
             // Update order with new Razorpay order ID
             await orderSchema.findByIdAndUpdate(orderId, {
                 'payment.razorpayTransaction.razorpayOrderId': razorpayOrder.id,
-                'payment.paymentStatus': 'failed',
-                'order.statusHistory': [
-                    ...order.order.statusHistory,
-                    {
+                $push: {
+                    'items.$[].order.statusHistory': {
                         status: 'pending',
                         date: new Date(),
                         comment: 'Payment retry initiated'
                     }
-                ]
+                }
             });
 
             res.json({
@@ -472,10 +280,9 @@ const userOrderController = {
                 key: process.env.RAZORPAY_KEY_ID,
                 order: razorpayOrder,
                 orderDetails: {
-                    amount: order.totalAmount,
+                    name: order.userId.firstName + ' ' + order.userId.lastName,
                     email: order.userId.email,
-                    contact: order.shippingAddress.mobileNumber,
-                    name: order.shippingAddress.fullName
+                    contact: order.shippingAddress.mobileNumber
                 }
             });
 
@@ -490,31 +297,22 @@ const userOrderController = {
 
     verifyRetryPayment: async (req, res) => {
         try {
-            const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId, error } = req.body;
-            const userId = req.session.user;
+            const { 
+                razorpay_order_id, 
+                razorpay_payment_id, 
+                razorpay_signature, 
+                orderId 
+            } = req.body;
 
-            // If there's a payment error, update order with failed status
-            if (error) {
-                await orderSchema.findByIdAndUpdate(orderId, {
-                    'payment.paymentStatus': 'failed',
-                    'order.status': 'pending',
-                    $push: {
-                        'order.statusHistory': {
-                            status: 'pending',
-                            date: new Date(),
-                            comment: 'Payment retry failed: ' + (error.description || 'Payment was not completed')
-                        }
-                    }
-                });
-
-                return res.status(400).json({
-                    success: false,
-                    message: 'Payment failed',
-                    error: error.description || 'Payment was not completed'
+            const order = await orderSchema.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Order not found' 
                 });
             }
 
-            // Verify the Razorpay signature
+            // Verify Razorpay signature
             const sign = razorpay_order_id + "|" + razorpay_payment_id;
             const expectedSign = crypto
                 .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -522,14 +320,14 @@ const userOrderController = {
                 .digest("hex");
 
             if (razorpay_signature !== expectedSign) {
+                // Update order status to failed if signature verification fails
                 await orderSchema.findByIdAndUpdate(orderId, {
                     'payment.paymentStatus': 'failed',
-                    'order.status': 'pending',
                     $push: {
-                        'order.statusHistory': {
+                        'items.$[].order.statusHistory': {
                             status: 'pending',
                             date: new Date(),
-                            comment: 'Invalid payment signature'
+                            comment: 'Payment verification failed'
                         }
                     }
                 });
@@ -540,15 +338,46 @@ const userOrderController = {
                 });
             }
 
-            // Find the order and populate product details
-            const order = await orderSchema.findOne({ 
-                _id: orderId,
-                userId,
-                'payment.method': 'razorpay'
-            }).populate({
-                path: 'items.product',
-                model: 'Product'
+            // Update order with successful payment
+            await orderSchema.findByIdAndUpdate(orderId, {
+                'payment.paymentStatus': 'completed',
+                'payment.razorpayTransaction': {
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    razorpaySignature: razorpay_signature
+                },
+                'items.$[].order.status': 'processing',
+                $push: {
+                    'items.$[].order.statusHistory': {
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'Payment successful, order processing'
+                    }
+                }
             });
+
+            res.json({
+                success: true,
+                message: 'Payment verified successfully'
+            });
+
+        } catch (error) {
+            console.error('Verify retry payment error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to verify payment'
+            });
+        }
+    },
+
+    cancelOrderItem: async (req, res) => {
+        try {
+            const { orderId, productId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
 
             if (!order) {
                 return res.status(404).json({
@@ -557,90 +386,186 @@ const userOrderController = {
                 });
             }
 
-            // Update product stock
-            try {
-                for (const item of order.items) {
-                    const product = await productSchema.findById(item.product._id);
-                    if (!product) {
-                        throw new Error(`Product not found: ${item.product._id}`);
-                    }
-                    
-                    if (product.stock < item.quantity) {
-                        throw new Error(`Insufficient stock for ${product.productName}`);
-                    }
-
-                    product.stock = product.stock - item.quantity;
-                    await product.save();
-                }
-            } catch (error) {
-                // If stock update fails, maintain failed payment status
-                await orderSchema.findByIdAndUpdate(orderId, {
-                    'payment.paymentStatus': 'failed',
-                    'order.status': 'pending',
-                    $push: {
-                        'order.statusHistory': {
-                            status: 'pending',
-                            date: new Date(),
-                            comment: `Stock update failed: ${error.message}`
-                        }
-                    }
-                });
-
-                return res.status(400).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-
-            // Update order status on successful payment
-            const updatedOrder = await orderSchema.findByIdAndUpdate(
-                orderId,
-                {
-                    $set: {
-                        'payment.paymentStatus': 'completed',
-                        'payment.razorpayTransaction.razorpayPaymentId': razorpay_payment_id,
-                        'payment.razorpayTransaction.razorpaySignature': razorpay_signature,
-                        'order.status': 'processing',
-                    },
-                    $push: {
-                        'order.statusHistory': {
-                            status: 'processing',
-                            date: new Date(),
-                            comment: 'Payment completed successfully'
-                        }
-                    }
-                },
-                { new: true }
+            // Find the specific item
+            const itemIndex = order.items.findIndex(item => 
+                item.product._id.toString() === productId
             );
 
-            if (!updatedOrder) {
-                throw new Error('Failed to update order status');
+            if (itemIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Item not found in order'
+                });
             }
+
+            const item = order.items[itemIndex];
+
+            // Check if item can be cancelled
+            if (!['pending', 'processing'].includes(item.order.status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This item cannot be cancelled at this stage'
+                });
+            }
+
+            // Update product stock
+            await productSchema.findByIdAndUpdate(
+                productId,
+                { $inc: { stock: item.quantity } }
+            );
+
+            // Update item status
+            item.order.status = 'cancelled';
+            item.order.statusHistory.push({
+                status: 'cancelled',
+                date: new Date(),
+                comment: `Item cancelled by user: ${reason}`
+            });
+
+            // Process refund if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
+                order.payment.paymentStatus === 'completed') {
+                
+                let wallet = await Wallet.findOne({ userId });
+                if (!wallet) {
+                    wallet = await Wallet.create({ userId, balance: 0 });
+                }
+
+                // Calculate refund amount for this item
+                const refundAmount = item.subtotal;
+
+                wallet.balance += refundAmount;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: refundAmount,
+                    description: `Refund for cancelled item in order #${order.orderCode}`,
+                    orderId: order._id,
+                    date: new Date()
+                });
+
+                await wallet.save();
+            }
+
+            await order.save();
 
             res.json({
                 success: true,
-                message: 'Payment successful'
+                message: 'Item cancelled successfully'
             });
 
         } catch (error) {
-            console.error('Verify retry payment error:', error);
-            
-            // Update order with failed status on any other error
-            await orderSchema.findByIdAndUpdate(orderId, {
-                'payment.paymentStatus': 'failed',
-                'order.status': 'pending',
-                $push: {
-                    'order.statusHistory': {
-                        status: 'pending',
-                        date: new Date(),
-                        comment: `Payment verification failed: ${error.message}`
-                    }
-                }
-            });
-
+            console.error('Cancel item error:', error);
             res.status(500).json({
                 success: false,
-                message: error.message || 'Error verifying payment'
+                message: error.message || 'Error cancelling item'
+            });
+        }
+    },
+
+    requestReturnItem: async (req, res) => {
+        try {
+            const { orderId, productId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            // Find the specific item
+            const itemIndex = order.items.findIndex(item => 
+                item.product._id.toString() === productId
+            );
+
+            if (itemIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Item not found in order'
+                });
+            }
+
+            const item = order.items[itemIndex];
+
+            // Check if item is delivered
+            if (item.order.status !== 'delivered') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Only delivered items can be returned'
+                });
+            }
+
+            // Check if return is already requested
+            if (item.return.isReturnRequested) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return already requested for this item'
+                });
+            }
+
+            // Check return window (7 days)
+            const deliveryDate = item.order.statusHistory
+                .find(h => h.status === 'delivered')?.date;
+
+            if (!deliveryDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery date not found'
+                });
+            }
+
+            const daysSinceDelivery = Math.floor(
+                (Date.now() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)
+            );
+
+            if (daysSinceDelivery > 7) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return window has expired (7 days from delivery)'
+                });
+            }
+
+            // Update return status for the item
+            item.return = {
+                isReturnRequested: true,
+                reason: reason,
+                requestDate: new Date(),
+                status: 'pending',
+                adminComment: null,
+                isReturnAccepted: false
+            };
+
+            // Update item status and add to history
+            item.order.status = 'refund processing';
+            item.order.statusHistory.push({
+                status: 'refund processing',
+                date: new Date(),
+                comment: `Return requested: ${reason}`
+            });
+
+            // Update payment status if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
+                order.payment.paymentStatus === 'completed') {
+                order.payment.paymentStatus = 'refund processing';
+            }
+
+            await order.save();
+
+            res.json({
+                success: true,
+                message: 'Return request submitted successfully'
+            });
+
+        } catch (error) {
+            console.error('Return request error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to submit return request'
             });
         }
     }
@@ -648,9 +573,8 @@ const userOrderController = {
 
 // Helper function to convert number to words
 function numberToWords(number) {
-    // Add your number to words conversion logic here
-    // You can use a library like 'number-to-words' or implement your own
-    return number.toString(); // Placeholder return
+    
+    return number.toString(); 
 }
 
 export default userOrderController; 

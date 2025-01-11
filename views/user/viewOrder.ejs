@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
 </head>
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
@@ -49,22 +49,24 @@
                                     <div>
                                         <p class="text-sm text-gray-500">Status</p>
                                         <% 
-                                            let statusText = order.order.status.charAt(0).toUpperCase() + order.order.status.slice(1);
-                                            let isAdminCancelled = order.order.statusHistory.some(status => 
-                                                status.status === 'cancelled' && 
-                                                status.comment && 
-                                                status.comment.toLowerCase().includes('admin')
-                                            );
-                                            if (order.order.status === 'cancelled' && isAdminCancelled) {
-                                                statusText;
-                                            }
+                                            // Get the most common status among items
+                                            const statusCounts = order.items.reduce((acc, item) => {
+                                                acc[item.order.status] = (acc[item.order.status] || 0) + 1;
+                                                return acc;
+                                            }, {});
+                                            
+                                            const mostCommonStatus = Object.entries(statusCounts)
+                                                .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+                                                
+                                            const statusText = mostCommonStatus.charAt(0).toUpperCase() + 
+                                              mostCommonStatus.slice(1);
                                         %>
                                         <span class="
                                             inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            <%= order.order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                order.order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                order.order.status === 'returned' ? 'bg-orange-100 text-orange-800' :
-                                                order.order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                            <%= mostCommonStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                mostCommonStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                mostCommonStatus === 'returned' ? 'bg-orange-100 text-orange-800' :
+                                                mostCommonStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
                                                 'bg-yellow-100 text-yellow-800'
                                             %>
                                         ">
@@ -108,15 +110,16 @@
                                     <h3 class="text-lg font-semibold mb-4">Order Items</h3>
                                     <div class="space-y-4">
                                         <% order.items.forEach(item => { %>
-                                            <div class="flex items-center gap-4">
+                                            <div class="flex items-center gap-4 p-4 border rounded-lg" data-order="<%= order._id %>">
                                                 <img src="<%= item.product.imageUrl[0] %>" 
                                                      alt="<%= item.product.productName %>"
                                                      class="w-16 h-16 object-cover rounded">
+                                                 
                                                 <div class="flex-1">
                                                     <p class="font-medium"><%= item.product.productName %></p>
                                                     <div class="text-sm text-gray-500">
                                                         <p>Quantity: <%= item.quantity %></p>
-                                                        <p>Original Price: ₹<%= item.price %></p>
+                                                        <p>Price: ₹<%= item.price %></p>
                                                         <% if (item.discountedPrice && item.price !== item.discountedPrice) { %>
                                                             <p class="text-green-600">
                                                                 Discounted Price: ₹<%= item.discountedPrice %>
@@ -127,95 +130,92 @@
                                                         <% } %>
                                                     </div>
                                                 </div>
-                                                <div class="text-right">
+
+                                                <div class="flex flex-col items-end gap-2">
                                                     <p class="font-medium">₹<%= item.subtotal %></p>
-                                                    <% if (item.price * item.quantity !== item.subtotal) { %>
-                                                        <p class="text-sm text-gray-500 line-through">
-                                                            ₹<%= (item.price * item.quantity).toFixed(2) %>
-                                                        </p>
-                                                    <% } %>
+                                                    <span class="status-badge px-2 py-1 text-sm rounded-full 
+                                                        <%= item.order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                            item.order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                            item.order.status === 'returned' ? 'bg-orange-100 text-orange-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                        %>">
+                                                        <%= item.order.status.charAt(0).toUpperCase() + item.order.status.slice(1) %>
+                                                    </span>
+
+                                                    <!-- Action buttons for each item -->
+                                                    <div class="action-buttons flex gap-2">
+                                                        <% if (item.order.status === 'pending' || item.order.status === 'processing') { %>
+                                                            <% if (order.payment.paymentStatus !== 'failed') { %>
+                                                                <button onclick="cancelOrderItem('<%= order._id %>', '<%= item.product._id %>', '<%= item.product.productName %>')"
+                                                                    class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+                                                                Cancel
+                                                            </button>
+                                                            <% } %>
+                                                        <% } %>
+
+                                                        <% if (item.order.status === 'delivered' && !item.return.isReturnRequested) { %>
+                                                            <button onclick="requestReturnForItem('<%= order._id %>', '<%= item.product._id %>', '<%= item.product.productName %>')"
+                                                                    class="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
+                                                                Return
+                                                            </button>
+                                                        <% } %>
+                                                    </div>
                                                 </div>
                                             </div>
                                         <% }); %>
-                                    </div>
-
-                                    <!-- Order Summary -->
-                                    <div class="mt-6 border-t pt-4">
-                                        <div class="space-y-2">
-                                            <div class="flex justify-between text-sm">
-                                                <span class="text-gray-600">Subtotal:</span>
-                                                <span>₹<%= order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2) %></span>
-                                            </div>
-                                            
-                                            <% if (order.coupon && order.coupon.code) { %>
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-600">
-                                                        Coupon Applied (<%= order.coupon.code %>):
-                                                    </span>
-                                                    <span class="text-green-600">
-                                                        -₹<%= order.coupon.discount.toFixed(2) %>
-                                                    </span>
-                                                </div>
-                                            <% } %>
-
-                                            <div class="flex justify-between font-medium text-base pt-2 border-t">
-                                                <span>Total Amount:</span>
-                                                <span>₹<%= order.totalAmount.toFixed(2) %></span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Order Timeline -->
                                 <div class="p-6 border-b">
                                     <h3 class="text-lg font-semibold mb-4">Order Timeline</h3>
-                                    <div class="space-y-4">
-                                        <% order.order.statusHistory.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(status => { %>
-                                            <div class="flex items-start gap-4">
-                                                <div class="w-2 h-2 mt-2 rounded-full 
-                                                    <%= status.status === 'cancelled' ? 'bg-red-500' : 
-                                                       status.status === 'delivered' ? 'bg-green-500' : 
-                                                       status.status === 'returned' ? 'bg-orange-500' : 
-                                                       'bg-gray-400' %>">
-                                                </div>
-                                                <div>
-                                                    <p class="font-medium">
-                                                        <%= status.status.charAt(0).toUpperCase() + status.status.slice(1) %>
-                                                        <% if (status.status === 'cancelled' && status.comment && status.comment.toLowerCase().includes('admin')) { %>
-                                                            <span class="text-sm text-red-600">(by Admin)</span>
-                                                        <% } %>
-                                                    </p>
-                                                    <p class="text-sm text-gray-500">
-                                                        <%= new Date(status.date).toLocaleString() %>
-                                                    </p>
-                                                    <% if (status.comment) { %>
-                                                        <p class="text-sm text-gray-600">
-                                                            <%= status.comment %>
+                                    <div class="timeline-container space-y-4" data-order="<%= order._id %>">
+                                        <% 
+                                            // Combine and sort all status histories from all items
+                                            const allStatuses = order.items.reduce((acc, item) => {
+                                                if (item.order && Array.isArray(item.order.statusHistory)) {
+                                                    return acc.concat(item.order.statusHistory
+                                                        .filter(status => status && status.status) // Filter out invalid entries
+                                                        .map(status => ({
+                                                            ...status,
+                                                            date: new Date(status.date)
+                                                        })));
+                                                }
+                                                return acc;
+                                            }, []).sort((a, b) => b.date - a.date);
+                                        %>
+                                        
+                                        <% allStatuses.forEach(status => { %>
+                                            <% if (status && status.status) { %>
+                                                <div class="flex items-start gap-4">
+                                                    <div class="w-2 h-2 mt-2 rounded-full 
+                                                        <%= status.status === 'cancelled' ? 'bg-red-500' : 
+                                                           status.status === 'delivered' ? 'bg-green-500' : 
+                                                           status.status === 'returned' ? 'bg-orange-500' : 
+                                                           'bg-gray-400' %>">
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium">
+                                                            <%= status.status.charAt(0).toUpperCase() + status.status.slice(1) %>
                                                         </p>
-                                                    <% } %>
+                                                        <p class="text-sm text-gray-500">
+                                                            <%= status.date.toLocaleString() %>
+                                                        </p>
+                                                        <% if (status.comment) { %>
+                                                            <p class="text-sm text-gray-600">
+                                                                <%= status.comment %>
+                                                            </p>
+                                                        <% } %>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            <% } %>
                                         <% }); %>
                                     </div>
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="p-6 flex flex-wrap justify-end gap-4">
-                                    <% if (['pending', 'processing'].includes(order.order.status)) { %>
-                                        <button onclick="cancelOrder('<%= order._id %>')"
-                                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                            Cancel Order
-                                        </button>
-                                    <% } %>
-                                    
-                                    <% if (order.order.status === 'delivered' && !order.return.isReturnRequested) { %>
-                                        <button onclick="requestReturn('<%= order._id %>')"
-                                                class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                                            Request Return
-                                        </button>
-                                    <% } %>
-                                    
-                                    <% if (['delivered', 'returned'].includes(order.order.status)) { %>
+                                <div class="p-6 flex justify-end gap-4">
+                                    <% if (order.items.every(item => ['delivered', 'returned', 'refund processing'].includes(item.order.status))) { %>
                                         <button onclick="downloadInvoice('<%= order._id %>')"
                                                 class="px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition-colors">
                                             <i class="fas fa-file-pdf mr-2"></i>Download Invoice
@@ -288,6 +288,75 @@
 
     <%- include("../partials/footer") %>
 
+    <!-- First add the alert modal HTML structure -->
+    <div id="alertModal" class="fixed inset-0 bg-black/50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl w-full max-w-sm p-6 transform transition-all">
+                <!-- Success Alert -->
+                <div id="successAlert" class="hidden text-center">
+                    <div class="mb-4">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                            <i class="fas fa-check text-xl text-green-600"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Success</h3>
+                    <p id="successMessage" class="text-gray-600 mb-6"></p>
+                    <button onclick="hideAlert()" 
+                        class="w-full px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        Continue
+                    </button>
+                </div>
+
+                <!-- Error Alert -->
+                <div id="errorAlert" class="hidden text-center">
+                    <div class="mb-4">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                            <i class="fas fa-times text-xl text-red-600"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Error</h3>
+                    <p id="errorMessage" class="text-gray-600 mb-6"></p>
+                    <button onclick="hideAlert()" 
+                        class="w-full px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        Try Again
+                    </button>
+                </div>
+
+                <!-- Loading Alert -->
+                <div id="loadingAlert" class="hidden text-center">
+                    <div class="mb-4">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12">
+                            <div class="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-black"></div>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Processing</h3>
+                    <p class="text-gray-600">Please wait...</p>
+                </div>
+
+                <!-- Confirm Alert -->
+                <div id="confirmAlert" class="hidden text-center">
+                    <div class="mb-4">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                            <i class="fas fa-question text-xl text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <h3 id="confirmTitle" class="text-lg font-semibold text-gray-900 mb-2"></h3>
+                    <p id="confirmMessage" class="text-gray-600 mb-6"></p>
+                    <div class="flex gap-3">
+                        <button onclick="hideAlert()" 
+                            class="flex-1 px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button id="confirmAction"
+                            class="flex-1 px-6 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleOrderDetails(orderId) {
             const detailsDiv = document.getElementById(`details-${orderId}`);
@@ -297,128 +366,185 @@
             arrow.classList.toggle('rotate-180');
         }
 
-        async function cancelOrder(orderId) {
-            const { value: reason } = await Swal.fire({
-                title: 'Cancel Order',
-                text: 'Please select a reason for cancellation',
-                input: 'select',
-                inputOptions: {
-                    'Changed my mind': 'Changed my mind',
-                    'Found better price elsewhere': 'Found better price elsewhere',
-                    'Ordered by mistake': 'Ordered by mistake',
-                    'Other': 'Other'
-                },
-                inputPlaceholder: 'Select a reason',
-                showCancelButton: true,
-                confirmButtonColor: '#000000',
-                cancelButtonColor: '#d33',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'Please select a reason';
-                    }
-                }
+        // Helper function to update UI status
+        function updateOrderUI(orderId, status, reason) {
+            const statusBadges = document.querySelectorAll(`[data-order="${orderId}"] .status-badge`);
+            const actionButtons = document.querySelectorAll(`[data-order="${orderId}"] .action-buttons`);
+            
+            // Update status badges
+            statusBadges.forEach(badge => {
+                badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                
+                // Update badge colors
+                const colorClasses = {
+                    'delivered': 'bg-green-100 text-green-800',
+                    'cancelled': 'bg-red-100 text-red-800',
+                    'returned': 'bg-orange-100 text-orange-800',
+                    'shipped': 'bg-blue-100 text-blue-800',
+                    'processing': 'bg-yellow-100 text-yellow-800'
+                };
+                
+                // Remove existing color classes
+                Object.values(colorClasses).forEach(cls => {
+                    badge.classList.remove(...cls.split(' '));
+                });
+                
+                // Add new color class
+                badge.classList.add(...colorClasses[status].split(' '));
             });
 
-            if (reason) {
+            // Add new timeline entry
+            const timelineContainer = document.querySelector(`[data-order="${orderId}"] .timeline-container`);
+            if (timelineContainer) {
+                const newEntry = document.createElement('div');
+                newEntry.className = 'flex items-start gap-4';
+                newEntry.innerHTML = `
+                    <div class="w-2 h-2 mt-2 rounded-full ${
+                        status === 'cancelled' ? 'bg-red-500' : 
+                        status === 'delivered' ? 'bg-green-500' : 
+                        status === 'returned' ? 'bg-orange-500' : 
+                        'bg-gray-400'
+                    }"></div>
+                    <div>
+                        <p class="font-medium">${status.charAt(0).toUpperCase() + status.slice(1)}</p>
+                        <p class="text-sm text-gray-500">${new Date().toLocaleString()}</p>
+                        ${reason ? `<p class="text-sm text-gray-600">${reason}</p>` : ''}
+                    </div>
+                `;
+                timelineContainer.insertBefore(newEntry, timelineContainer.firstChild);
+            }
+
+            // Update action buttons visibility
+            actionButtons.forEach(buttonContainer => {
+                buttonContainer.innerHTML = getActionButtonsHTML(status);
+            });
+        }
+
+        // Helper function to get action buttons HTML based on status
+        function getActionButtonsHTML(status) {
+            if (['delivered'].includes(status)) {
+                return `
+                    <button onclick="requestReturn(orderId)" 
+                            class="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
+                        Return
+                    </button>`;
+            }
+            return '';
+        }
+
+        async function cancelOrder(orderId) {
+            // Show confirm dialog with select input
+            const select = document.createElement('select');
+            select.className = 'mt-4 w-full rounded border-gray-300';
+            select.innerHTML = `
+                <option value="">Select a reason</option>
+                <option value="Changed my mind">Changed my mind</option>
+                <option value="Found better price elsewhere">Found better price elsewhere</option>
+                <option value="Ordered by mistake">Ordered by mistake</option>
+                <option value="Other">Other</option>
+            `;
+
+            const confirmMessage = document.getElementById('confirmMessage');
+            confirmMessage.textContent = 'Please select a reason for cancellation';
+            confirmMessage.appendChild(select);
+
+            showAlert('confirm', '', 'Cancel Order');
+
+            document.getElementById('confirmAction').onclick = async () => {
+                const reason = select.value;
+                if (!reason) {
+                    showAlert('error', 'Please select a reason');
+                    return;
+                }
+
                 try {
+                    hideAlert();
+                    showAlert('loading');
+
                     const response = await fetch(`/orders/${orderId}/cancel`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason })
                     });
 
                     const data = await response.json();
+                    hideAlert();
 
                     if (response.ok) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Order Cancelled',
-                            text: data.message,
-                            confirmButtonColor: '#000000'
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        updateOrderUI(orderId, 'cancelled', reason);
+                        showAlert('success', data.message);
                     } else {
                         throw new Error(data.message);
                     }
                 } catch (error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: error.message || 'Failed to cancel order',
-                        confirmButtonColor: '#000000'
-                    });
+                    hideAlert();
+                    showAlert('error', error.message || 'Failed to cancel order');
                 }
-            }
+            };
         }
 
         async function requestReturn(orderId) {
-            const { value: reason } = await Swal.fire({
-                title: 'Return Order',
-                text: 'Please select a reason for return',
-                input: 'select',
-                inputOptions: {
-                    'Product damaged': 'Product damaged',
-                    'Wrong product received': 'Wrong product received',
-                    'Product not as described': 'Product not as described',
-                    'Size/fit issue': 'Size/fit issue',
-                    'Quality not as expected': 'Quality not as expected',
-                    'Other': 'Other'
-                },
-                inputPlaceholder: 'Select a reason',
-                showCancelButton: true,
-                confirmButtonColor: '#000000',
-                cancelButtonColor: '#d33',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'Please select a reason';
-                    }
-                }
-            });
+            // Show confirm dialog with select input
+            const select = document.createElement('select');
+            select.className = 'mt-4 w-full rounded border-gray-300';
+            select.innerHTML = `
+                <option value="">Select a reason</option>
+                <option value="Product damaged">Product damaged</option>
+                <option value="Wrong product received">Wrong product received</option>
+                <option value="Product not as described">Product not as described</option>
+                <option value="Size/fit issue">Size/fit issue</option>
+                <option value="Quality not as expected">Quality not as expected</option>
+                <option value="Other">Other</option>
+            `;
 
-            if (reason) {
+            const confirmMessage = document.getElementById('confirmMessage');
+            confirmMessage.textContent = 'Please select a reason for return';
+            confirmMessage.appendChild(select);
+
+            showAlert('confirm', '', 'Return Order');
+
+            document.getElementById('confirmAction').onclick = async () => {
+                const reason = select.value;
+                if (!reason) {
+                    showAlert('error', 'Please select a reason');
+                    return;
+                }
+
                 try {
+                    hideAlert();
+                    showAlert('loading');
+
                     const response = await fetch(`/orders/${orderId}/return`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason })
                     });
 
                     const data = await response.json();
+                    hideAlert();
 
                     if (response.ok) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Return Requested',
-                            text: data.message,
-                            confirmButtonColor: '#000000'
-                        }).then(() => {
+                        showAlert('success', data.message, 'Return Requested');
+                        setTimeout(() => {
                             window.location.reload();
-                        });
+                        }, 1500);
                     } else {
                         throw new Error(data.message);
                     }
                 } catch (error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: error.message || 'Failed to request return',
-                        confirmButtonColor: '#000000'
-                    });
+                    hideAlert();
+                    showAlert('error', error.message || 'Failed to request return');
                 }
-            }
+            };
         }
 
         async function downloadInvoice(orderId) {
             try {
+                showAlert('loading');
                 const response = await fetch(`/orders/${orderId}/invoice`, {
                     method: 'GET'
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to generate invoice');
                 }
@@ -430,35 +556,34 @@
                 // Create a temporary link and trigger download
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `invoice-${orderId.slice(-6)}.pdf`;
+                a.download = `invoice-${orderId}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 
                 // Cleanup
                 window.URL.revokeObjectURL(url);
                 a.remove();
+                hideAlert();
+                
+                showAlert('success', 'Invoice downloaded successfully');
             } catch (error) {
                 console.error('Invoice download error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to download invoice',
-                    confirmButtonColor: '#000000'
-                });
+                hideAlert();
+                showAlert('error', 'Failed to download invoice');
             }
         }
 
         async function retryPayment(orderId) {
             try {
+                showAlert('loading');
                 const response = await fetch(`/orders/${orderId}/retry-payment`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
 
                 if (data.success) {
+                    hideAlert();
                     const options = {
                         key: data.key,
                         amount: data.order.amount,
@@ -468,11 +593,10 @@
                         description: "Order Payment Retry",
                         handler: async function (response) {
                             try {
+                                showAlert('loading');
                                 const verifyResponse = await fetch(`/orders/${orderId}/verify-retry-payment`, {
                                     method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
+                                    headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
                                         razorpay_order_id: response.razorpay_order_id,
                                         razorpay_payment_id: response.razorpay_payment_id,
@@ -483,19 +607,21 @@
 
                                 const verifyData = await verifyResponse.json();
                                 if (verifyData.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Payment Successful',
-                                        text: 'Your payment has been processed successfully',
-                                        confirmButtonColor: '#000000'
-                                    }).then(() => {
-                                        window.location.reload();
-                                    });
+                                    // Update payment status in UI
+                                    updatePaymentUI(orderId, 'completed');
+                                    // Hide retry payment button
+                                    hideRetryPaymentButton(orderId);
+                                    // Update order status to processing
+                                    updateOrderStatus(orderId, 'processing');
+                                    
+                                    hideAlert();
+                                    showAlert('success', 'Your payment has been processed successfully');
                                 } else {
                                     throw new Error(verifyData.message);
                                 }
                             } catch (error) {
-                                throw error;
+                                hideAlert();
+                                showAlert('error', error.message || 'Payment verification failed');
                             }
                         },
                         prefill: {
@@ -514,13 +640,196 @@
                     throw new Error(data.message);
                 }
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to process payment',
-                    confirmButtonColor: '#000000'
-                });
+                hideAlert();
+                showAlert('error', error.message || 'Failed to process payment');
             }
+        }
+
+        // Helper functions to update UI
+        function updatePaymentUI(orderId, status) {
+            const paymentStatusElement = document.querySelector(`[data-order="${orderId}"] .payment-status`);
+            if (paymentStatusElement) {
+                paymentStatusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+        }
+
+        function hideRetryPaymentButton(orderId) {
+            const retryButton = document.querySelector(`[data-order="${orderId}"] button[onclick*="retryPayment"]`);
+            if (retryButton) {
+                retryButton.remove();
+            }
+        }
+
+        function updateOrderStatus(orderId, status) {
+            // Update status badge for all items
+            const statusBadges = document.querySelectorAll(`[data-order="${orderId}"] .status-badge`);
+            const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            statusBadges.forEach(badge => {
+                badge.textContent = statusText;
+                
+                // Update badge colors
+                badge.className = `status-badge px-2 py-1 text-sm rounded-full ${
+                    status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                    status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    status === 'returned' ? 'bg-orange-100 text-orange-800' :
+                    'bg-yellow-100 text-yellow-800'
+                }`;
+            });
+
+            // Update main order status if exists
+            const mainStatusBadge = document.querySelector(`[data-order="${orderId}"] .order-status-badge`);
+            if (mainStatusBadge) {
+                mainStatusBadge.textContent = statusText;
+                mainStatusBadge.className = `order-status-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                    status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    status === 'returned' ? 'bg-orange-100 text-orange-800' :
+                    'bg-yellow-100 text-yellow-800'
+                }`;
+            }
+        }
+
+        // Alert handling functions
+        function showAlert(type, message = '', title = '') {
+            const modal = document.getElementById('alertModal');
+            const alerts = ['successAlert', 'errorAlert', 'loadingAlert', 'confirmAlert'];
+            
+            alerts.forEach(alert => {
+                document.getElementById(alert).classList.add('hidden');
+            });
+            
+            const alertElement = document.getElementById(`${type}Alert`);
+            alertElement.classList.remove('hidden');
+            
+            if (message) {
+                if (type === 'error') {
+                    document.getElementById('errorMessage').textContent = message;
+                } else if (type === 'success') {
+                    document.getElementById('successMessage').textContent = message;
+                } else if (type === 'confirm') {
+                    document.getElementById('confirmMessage').textContent = message;
+                    if (title) document.getElementById('confirmTitle').textContent = title;
+                }
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('alertModal').classList.add('hidden');
+        }
+
+        async function requestReturnForItem(orderId, productId, productName) {
+            const reasons = {
+                'Product damaged': 'Product damaged',
+                'Wrong product received': 'Wrong product received',
+                'Product not as described': 'Product not as described',
+                'Size/fit issue': 'Size/fit issue',
+                'Quality not as expected': 'Quality not as expected',
+                'Other': 'Other'
+            };
+
+            // Show confirm dialog with select input
+            const select = document.createElement('select');
+            select.className = 'mt-4 w-full rounded border-gray-300';
+            select.innerHTML = `
+                <option value="">Select a reason</option>
+                ${Object.entries(reasons).map(([key, value]) => 
+                    `<option value="${key}">${value}</option>`
+                ).join('')}
+            `;
+
+            const confirmMessage = document.getElementById('confirmMessage');
+            confirmMessage.textContent = 'Please select a reason for return';
+            confirmMessage.appendChild(select);
+
+            showAlert('confirm', '', `Return ${productName}`);
+
+            document.getElementById('confirmAction').onclick = async () => {
+                const reason = select.value;
+                if (!reason) {
+                    showAlert('error', 'Please select a reason');
+                    return;
+                }
+
+                try {
+                    hideAlert();
+                    showAlert('loading');
+
+                    const response = await fetch(`/orders/${orderId}/items/${productId}/return`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason })
+                    });
+
+                    const data = await response.json();
+                    hideAlert();
+
+                    if (response.ok) {
+                        updateOrderUI(orderId, 'refund processing', reason);
+                        showAlert('success', data.message);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    hideAlert();
+                    showAlert('error', error.message || 'Failed to request return');
+                }
+            };
+        }
+
+        async function cancelOrderItem(orderId, productId, productName) {
+            // Show confirm dialog with select input
+            const select = document.createElement('select');
+            select.className = 'mt-4 w-full rounded border-gray-300';
+            select.innerHTML = `
+                <option value="">Select a reason</option>
+                <option value="Changed my mind">Changed my mind</option>
+                <option value="Found better price elsewhere">Found better price elsewhere</option>
+                <option value="Ordered by mistake">Ordered by mistake</option>
+                <option value="Other">Other</option>
+            `;
+
+            const confirmMessage = document.getElementById('confirmMessage');
+            confirmMessage.textContent = 'Please select a reason for cancellation';
+            confirmMessage.appendChild(select);
+
+            showAlert('confirm', '', `Cancel ${productName}`);
+
+            document.getElementById('confirmAction').onclick = async () => {
+                const reason = select.value;
+                if (!reason) {
+                    showAlert('error', 'Please select a reason');
+                    return;
+                }
+
+                try {
+                    hideAlert();
+                    showAlert('loading');
+
+                    const response = await fetch(`/orders/${orderId}/items/${productId}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason })
+                    });
+
+                    const data = await response.json();
+                    hideAlert();
+
+                    if (response.ok) {
+                        updateOrderUI(orderId, 'cancelled', reason);
+                        showAlert('success', data.message);
+                    } else {
+                        throw new Error(data.message);
+                    }
+                } catch (error) {
+                    hideAlert();
+                    showAlert('error', error.message || 'Failed to cancel item');
+                }
+            };
         }
     </script>
 </body>
