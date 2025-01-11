@@ -20,7 +20,85 @@
 
     <!-- Cart Section -->
     <div class="container mx-auto px-4 py-8 mt-28">
-      <div class="flex flex-row-reverse items-start space-x-reverse space-x-8">
+      <!-- Mobile View (visible only on small screens) -->
+      <div class="md:hidden">
+        <!-- Order Summary Card -->
+        <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+          <div class="flex justify-between items-center">
+            <h2 class="text-lg font-semibold">Order Total:</h2>
+            <span class="text-xl font-bold">₹<%= total %></span>
+          </div>
+          <% if (cartItems && cartItems.length > 0) { %>
+            <button onclick="location.href='/checkout'" class="w-full mt-4 bg-black text-white py-3 rounded-xl font-medium">
+              Checkout (<%= cartItems.length %> items)
+            </button>
+          <% } %>
+        </div>
+
+        <!-- Cart Items -->
+        <div class="space-y-4">
+          <% if (cartItems && cartItems.length > 0) { %>
+            <% cartItems.forEach(item => { %>
+              <div class="bg-white p-4 rounded-xl shadow-md" id="cart-item-<%= item.product._id %>">
+                <div class="flex gap-4">
+                  <img
+                    src="<%= item.product.imageUrl[0] %>"
+                    alt="<%= item.product.productName %>"
+                    class="w-24 h-24 object-cover rounded-lg"
+                  />
+                  <div class="flex-1">
+                    <div class="flex justify-between">
+                      <h3 class="font-semibold text-gray-800"><%= item.product.productName %></h3>
+                      <button 
+                        onclick="removeFromCart(this, '<%= item.product._id %>')"
+                        class="text-red-500"
+                      >
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                    <p class="text-sm text-gray-500">Color: <%= item.product.color %></p>
+                    <p class="text-sm text-green-500"><%= item.product.stock > 0 ? 'In Stock' : 'Out of Stock' %></p>
+                    <div class="mt-2 flex justify-between items-center">
+                      <div class="flex items-center bg-gray-100 rounded-lg">
+                        <button 
+                          class="quantity-btn px-3 py-1 text-gray-600 <%= item.quantity <= 1 ? 'opacity-50' : '' %>"
+                          onclick="updateQuantity(this, '<%= item.product._id %>', 'decrease')"
+                          <%= item.quantity <= 1 ? 'disabled' : '' %>
+                        >
+                          <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="quantity-display px-3 font-medium"><%= item.quantity %></span>
+                        <button 
+                          class="quantity-btn px-3 py-1 text-gray-600 <%= item.quantity >= 3 ? 'opacity-50' : '' %>"
+                          onclick="updateQuantity(this, '<%= item.product._id %>', 'increase')"
+                          <%= item.quantity >= 3 ? 'disabled' : '' %>
+                        >
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                      <div class="text-right">
+                        <div class="font-semibold" id="subtotal-<%= item.product._id %>">₹<%= item.subtotal %></div>
+                        <div class="text-sm text-gray-500">₹<%= item.price %> each</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="bg-white p-8 rounded-xl shadow-md text-center">
+              <i class="fas fa-shopping-cart text-4xl text-gray-400 mb-4"></i>
+              <p class="text-gray-500 mb-4">Your cart is empty</p>
+              <a href="/shop" class="inline-block bg-black text-white px-6 py-2 rounded-lg">
+                Continue Shopping
+              </a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Desktop View (hidden on mobile) -->
+      <div class="hidden md:flex flex-row-reverse items-start space-x-reverse space-x-8">
         <!-- Products Section (Right Side) -->
         <div class="w-3/4">
           <div class="bg-white p-8 rounded-2xl shadow-lg">
@@ -155,6 +233,55 @@
     <!-- Footer -->
     <%- include('../partials/footer') %>
 
+    <!-- Modal Backdrop -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-90 opacity-0 translate-y-4">
+        <!-- Success Template -->
+        <div id="successAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+            <i class="fas fa-check text-2xl text-green-600"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Success!</h3>
+          <p id="successMessage" class="text-gray-600 text-center mb-6">Item removed successfully</p>
+          <button onclick="hideAlert()" class="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+            Continue
+          </button>
+        </div>
+
+        <!-- Error Template -->
+        <div id="errorAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+            <i class="fas fa-exclamation text-2xl text-red-600"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Error</h3>
+          <p id="errorMessage" class="text-gray-600 text-center mb-6">Something went wrong</p>
+          <button onclick="hideAlert()" class="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+            Try Again
+          </button>
+        </div>
+
+        <!-- Confirmation Template -->
+        <div id="confirmAlert" class="hidden">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-6">
+            <i class="fas fa-question text-2xl text-yellow-600"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Remove Item?</h3>
+          <p class="text-gray-600 text-center mb-6">Are you sure you want to remove this item from your cart?</p>
+          <div class="flex gap-4">
+            <button id="confirmYes" class="flex-1 py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+              Yes, remove it
+            </button>
+            <button onclick="hideAlert()" class="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors duration-200">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       let updateTimeout;
       let isUpdating = false;
@@ -162,7 +289,7 @@
       async function updateQuantity(button, productId, action) {
         if (isUpdating) return;
 
-        const cartItem = button.closest('.flex.items-center.border-b');
+        const cartItem = button.closest('[id^="cart-item-"]');
         const quantityDisplay = cartItem.querySelector('.quantity-display');
         const currentQuantity = parseInt(quantityDisplay.textContent);
         
@@ -201,24 +328,27 @@
 
             if (response.ok) {
                 // Update subtotal for this item
-                const subtotalElement = cartItem.querySelector('#subtotal');
-                subtotalElement.textContent = `₹${data.subtotal}`;
-                
-                const totalElement = document.querySelector('#total');
-                if (totalElement) {
-                    totalElement.textContent = `Total: ₹${data.total}`;
+                const subtotalElement = cartItem.querySelector(`#subtotal-${productId}`);
+                if (subtotalElement) {
+                    subtotalElement.textContent = `₹${data.subtotal}`;
                 }
                 
-                // Update checkout section
-                document.getElementById('subtotal-amount').textContent = `₹${data.total}`;
-                document.getElementById('total-amount').textContent = `₹${data.total}`;
+                // Update all total elements
+                const totalElements = document.querySelectorAll('[id$="total"], [id$="total-amount"]');
+                totalElements.forEach(el => {
+                    if (el.id === 'total') {
+                        el.textContent = `Total: ₹${data.total}`;
+                    } else {
+                        el.textContent = `₹${data.total}`;
+                    }
+                });
                 
                 // Update button states
                 const minusBtn = cartItem.querySelector('.quantity-btn:first-child');
                 const plusBtn = cartItem.querySelector('.quantity-btn:last-child');
                 
-                minusBtn.disabled = newQuantity <= 1;
-                plusBtn.disabled = newQuantity >= 3;
+                if (minusBtn) minusBtn.disabled = newQuantity <= 1;
+                if (plusBtn) plusBtn.disabled = newQuantity >= 3;
 
                 // Success feedback
                 button.classList.add('bg-green-200');
@@ -238,15 +368,7 @@
                 button.classList.remove('bg-red-200');
             }, 300);
 
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Failed to update quantity',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
+            showAlert('error', error.message || 'Failed to update quantity');
         } finally {
             // Re-enable buttons
             buttons.forEach(btn => {
@@ -262,57 +384,85 @@
         }
       }
 
-      async function removeFromCart(button, productId) {
-        // Show confirmation dialog
-        const result = await Swal.fire({
-            title: 'Remove Item?',
-            text: 'Are you sure you want to remove this item from your cart?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#000000',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, remove it',
-            cancelButtonText: 'Cancel'
+      function showAlert(type, message = '') {
+        const modal = document.getElementById('alertModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const modalContent = modal.querySelector('div > div');
+        
+        // Hide all alert types
+        document.getElementById('successAlert').classList.add('hidden');
+        document.getElementById('errorAlert').classList.add('hidden');
+        document.getElementById('confirmAlert').classList.add('hidden');
+        
+        // Show selected alert type
+        const alertElement = document.getElementById(`${type}Alert`);
+        alertElement.classList.remove('hidden');
+        
+        if (message) {
+          const messageElement = document.getElementById(`${type}Message`);
+          if (messageElement) {
+            messageElement.textContent = message;
+          }
+        }
+        
+        // Show modal with animation
+        modal.classList.remove('hidden');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => {
+          backdrop.classList.remove('opacity-0');
+          modalContent.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
+        }, 50);
+
+        return new Promise((resolve) => {
+          if (type === 'confirm') {
+            document.getElementById('confirmYes').onclick = () => {
+              hideAlert();
+              resolve(true);
+            };
+          } else if (type === 'success') {
+            const continueButton = alertElement.querySelector('button');
+            continueButton.onclick = () => {
+              hideAlert();
+              window.location.reload();
+            };
+          }
         });
+      }
 
-        // If user confirms deletion
-        if (result.isConfirmed) {
-            try {
-                const response = await fetch(`/cart/remove/${productId}`, {
-                    method: 'DELETE'
-                });
+      function hideAlert() {
+        const modal = document.getElementById('alertModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const modalContent = modal.querySelector('div > div');
+        
+        backdrop.classList.add('opacity-0');
+        modalContent.classList.add('scale-90', 'opacity-0', 'translate-y-4');
+        
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          backdrop.classList.add('hidden');
+        }, 0);
+      }
 
-                const data = await response.json();
+      async function removeFromCart(button, productId) {
+        const confirmed = await showAlert('confirm');
+        
+        if (confirmed) {
+          try {
+            const response = await fetch(`/cart/remove/${productId}`, {
+              method: 'DELETE'
+            });
 
-                if (response.ok) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Item Removed',
-                        text: data.message,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
+            const data = await response.json();
 
-                    // Reload the page after a short delay
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    throw new Error(data.message);
-                }
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to remove item',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+            if (response.ok) {
+              await showAlert('success', data.message);
+              window.location.reload();
+            } else {
+              throw new Error(data.message);
             }
+          } catch (error) {
+            showAlert('error', error.message || 'Failed to remove item');
+          }
         }
       }
       
