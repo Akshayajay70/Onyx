@@ -525,9 +525,11 @@
 
                     if (response.ok) {
                         showAlert('success', data.message, 'Return Requested');
-                        setTimeout(() => {
+                        // Add reload after success alert is closed
+                        document.querySelector('#successAlert button').onclick = () => {
+                            hideAlert();
                             window.location.reload();
-                        }, 1500);
+                        };
                     } else {
                         throw new Error(data.message);
                     }
@@ -709,6 +711,12 @@
                     document.getElementById('errorMessage').textContent = message;
                 } else if (type === 'success') {
                     document.getElementById('successMessage').textContent = message;
+                    // Add click handler for success alert's continue button
+                    const continueBtn = alertElement.querySelector('button');
+                    continueBtn.onclick = () => {
+                        hideAlert();
+                        window.location.reload();
+                    };
                 } else if (type === 'confirm') {
                     document.getElementById('confirmMessage').textContent = message;
                     if (title) document.getElementById('confirmTitle').textContent = title;
@@ -769,10 +777,14 @@
                     hideAlert();
 
                     if (response.ok) {
-                        updateOrderUI(orderId, 'refund processing', reason);
-                        showAlert('success', data.message);
+                        showAlert('success', data.message || 'Return request submitted successfully');
+                        // Add reload after success alert is closed
+                        document.querySelector('#successAlert button').onclick = () => {
+                            hideAlert();
+                            window.location.reload();
+                        };
                     } else {
-                        throw new Error(data.message);
+                        throw new Error(data.message || 'Failed to submit return request');
                     }
                 } catch (error) {
                     hideAlert();

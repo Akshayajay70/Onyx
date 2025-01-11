@@ -1,9 +1,9 @@
-import orderSchema from '../model/orderModel.js';
-import Wallet from '../model/walletModel.js';
-import productSchema from '../model/productModel.js';
-import userSchema from '../model/userModel.js';
+import orderSchema from '../../model/orderModel.js';
+import Wallet from '../../model/walletModel.js';
+import productSchema from '../../model/productModel.js';
+import userSchema from '../../model/userModel.js';
 import PDFDocument from 'pdfkit';
-import razorpay from '../utils/razorpay.js';
+import razorpay from '../../utils/razorpay.js';
 import crypto from 'crypto';
 
 

@@ -869,6 +869,10 @@ video {
   display: grid;
 }
 
+.contents {
+  display: contents;
+}
+
 .hidden {
   display: none;
 }
@@ -3132,6 +3136,10 @@ video {
     max-width: 24rem;
   }
 
+  .sm\:max-w-lg {
+    max-width: 32rem;
+  }
+
   .sm\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3237,6 +3245,10 @@ video {
 
   .md\:block {
     display: block;
+  }
+
+  .md\:table {
+    display: table;
   }
 
   .md\:table-cell {

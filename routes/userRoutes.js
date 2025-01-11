@@ -7,7 +7,7 @@ import profileController from '../controller/user/profileController.js';
 import addressController from '../controller/user/addressController.js';
 import userCartController from '../controller/userCartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
-import userOrderController from '../controller/userOrderController.js';
+import userOrderController from '../controller/user/orderController.js';
 import wishlistController from '../controller/user/wishlistController.js';
 import walletController from '../controller/user/walletController.js';
 import couponController from '../controller/user/couponController.js';

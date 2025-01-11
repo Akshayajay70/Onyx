@@ -1,6 +1,6 @@
-import orderSchema from '../model/orderModel.js';
-import Wallet from '../model/walletModel.js';
-import productSchema from '../model/productModel.js';
+import orderSchema from '../../model/orderModel.js';
+import Wallet from '../../model/walletModel.js';
+import productSchema from '../../model/productModel.js';
 
 const adminOrderController = {
     getOrders: async (req, res) => {
@@ -207,10 +207,20 @@ const adminOrderController = {
                 // Update payment status for both online and COD orders
                 order.payment.paymentStatus = 'refunded';
 
-                // Process refund for online payments
-                if (order.payment.method !== 'cod') {
-                    await processItemRefund(order, item);
-                }
+                // Process refund
+                await processItemRefund(order, item);
+                
+            } else if (returnStatus === 'rejected') {
+                // Set status back to delivered when return is rejected
+                item.order.status = 'delivered';
+                item.order.statusHistory.push({
+                    status: 'delivered',
+                    date: new Date(),
+                    comment: `Return rejected by admin: ${adminComment}`
+                });
+
+                // Set payment status to completed
+                order.payment.paymentStatus = 'completed';
             }
 
             await order.save();
