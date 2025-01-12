@@ -7,14 +7,23 @@
     <title>My Wishlist - Onyx</title>
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-100">
     <%- include("../partials/nav") %>
 
-    <div class="container mx-auto px-4 py-8 mt-28">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">My Wishlist (<span id="wishlist-count"><%= wishlist.length %></span> items)</h1>
+    <div class="container mx-auto px-2 md:px-4 py-4 md:py-8 mt-20 md:mt-28">
+        <!-- Mobile Header -->
+        <div class="md:hidden sticky top-14 bg-white z-20 px-3 py-3 -mx-2 border-b border-gray-100">
+            <h1 class="text-lg font-bold text-gray-800">
+                Wishlist (<span id="wishlist-count"><%= wishlist.length %></span>)
+            </h1>
+        </div>
+
+        <!-- Desktop Header -->
+        <h1 class="hidden md:block text-2xl font-bold text-gray-800 mb-6">
+            My Wishlist (<span id="wishlist-count"><%= wishlist.length %></span> items)
+        </h1>
 
         <% if (wishlist.length === 0) { %>
             <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -29,83 +38,138 @@
             </div>
         <% } else { %>
             <div id="wishlist-grid" 
-                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
-                 data-total-items="<%= wishlist.length %>">
+                 class="md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 space-y-2 md:space-y-0">
                 <% wishlist.forEach((item, index) => { %>
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden group relative flex flex-col h-full <%= index >= 4 ? 'hidden' : '' %>" 
+                    <div class="bg-white overflow-hidden relative flex flex-col h-full <%= index >= 4 ? 'hidden' : '' %>" 
                          id="wishlist-item-<%= item.productId._id %>"
                          data-index="<%= index %>">
-                        <% if (item.productId && item.productId.isActive) { %>
-                            <a href="/product/<%= item.productId._id %>" class="block flex-grow">
-                        <% } else { %>
-                            <div onclick="showUnavailableMessage()" class="block flex-grow cursor-not-allowed">
-                        <% } %>
-                            <div class="relative aspect-[4/5] overflow-hidden">
-                                <img 
-                                    src="<%= item.productId.imageUrl[0] %>" 
-                                    alt="<%= item.productId.productName %>"
-                                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                >
+                        
+                        <!-- Mobile Layout -->
+                        <div class="flex md:hidden p-3">
+                            <!-- Product Image -->
+                            <div class="w-[100px] h-[120px] flex-shrink-0 relative overflow-hidden rounded">
+                                <img src="<%= item.productId.imageUrl[0] %>" 
+                                     alt="<%= item.productId.productName %>"
+                                     class="w-full h-full object-cover">
                                 <% if (item.productId && !item.productId.isActive) { %>
-                                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                                        <span class="text-white text-xs font-medium px-2 py-0.5 rounded-full bg-black bg-opacity-75">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <span class="text-white text-xs px-2 py-0.5 bg-black/75 rounded-full">
                                             Unavailable
                                         </span>
                                     </div>
                                 <% } %>
                             </div>
-                            
-                            <div class="p-2">
-                                <h3 class="text-sm font-medium text-gray-800 truncate">
-                                    <%= item.productId.productName %>
-                                </h3>
-                                <p class="text-sm text-gray-600 mt-1">₹<%= item.productId.price %></p>
-                            </div>
-                        <% if (item.productId && item.productId.isActive) { %>
-                            </a>
-                        <% } else { %>
-                            </div>
-                        <% } %>
-                        
-                        <div class="p-2 bg-white border-t mt-auto">
-                            <div class="flex items-center gap-1">
-                                <% if (item.productId && !item.productId.isActive) { %>
-                                    <button 
-                                        class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
-                                        disabled
-                                    >
-                                        Unavailable
+
+                            <!-- Mobile Content -->
+                            <div class="pl-3 flex flex-col justify-between flex-grow">
+                                <div>
+                                    <h3 class="text-sm text-gray-800 mb-1 line-clamp-2">
+                                        <%= item.productId.productName %>
+                                    </h3>
+                                    <p class="text-base font-semibold text-gray-900">₹<%= item.productId.price %></p>
+                                </div>
+
+                                <!-- Mobile Actions -->
+                                <div class="flex gap-2 mt-2">
+                                    <% if (item.productId && !item.productId.isActive) { %>
+                                        <button disabled 
+                                                class="flex-1 bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs">
+                                            Unavailable
+                                        </button>
+                                    <% } else if (item.productId.stock > 0) { %>
+                                        <button onclick="addToCart('<%= item.productId._id %>')"
+                                                class="flex-1 bg-black text-white px-3 py-1.5 rounded text-xs">
+                                            Add to Cart
+                                        </button>
+                                    <% } else { %>
+                                        <button disabled 
+                                                class="flex-1 bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs">
+                                            Out of Stock
+                                        </button>
+                                    <% } %>
+                                    <button onclick="removeFromWishlist('<%= item.productId._id %>')"
+                                            class="p-2 text-red-500 hover:text-red-600">
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
-                                <% } else if (item.productId.stock > 0) { %>
-                                    <button 
-                                        onclick="addToCart('<%= item.productId._id %>')"
-                                        class="bg-black text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-800 transition-colors flex-1"
-                                    >
-                                        Add to Cart
-                                    </button>
-                                <% } else { %>
-                                    <button 
-                                        class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
-                                        disabled
-                                    >
-                                        Out of Stock
-                                    </button>
-                                <% } %>
+                                </div>
                             </div>
                         </div>
 
-                        <button 
-                            onclick="removeFromWishlist('<%= item.productId._id %>')"
-                            class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
-                        >
-                            <i class="fas fa-heart text-red-500 text-sm"></i>
-                        </button>
+                        <!-- Desktop Layout -->
+                        <div class="hidden md:block">
+                            <% if (item.productId && item.productId.isActive) { %>
+                                <a href="/product/<%= item.productId._id %>" class="block flex-grow">
+                            <% } else { %>
+                                <div onclick="showUnavailableMessage()" class="block flex-grow cursor-not-allowed">
+                            <% } %>
+                                <div class="relative aspect-[4/5] overflow-hidden">
+                                    <img 
+                                        src="<%= item.productId.imageUrl[0] %>" 
+                                        alt="<%= item.productId.productName %>"
+                                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                    >
+                                    <% if (item.productId && !item.productId.isActive) { %>
+                                        <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium px-2 py-0.5 rounded-full bg-black bg-opacity-75">
+                                                Unavailable
+                                            </span>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="p-2">
+                                    <h3 class="text-sm font-medium text-gray-800 truncate">
+                                        <%= item.productId.productName %>
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mt-1">₹<%= item.productId.price %></p>
+                                </div>
+                            <% if (item.productId && item.productId.isActive) { %>
+                                </a>
+                            <% } else { %>
+                                </div>
+                            <% } %>
+                            
+                            <div class="p-2 bg-white border-t mt-auto">
+                                <div class="flex items-center gap-1">
+                                    <% if (item.productId && !item.productId.isActive) { %>
+                                        <button 
+                                            class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
+                                            disabled
+                                        >
+                                            Unavailable
+                                        </button>
+                                    <% } else if (item.productId.stock > 0) { %>
+                                        <button 
+                                            onclick="addToCart('<%= item.productId._id %>')"
+                                            class="bg-black text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-800 transition-colors flex-1"
+                                        >
+                                            Add to Cart
+                                        </button>
+                                    <% } else { %>
+                                        <button 
+                                            class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
+                                            disabled
+                                        >
+                                            Out of Stock
+                                        </button>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <button 
+                                onclick="removeFromWishlist('<%= item.productId._id %>')"
+                                class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
+                            >
+                                <i class="fas fa-heart text-red-500 text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 <% }); %>
             </div>
 
+            <!-- Load More Button -->
             <% if (wishlist.length > 4) { %>
-                <div class="text-center mt-8">
+                <div class="text-center mt-6">
                     <button id="load-more" 
                             class="bg-white text-gray-800 px-6 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors border border-gray-200">
                         Show More Items 
@@ -167,6 +231,7 @@
 
         async function removeFromWishlist(productId) {
             try {
+                // Prevent event propagation
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -177,22 +242,55 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Remove item from UI with animation
                     const item = document.getElementById(`wishlist-item-${productId}`);
-                    item.classList.add('transform', 'transition-all', 'duration-300', 'opacity-0', 'scale-95');
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.95)';
+                    item.style.transition = 'all 0.3s ease';
                     
                     setTimeout(() => {
                         item.remove();
-                        if (document.querySelectorAll('[id^="wishlist-item-"]').length === 0) {
+                        
+                        // Show next hidden item if available
+                        const hiddenItems = document.querySelectorAll('[id^="wishlist-item-"].hidden');
+                        if (hiddenItems.length > 0) {
+                            const nextItem = hiddenItems[0];
+                            nextItem.classList.remove('hidden');
+                            nextItem.style.opacity = '0';
+                            requestAnimationFrame(() => {
+                                nextItem.style.opacity = '1';
+                                nextItem.style.transition = 'opacity 0.3s ease';
+                            });
+                        }
+
+                        // Update wishlist count
+                        const wishlistCount = document.querySelectorAll('[id^="wishlist-item-"]').length;
+                        document.querySelectorAll('#wishlist-count').forEach(el => {
+                            el.textContent = wishlistCount;
+                        });
+
+                        // If wishlist is empty, reload page to show empty state
+                        if (wishlistCount === 0) {
                             window.location.reload();
+                        }
+
+                        // Update load more button visibility
+                        const loadMoreBtn = document.getElementById('load-more');
+                        if (loadMoreBtn) {
+                            const remainingItems = document.querySelectorAll('[id^="wishlist-item-"].hidden').length;
+                            if (remainingItems === 0) {
+                                loadMoreBtn.classList.add('hidden');
+                            }
                         }
                     }, 300);
 
-                    showToast('success', 'Removed from wishlist');
+                    showToast('success', 'Item removed from wishlist');
                 } else {
                     throw new Error(data.message);
                 }
             } catch (error) {
-                showToast('error', 'Error', error.message || 'Error removing from wishlist');
+                console.error('Wishlist remove error:', error);
+                showToast('error', 'Error', 'Error removing from wishlist');
             }
         }
 
@@ -271,65 +369,94 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const ITEMS_PER_LOAD = 5;
+            const ITEMS_PER_LOAD = 4;
             let visibleItems = ITEMS_PER_LOAD;
-            const totalItems = parseInt(document.getElementById('wishlist-grid').dataset.totalItems);
-            const loadMoreBtn = document.getElementById('load-more');
-            const itemsShownSpan = document.getElementById('items-shown');
             const wishlistGrid = document.getElementById('wishlist-grid');
+            const loadMoreBtn = document.getElementById('load-more');
+            const totalItems = parseInt(wishlistGrid.getAttribute('data-total-items'));
+            let isLoading = false;
 
+            // Show More button for desktop only
             if (loadMoreBtn) {
-                loadMoreBtn.addEventListener('click', function() {
-                    const hiddenItems = wishlistGrid.querySelectorAll('.hidden');
-                    const itemsToShow = Array.from(hiddenItems).slice(0, ITEMS_PER_LOAD);
-                    
-                    itemsToShow.forEach(item => {
-                        item.classList.remove('hidden');
-                        // Replace custom animation with Tailwind classes
-                        item.classList.add('animate-[fade-in_0.3s_ease-out]', 'opacity-0', 'translate-y-2');
-                        requestAnimationFrame(() => {
-                            item.classList.remove('opacity-0', 'translate-y-2');
-                        });
-                    });
-
-                    visibleItems += itemsToShow.length;
-                    itemsShownSpan.textContent = visibleItems;
-
-                    // Hide button if all items are shown
-                    if (visibleItems >= totalItems) {
-                        loadMoreBtn.style.display = 'none';
-                    }
-
-                    // Smooth scroll to the last newly visible item
-                    if (itemsToShow.length > 0) {
-                        const lastNewItem = itemsToShow[itemsToShow.length - 1];
-                        lastNewItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                });
+                loadMoreBtn.classList.add('hidden', 'md:block');
+                loadMoreBtn.addEventListener('click', loadMoreItems);
             }
 
-            // Update count when items are removed
-            window.updateWishlistCount = function() {
-                const count = document.querySelectorAll('[id^="wishlist-item-"]').length;
-                document.getElementById('wishlist-count').textContent = count;
-                
-                // Hide load more button if not needed
-                if (count <= ITEMS_PER_LOAD && loadMoreBtn) {
-                    loadMoreBtn.style.display = 'none';
-                }
-                
-                // Show empty state if no items
-                if (count === 0) {
-                    window.location.reload();
-                }
-            };
+            // Infinite scroll for mobile
+            const observer = new IntersectionObserver((entries) => {
+                // Only trigger on mobile devices
+                if (window.innerWidth >= 768) return;
 
-            // Add this to your existing removeFromWishlist function
-            const originalRemoveFromWishlist = window.removeFromWishlist;
-            window.removeFromWishlist = async function(productId) {
-                await originalRemoveFromWishlist(productId);
-                updateWishlistCount();
-            };
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !isLoading) {
+                        loadMoreItems();
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '100px',
+                threshold: 0.1
+            });
+
+            // Function to load more items
+            function loadMoreItems() {
+                if (isLoading || visibleItems >= totalItems) return;
+                isLoading = true;
+
+                const hiddenItems = document.querySelectorAll('[id^="wishlist-item-"].hidden');
+                const itemsToShow = Array.from(hiddenItems).slice(0, ITEMS_PER_LOAD);
+
+                itemsToShow.forEach(item => {
+                    item.classList.remove('hidden');
+                    item.classList.add('opacity-0');
+                    requestAnimationFrame(() => {
+                        item.classList.remove('opacity-0');
+                        item.classList.add('transition-opacity', 'duration-300');
+                    });
+                });
+
+                visibleItems += itemsToShow.length;
+
+                // Update observer for the new last item
+                updateIntersectionObserver();
+
+                // Hide load more button if all items are shown (desktop only)
+                if (visibleItems >= totalItems) {
+                    loadMoreBtn?.classList.add('hidden');
+                }
+
+                isLoading = false;
+            }
+
+            // Update observer target
+            function updateIntersectionObserver() {
+                // Disconnect previous observations
+                observer.disconnect();
+
+                // Find the last visible item
+                const visibleItems = document.querySelectorAll('[id^="wishlist-item-"]:not(.hidden)');
+                if (visibleItems.length > 0) {
+                    const lastItem = visibleItems[visibleItems.length - 1];
+                    observer.observe(lastItem);
+                }
+            }
+
+            // Initial observer setup
+            updateIntersectionObserver();
+
+            // Handle window resize
+            let lastWidth = window.innerWidth;
+            window.addEventListener('resize', () => {
+                const newWidth = window.innerWidth;
+                const breakpoint = 768;
+
+                // Only handle changes across the mobile/desktop breakpoint
+                if ((lastWidth < breakpoint && newWidth >= breakpoint) || 
+                    (lastWidth >= breakpoint && newWidth < breakpoint)) {
+                    lastWidth = newWidth;
+                    updateIntersectionObserver();
+                }
+            });
         });
     </script>
 </body>

@@ -46,9 +46,7 @@
     <!-- Page Content -->
     <div class="bg-gray-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
-          Shop All
-        </h2>
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center"></h2>
 
         <div class="flex flex-col md:flex-row gap-8 ">
           <!-- Left Sidebar - Filters -->
@@ -184,18 +182,25 @@
               <!-- Dynamic product rendering here -->
               <% products.forEach(product => { %>
               <a href="/product/<%= product._id %>" 
-                 class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                 class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative">
                 <!-- Product Image with Discount Badge -->
                 <div class="relative aspect-[4/5] overflow-hidden">
                   <img 
                     src="<%= product.imageUrl[0] %>" 
                     alt="<%= product.productName %>"
-                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 <%= product.stock === 0 ? 'opacity-60' : '' %>"
                     loading="lazy"
                   >
                   <% if (product.discountPrice < product.price) { %>
                     <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                       -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
+                    </div>
+                  <% } %>
+                  <% if (product.stock === 0) { %>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="bg-black bg-opacity-75 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                        Out of Stock
+                      </span>
                     </div>
                   <% } %>
                 </div>
@@ -277,17 +282,24 @@
 
               productGrid.innerHTML = productsToRender.map(product => `
                   <a href="/product/${product._id}" 
-                     class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                     class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative">
                       <div class="relative aspect-[4/5] overflow-hidden">
                           <img
                               src="${product.imageUrl[0]}"
                               alt="${product.productName}"
-                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 ${product.stock === 0 ? 'opacity-60' : ''}"
                               loading="lazy"
                           >
                           ${product.discountPrice < product.price ? `
                               <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                                   -${Math.round((product.price - product.discountPrice) / product.price * 100)}%
+                              </div>
+                          ` : ''}
+                          ${product.stock === 0 ? `
+                              <div class="absolute inset-0 flex items-center justify-center">
+                                  <span class="bg-black bg-opacity-75 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                                      Out of Stock
+                                  </span>
                               </div>
                           ` : ''}
                       </div>

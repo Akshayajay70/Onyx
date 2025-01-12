@@ -66,9 +66,9 @@
       <!-- Breadcrumb -->
       <nav class="max-w-7xl mx-auto px-4 py-4">
         <ol class="flex items-center space-x-2 text-sm">
-          <li><a href="/home" class="text-gray-600 hover:text-black">Home</a></li>
+          <li><a href="/home" class="text-gray-500 hover:text-gray-900 transition-colors">Home</a></li>
           <li><span class="text-gray-400">/</span></li>
-          <li><a href="/shop" class="text-gray-600 hover:text-black">Shop</a></li>
+          <li><a href="/shop" class="text-gray-500 hover:text-gray-900 transition-colors">Shop</a></li>
           <li><span class="text-gray-400">/</span></li>
           <li class="text-gray-900 font-medium"><%= product.brand %> <%= product.productName %></li>
         </ol>
@@ -76,18 +76,18 @@
 
       <!-- Product Section -->
       <div class="max-w-7xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+        <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-6 md:p-8">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Image Gallery Section -->
             <div class="space-y-4">
               <!-- Main Image with Zoom -->
-              <div class="bg-gray-50 rounded-xl p-4">
-                <div id="imageZoom" style="--url: url(<%= product.imageUrl[0] %>); --zoom-x: 0%; --zoom-y: 0%; --display: none;">
+              <div class="bg-gray-50 rounded-2xl p-4">
+                <div id="imageZoom" class="aspect-square" style="--url: url(<%= product.imageUrl[0] %>); --zoom-x: 0%; --zoom-y: 0%; --display: none;">
                   <img 
                     id="main-product-image"
                     src="<%= product.imageUrl[0] %>"
                     alt="<%= product.productName %>"
-                    class="rounded-lg"
+                    class="w-full h-full object-cover rounded-xl"
                   />
                 </div>
               </div>
@@ -98,7 +98,7 @@
                   <img 
                     src="<%= image %>" 
                     alt="<%= product.productName %> view <%= index + 1 %>"
-                    class="w-20 h-20 rounded-lg cursor-pointer object-cover border-2 border-transparent hover:border-black transition-colors"
+                    class="w-20 h-20 rounded-xl cursor-pointer object-cover border-2 border-transparent hover:border-gray-900 transition-all"
                     onclick="updateMainImage('<%= image %>')"
                   />
                 <% }) %>
@@ -109,27 +109,30 @@
             <div class="space-y-6">
               <!-- Brand & Title -->
               <div>
-                <h2 class="text-sm text-gray-500 uppercase tracking-wide"><%= product.brand %></h2>
-                <h1 class="text-3xl font-bold text-gray-900 mt-1"><%= product.productName %></h1>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="w-8 h-[2px] bg-gray-900"></span>
+                  <span class="text-gray-500 text-sm tracking-wider uppercase"><%= product.brand %></span>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900"><%= product.productName %></h1>
               </div>
 
               <!-- Rating -->
-              <div class="flex items-center space-x-2">
+              <div class="flex items-center gap-2">
                 <div class="flex text-yellow-400">
                   <% for(let i = 1; i <= 5; i++) { %>
-                    <i class="fas fa-star <%= i <= product.rating ? '' : 'text-gray-300' %>"></i>
+                    <i class="fas fa-star <%= i <= product.rating ? '' : 'text-gray-200' %>"></i>
                   <% } %>
                 </div>
-                <span class="text-gray-600">(<%= product.rating || 'No rating' %>)</span>
+                <span class="text-gray-500">(<%= product.rating || 'No rating' %>)</span>
               </div>
 
               <!-- Price -->
               <div class="space-y-2">
                 <% if (product.discountPrice < product.originalPrice) { %>
-                  <div class="flex items-baseline space-x-3">
+                  <div class="flex items-baseline gap-3">
                     <span class="text-4xl font-bold text-gray-900">₹<%= product.discountPrice %></span>
-                    <span class="text-xl text-gray-500 line-through">₹<%= product.originalPrice %></span>
-                    <span class="text-green-600 font-medium px-2 py-1 bg-green-50 rounded-full text-sm">
+                    <span class="text-xl text-gray-400 line-through">₹<%= product.originalPrice %></span>
+                    <span class="bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
                       -<%= Math.round((product.originalPrice - product.discountPrice) / product.originalPrice * 100) %>%
                     </span>
                   </div>
@@ -141,12 +144,12 @@
               <!-- Stock Status -->
               <div>
                 <% if (product.stock === 0) { %>
-                  <div class="inline-flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-full font-medium">
+                  <div class="inline-flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm font-medium">
                     <i class="fas fa-times-circle mr-2"></i>
                     Out of Stock
                   </div>
                 <% } else { %>
-                  <div class="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-full font-medium">
+                  <div class="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
                     <i class="fas fa-check-circle mr-2"></i>
                     In Stock (<%= product.stock %> available)
                   </div>
@@ -154,7 +157,7 @@
               </div>
 
               <!-- Product Details -->
-              <div class="border-t border-gray-200 pt-6">
+              <div class="border-t border-gray-100 pt-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
                 <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
@@ -177,9 +180,9 @@
                 <% if (product.stock > 0) { %>
                   <button 
                     onclick="addToCart('<%= product._id %>')"
-                    class="flex-1 px-6 py-4 bg-black text-white rounded-xl font-bold shadow-sm hover:bg-gray-800 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    class="flex-1 px-6 py-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                   >
-                    <i class="fas fa-shopping-cart mr-2"></i>
+                    <i class="fas fa-shopping-cart"></i>
                     Add To Cart
                   </button>
                 <% } %>
@@ -187,7 +190,7 @@
                 <button 
                   onclick="toggleWishlist('<%= product._id %>')"
                   id="wishlist-btn-<%= product._id %>"
-                  class="px-6 py-4 bg-white text-gray-800 rounded-xl font-bold shadow-sm hover:bg-gray-50 border border-gray-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                  class="p-4 bg-white text-gray-800 rounded-xl font-medium hover:bg-gray-50 border border-gray-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <i class="far fa-heart text-xl"></i>
                 </button>
@@ -198,33 +201,61 @@
 
         <!-- Related Products -->
         <div class="mt-16">
-          <h3 class="text-2xl font-bold text-gray-900 mb-8">You May Also Like</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-8 h-[2px] bg-gray-900"></span>
+                <span class="text-gray-500 text-sm tracking-wider uppercase">Related</span>
+              </div>
+              <h2 class="text-3xl font-bold text-gray-900">You May Also Like</h2>
+            </div>
+          </div>
+
+          <div class="flex overflow-x-auto gap-4 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6 pb-4 sm:pb-0">
             <% relatedProducts.forEach(product => { %>
-              <div class="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
-                <a href="/product/<%= product._id %>" class="block">
-                  <img 
-                    class="w-full h-48 object-cover rounded-lg mb-4"
-                    src="<%= product.imageUrl[0] %>"
-                    alt="<%= product.productName %>"
-                  />
-                  <div class="space-y-2">
-                    <h3 class="font-medium text-gray-900 line-clamp-2">
-                      <%= product.brand %> <%= product.productName %>
-                    </h3>
-                    <div class="flex items-center text-yellow-400 text-sm">
-                      <i class="fas fa-star"></i>
-                      <span class="ml-1 text-gray-600"><%= product.rating || 'No rating' %></span>
+              <a href="/product/<%= product._id %>" class="group min-w-[240px] sm:min-w-0">
+                <div class="bg-white rounded-2xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300">
+                  <!-- Product Image -->
+                  <div class="relative aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src="<%= product.imageUrl[0] %>"
+                      alt="<%= product.productName %>"
+                      class="w-full h-full object-cover transform transition-all duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <% if (product.discountPrice < product.originalPrice) { %>
+                      <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-xs font-medium">
+                        -<%= Math.round((product.originalPrice - product.discountPrice) / product.originalPrice * 100) %>%
+                      </div>
+                    <% } %>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="p-5">
+                    <!-- Brand & Rating -->
+                    <div class="flex justify-between items-center mb-2">
+                      <div class="text-sm text-gray-500 font-medium"><%= product.brand %></div>
+                      <div class="flex items-center gap-1">
+                        <i class="fas fa-star text-yellow-400 text-xs"></i>
+                        <span class="text-sm text-gray-500"><%= product.rating %></span>
+                      </div>
                     </div>
+                    
+                    <!-- Product Name -->
+                    <h3 class="text-gray-900 font-medium mb-2 truncate group-hover:text-gray-700 transition-colors">
+                      <%= product.productName %>
+                    </h3>
+                    
+                    <!-- Price -->
                     <div class="flex items-baseline gap-2">
                       <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
                       <% if (product.discountPrice < product.originalPrice) { %>
-                        <span class="text-sm text-gray-500 line-through">₹<%= product.originalPrice %></span>
+                        <span class="text-sm text-gray-400 line-through">₹<%= product.originalPrice %></span>
                       <% } %>
                     </div>
                   </div>
-                </a>
-              </div>
+                </div>
+              </a>
             <% }) %>
           </div>
         </div>
@@ -232,6 +263,54 @@
     </div>
 
     <%- include("../partials/footer") %>
+
+    <!-- Modal Backdrop -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-90 opacity-0 translate-y-4">
+            <!-- Success Template -->
+            <div id="successAlert" class="hidden">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+                    <i class="fas fa-check text-2xl text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Success!</h3>
+                <p id="successMessage" class="text-gray-600 text-center mb-6">Item added to cart successfully</p>
+                <div class="flex gap-3">
+                    <button onclick="hideAlert()" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl transition-colors duration-200">
+                        Continue Shopping
+                    </button>
+                    <button onclick="window.location.href='/cart'" class="flex-1 py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+                        View Cart
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Template -->
+            <div id="errorAlert" class="hidden">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                    <i class="fas fa-exclamation text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Error</h3>
+                <p id="errorMessage" class="text-gray-600 text-center mb-6">Something went wrong</p>
+                <button onclick="hideAlert()" class="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white rounded-xl transition-colors duration-200">
+                    Try Again
+                </button>
+            </div>
+
+            <!-- Loading Template -->
+            <div id="loadingAlert" class="hidden">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 mb-6">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-black"></div>
+                </div>
+                <h3 class="text-xl font-semibold text-center text-gray-900 mb-2">Processing</h3>
+                <p class="text-gray-600 text-center">Please wait...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2"></div>
 
     <script>
       // Image zoom functionality
@@ -260,6 +339,8 @@
       // Add to cart functionality
       async function addToCart(productId) {
         try {
+          const loadingId = showToast('loading', 'Adding to cart...');
+
           const response = await fetch('/cart/add', {
             method: 'POST',
             headers: {
@@ -272,111 +353,45 @@
           });
 
           const data = await response.json();
+          removeToast(loadingId);
 
           if (response.ok) {
-            // Update the button to "Go to Cart"
-            const addToCartBtn = document.querySelector(`button[onclick="addToCart('${productId}')"]`);
-            addToCartBtn.innerHTML = `
-              <i class="fas fa-shopping-bag mr-2"></i>
-              Go to Cart
-            `;
-            addToCartBtn.onclick = () => window.location.href = '/cart';
-            addToCartBtn.classList.remove('bg-black', 'hover:bg-gray-800');
-            addToCartBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Added to Cart',
-              text: data.message,
-              toast: true,
-              position: 'top-end',
-              showConfirmButton: false,
-              timer: 2000
-            });
-
+            showToast('success', data.message);
+            
             // Update cart count in navbar
             const cartCountElement = document.querySelector('.cart-count');
             if (cartCountElement) {
               cartCountElement.textContent = data.cartCount;
             }
           } else {
-            // If the error is about quantity limit, show toast alert
-            if (data.message.includes('Maximum limit')) {
-              Swal.fire({
-                title: 'Maximum Quantity Reached',
-                text: data.message,
-                icon: 'warning',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'View Cart',
-                cancelButtonText: 'Close',
-                timer: 5000,
-                timerProgressBar: true,
-                customClass: {
-                  popup: 'rounded-lg shadow-md',
-                  title: 'text-gray-800 font-semibold',
-                  htmlContainer: 'text-gray-600',
-                  actions: 'space-x-2',
-                  confirmButton: 'bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm transition-colors',
-                  cancelButton: 'bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm transition-colors'
-                },
-                buttonsStyling: false,
-                showClass: {
-                  popup: 'animate__animated animate__fadeInRight animate__faster'
-                },
-                hideClass: {
-                  popup: 'animate__animated animate__fadeOutRight animate__faster'
-                }
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  window.location.href = '/cart';
-                }
-              });
-            } else {
-              throw new Error(data.message);
-            }
+            showToast('error', data.message);
           }
         } catch (error) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message || 'Failed to add to cart',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-          });
+          showToast('error', 'Failed to add item to cart');
         }
       }
 
       // Add to wishlist functionality
       async function addToWishlist(productId) {
         try {
-          const response = await fetch('/wishlist/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId })
-          });
-
-          if (response.ok) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Added to Wishlist',
-              timer: 1500,
-              showConfirmButton: true
+            const loadingId = showToast('loading', 'Adding to wishlist...');
+            
+            const response = await fetch('/wishlist/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId })
             });
-          } else {
-            const data = await response.json();
-            throw new Error(data.message);
-          }
+
+            removeToast(loadingId);
+
+            if (response.ok) {
+                showToast('success', 'Added to wishlist');
+            } else {
+                const data = await response.json();
+                throw new Error(data.message);
+            }
         } catch (error) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message || 'Failed to add to wishlist'
-          });
+            showToast('error', error.message || 'Failed to add to wishlist');
         }
       }
 
@@ -384,29 +399,21 @@
         try {
             const wishlistBtn = document.querySelector(`#wishlist-btn-${productId} i`);
             const isInWishlist = wishlistBtn.classList.contains('fas');
+            const loadingId = showToast('loading', isInWishlist ? 'Removing from wishlist...' : 'Adding to wishlist...');
 
             if (isInWishlist) {
-                // Remove from wishlist
                 const response = await fetch(`/wishlist/remove/${productId}`, {
                     method: 'DELETE'
                 });
                 const data = await response.json();
+                removeToast(loadingId);
 
                 if (data.success) {
                     wishlistBtn.classList.replace('fas', 'far');
                     wishlistBtn.classList.remove('text-red-500');
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Removed from wishlist',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
+                    showToast('success', 'Removed from wishlist');
                 }
             } else {
-                // Add to wishlist
                 const response = await fetch('/wishlist/add', {
                     method: 'POST',
                     headers: {
@@ -415,32 +422,16 @@
                     body: JSON.stringify({ productId })
                 });
                 const data = await response.json();
+                removeToast(loadingId);
 
-                if (data.success) {
+                if (response.ok) {
                     wishlistBtn.classList.replace('far', 'fas');
                     wishlistBtn.classList.add('text-red-500');
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Added to wishlist',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
+                    showToast('success', 'Added to wishlist');
                 }
             }
         } catch (error) {
-            console.error('Wishlist toggle error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.message || 'Error updating wishlist',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            });
+            showToast('error', 'Failed to update wishlist');
         }
       }
 
@@ -459,6 +450,75 @@
             console.error('Error checking wishlist status:', error);
         }
       });
+
+
+      function showToast(type, message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const id = Date.now();
+        
+        // Base classes for toast
+        let baseClasses = 'transform transition-all duration-300 ease-out flex items-center gap-3 p-4 rounded-lg shadow-lg max-w-xs translate-x-full';
+        let icon, bgColor;
+        
+        // Set styles based on type
+        switch(type) {
+            case 'success':
+                bgColor = 'bg-green-50 text-green-800 border border-green-100';
+                icon = '<i class="fas fa-check-circle text-green-500 text-lg"></i>';
+                break;
+            case 'error':
+                bgColor = 'bg-red-50 text-red-800 border border-red-100';
+                icon = '<i class="fas fa-exclamation-circle text-red-500 text-lg"></i>';
+                break;
+            case 'loading':
+                bgColor = 'bg-gray-50 text-gray-800 border border-gray-100';
+                icon = '<div class="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-gray-600"></div>';
+                break;
+            default:
+                bgColor = 'bg-gray-50 text-gray-800 border border-gray-100';
+                icon = '<i class="fas fa-info-circle text-gray-500 text-lg"></i>';
+        }
+
+        // Set toast HTML
+        toast.className = `${baseClasses} ${bgColor}`;
+        toast.id = `toast-${id}`;
+        toast.innerHTML = `
+            ${icon}
+            <p class="text-sm font-medium">${message}</p>
+            <button onclick="removeToast('${id}')" class="ml-auto text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        // Add toast to container
+        container.appendChild(toast);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+        });
+
+        // Auto remove after delay (except for loading)
+        if (type !== 'loading') {
+            setTimeout(() => removeToast(id), 3000);
+        }
+
+        return id;
+      }
+
+      function removeToast(id) {
+        const toast = document.getElementById(`toast-${id}`);
+        if (!toast) return;
+
+        // Animate out
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+
+        // Remove after animation
+        setTimeout(() => toast.remove(), 300);
+      }
     </script>
   </body>
 </html>
