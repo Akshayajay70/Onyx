@@ -240,49 +240,65 @@ const userOrderController = {
             const { orderId } = req.params;
             const userId = req.session.user;
 
-            // Find the order with failed payment status
-            const order = await orderSchema.findOne({
-                _id: orderId,
-                userId,
-                'payment.method': 'razorpay',
-                'payment.paymentStatus': 'failed',
-                'items.order.status': 'pending' 
-            }).populate('userId');
+            // Find order and populate product details
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
 
             if (!order) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Order not found or payment retry not available'
+                    message: 'Order not found'
                 });
             }
 
-            // Create new Razorpay order
-            const razorpayOrder = await razorpay.orders.create({
-                amount: Math.round(order.totalAmount * 100), // Convert to paise
-                currency: "INR",
-                receipt: `retry_${order.orderCode}`
-            });
-
-            // Update order with new Razorpay order ID
-            await orderSchema.findByIdAndUpdate(orderId, {
-                'payment.razorpayTransaction.razorpayOrderId': razorpayOrder.id,
-                $push: {
-                    'items.$[].order.statusHistory': {
-                        status: 'pending',
-                        date: new Date(),
-                        comment: 'Payment retry initiated'
-                    }
+            // Check stock availability for all items
+            const stockCheck = await Promise.all(order.items.map(async (item) => {
+                const product = await productSchema.findById(item.product._id);
+                if (!product || product.stock < item.quantity) {
+                    return {
+                        productName: item.product.productName,
+                        available: false,
+                        requiredQuantity: item.quantity,
+                        currentStock: product ? product.stock : 0
+                    };
                 }
-            });
+                return { available: true };
+            }));
+
+            // Check if any product is out of stock
+            const outOfStockItems = stockCheck.filter(item => !item.available);
+            if (outOfStockItems.length > 0) {
+                const errorMessages = outOfStockItems.map(item => 
+                    `${item.productName} - Required: ${item.requiredQuantity}, Available: ${item.currentStock}`
+                );
+                
+                return res.status(400).json({
+                    success: false,
+                    message: 'Some items are out of stock',
+                    details: errorMessages.join('\n')
+                });
+            }
+
+            // If all items are in stock, proceed with payment
+            const options = {
+                amount: order.totalAmount * 100,
+                currency: "INR",
+                receipt: orderId,
+            };
+
+            const razorpayOrder = await razorpay.orders.create(options);
+
+            // Get user details for prefill
+            const user = await userSchema.findById(userId);
 
             res.json({
                 success: true,
                 key: process.env.RAZORPAY_KEY_ID,
                 order: razorpayOrder,
                 orderDetails: {
-                    name: order.userId.firstName + ' ' + order.userId.lastName,
-                    email: order.userId.email,
-                    contact: order.shippingAddress.mobileNumber
+                    name: user.name,
+                    email: user.email,
+                    contact: user.mobile
                 }
             });
 
@@ -290,7 +306,7 @@ const userOrderController = {
             console.error('Retry payment error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error processing payment retry'
+                message: error.message || 'Failed to initiate payment'
             });
         }
     },
@@ -304,7 +320,7 @@ const userOrderController = {
                 orderId 
             } = req.body;
 
-            const order = await orderSchema.findById(orderId);
+            const order = await orderSchema.findById(orderId).populate('items.product');
             if (!order) {
                 return res.status(404).json({ 
                     success: false, 
@@ -336,6 +352,14 @@ const userOrderController = {
                     success: false,
                     message: 'Invalid payment signature'
                 });
+            }
+
+            // Update product stock for each item in the order
+            for (const item of order.items) {
+                await productSchema.findByIdAndUpdate(
+                    item.product._id,
+                    { $inc: { stock: -item.quantity } }
+                );
             }
 
             // Update order with successful payment

@@ -179,7 +179,8 @@
               <div class="flex gap-4 pt-6">
                 <% if (product.stock > 0) { %>
                   <button 
-                    onclick="addToCart('<%= product._id %>')"
+                    id="cartButton-<%= product._id %>"
+                    onclick="handleCartAction('<%= product._id %>')"
                     class="flex-1 px-6 py-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                   >
                     <i class="fas fa-shopping-cart"></i>
@@ -336,41 +337,6 @@
         imageZoom.style.setProperty('--url', `url(${imageUrl})`);
       }
 
-      // Add to cart functionality
-      async function addToCart(productId) {
-        try {
-          const loadingId = showToast('loading', 'Adding to cart...');
-
-          const response = await fetch('/cart/add', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              productId,
-              quantity: 1
-            })
-          });
-
-          const data = await response.json();
-          removeToast(loadingId);
-
-          if (response.ok) {
-            showToast('success', data.message);
-            
-            // Update cart count in navbar
-            const cartCountElement = document.querySelector('.cart-count');
-            if (cartCountElement) {
-              cartCountElement.textContent = data.cartCount;
-            }
-          } else {
-            showToast('error', data.message);
-          }
-        } catch (error) {
-          showToast('error', 'Failed to add item to cart');
-        }
-      }
-
       // Add to wishlist functionality
       async function addToWishlist(productId) {
         try {
@@ -518,6 +484,56 @@
 
         // Remove after animation
         setTimeout(() => toast.remove(), 300);
+      }
+
+      async function handleCartAction(productId) {
+        const button = document.getElementById(`cartButton-${productId}`);
+        
+        if (button.classList.contains('in-cart')) {
+            // If already in cart, go to cart page
+            window.location.href = '/cart';
+            return;
+        }
+
+        try {
+            const loadingId = showToast('loading', 'Adding to cart...');
+
+            const response = await fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productId,
+                    quantity: 1
+                })
+            });
+
+            const data = await response.json();
+            removeToast(loadingId);
+
+            if (response.ok) {
+                showToast('success', data.message);
+                
+                // Update cart count in navbar
+                const cartCountElement = document.querySelector('.cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = data.cartCount;
+                }
+
+                // Update button appearance and function
+                button.classList.add('in-cart', 'bg-green-600', 'hover:bg-green-700');
+                button.classList.remove('bg-gray-900', 'hover:bg-gray-800');
+                button.innerHTML = `
+                    <i class="fas fa-shopping-bag"></i>
+                    Go to Cart
+                `;
+            } else {
+                showToast('error', data.message);
+            }
+        } catch (error) {
+            showToast('error', 'Failed to add item to cart');
+        }
       }
     </script>
   </body>
