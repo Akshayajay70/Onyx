@@ -1,11 +1,11 @@
-import cartSchema from '../model/cartModel.js';
-import orderSchema from '../model/orderModel.js';
-import addressSchema from '../model/addressModel.js';
-import productSchema from '../model/productModel.js';
-import Coupon from '../model/couponModel.js';
-import razorpay from '../utils/razorpay.js';
+import cartSchema from '../../model/cartModel.js';
+import orderSchema from '../../model/orderModel.js';
+import addressSchema from '../../model/addressModel.js';
+import productSchema from '../../model/productModel.js';
+import Coupon from '../../model/couponModel.js';
+import razorpay from '../../utils/razorpay.js';
 import crypto from 'crypto';
-import Wallet from '../model/walletModel.js';
+import Wallet from '../../model/walletModel.js';
 
 // Helper function (keep this at the top of the file)
 function calculateProportionalDiscounts(items, totalDiscount) {
