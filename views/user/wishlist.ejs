@@ -14,7 +14,7 @@
     <%- include("../partials/nav") %>
 
     <div class="container mx-auto px-4 py-8 mt-28">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">My Wishlist</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">My Wishlist (<span id="wishlist-count"><%= wishlist.length %></span> items)</h1>
 
         <% if (wishlist.length === 0) { %>
             <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -28,34 +28,38 @@
                 </a>
             </div>
         <% } else { %>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <% wishlist.forEach(item => { %>
-                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden group relative flex flex-col h-full" id="wishlist-item-<%= item.productId._id %>">
+            <div id="wishlist-grid" 
+                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
+                 data-total-items="<%= wishlist.length %>">
+                <% wishlist.forEach((item, index) => { %>
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden group relative flex flex-col h-full <%= index >= 4 ? 'hidden' : '' %>" 
+                         id="wishlist-item-<%= item.productId._id %>"
+                         data-index="<%= index %>">
                         <% if (item.productId && item.productId.isActive) { %>
                             <a href="/product/<%= item.productId._id %>" class="block flex-grow">
                         <% } else { %>
                             <div onclick="showUnavailableMessage()" class="block flex-grow cursor-not-allowed">
                         <% } %>
-                            <div class="relative aspect-square">
+                            <div class="relative aspect-[4/5] overflow-hidden">
                                 <img 
                                     src="<%= item.productId.imageUrl[0] %>" 
                                     alt="<%= item.productId.productName %>"
-                                    class="w-full h-full object-contain"
+                                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 >
                                 <% if (item.productId && !item.productId.isActive) { %>
                                     <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                                        <span class="text-white text-sm font-medium px-3 py-1 rounded-full bg-black bg-opacity-75">
-                                            Currently Unavailable
+                                        <span class="text-white text-xs font-medium px-2 py-0.5 rounded-full bg-black bg-opacity-75">
+                                            Unavailable
                                         </span>
                                     </div>
                                 <% } %>
                             </div>
                             
-                            <div class="p-4">
-                                <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">
+                            <div class="p-2">
+                                <h3 class="text-sm font-medium text-gray-800 truncate">
                                     <%= item.productId.productName %>
                                 </h3>
-                                <p class="text-gray-600">₹<%= item.productId.price %></p>
+                                <p class="text-sm text-gray-600 mt-1">₹<%= item.productId.price %></p>
                             </div>
                         <% if (item.productId && item.productId.isActive) { %>
                             </a>
@@ -63,11 +67,11 @@
                             </div>
                         <% } %>
                         
-                        <div class="p-4 bg-white border-t mt-auto">
-                            <div class="flex items-center gap-2">
+                        <div class="p-2 bg-white border-t mt-auto">
+                            <div class="flex items-center gap-1">
                                 <% if (item.productId && !item.productId.isActive) { %>
                                     <button 
-                                        class="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg cursor-not-allowed flex-1"
+                                        class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
                                         disabled
                                     >
                                         Unavailable
@@ -75,13 +79,13 @@
                                 <% } else if (item.productId.stock > 0) { %>
                                     <button 
                                         onclick="addToCart('<%= item.productId._id %>')"
-                                        class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-1"
+                                        class="bg-black text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-800 transition-colors flex-1"
                                     >
                                         Add to Cart
                                     </button>
                                 <% } else { %>
                                     <button 
-                                        class="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg cursor-not-allowed flex-1"
+                                        class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
                                         disabled
                                     >
                                         Out of Stock
@@ -92,22 +96,77 @@
 
                         <button 
                             onclick="removeFromWishlist('<%= item.productId._id %>')"
-                            class="absolute top-4 right-4 bg-white rounded-full p-2 shadow-md hover:bg-red-50 transition-colors"
+                            class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
                         >
-                            <i class="fas fa-heart text-red-500"></i>
+                            <i class="fas fa-heart text-red-500 text-sm"></i>
                         </button>
                     </div>
                 <% }); %>
             </div>
+
+            <% if (wishlist.length > 4) { %>
+                <div class="text-center mt-8">
+                    <button id="load-more" 
+                            class="bg-white text-gray-800 px-6 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors border border-gray-200">
+                        Show More Items 
+                    </button>
+                </div>
+            <% } %>
         <% } %>
     </div>
 
     <%- include('../partials/footer') %>
 
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
     <script>
+        // Custom toast notification function
+        function showToast(type, title, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Set toast classes based on type
+            const baseClasses = 'flex items-center p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-out translate-x-full';
+            const typeClasses = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-yellow-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            toast.className = `${baseClasses} ${typeClasses[type]}`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0 mr-3">
+                    ${type === 'success' ? '<i class="fas fa-check-circle"></i>' :
+                      type === 'error' ? '<i class="fas fa-times-circle"></i>' :
+                      type === 'warning' ? '<i class="fas fa-exclamation-circle"></i>' :
+                      '<i class="fas fa-info-circle"></i>'}
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium">${title}</p>
+                    ${message ? `<p class="text-sm opacity-90">${message}</p>` : ''}
+                </div>
+                <button class="ml-4 hover:opacity-80" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full');
+            });
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         async function removeFromWishlist(productId) {
             try {
-                // Prevent event propagation
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -118,195 +177,160 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Remove item from UI
                     const item = document.getElementById(`wishlist-item-${productId}`);
-                    item.style.opacity = '0';
-                    item.style.transform = 'scale(0.95)';
-                    item.style.transition = 'all 0.3s ease';
+                    item.classList.add('transform', 'transition-all', 'duration-300', 'opacity-0', 'scale-95');
                     
                     setTimeout(() => {
                         item.remove();
-                        // If wishlist is empty, reload page to show empty state
                         if (document.querySelectorAll('[id^="wishlist-item-"]').length === 0) {
                             window.location.reload();
                         }
                     }, 300);
 
-                    // Show success message
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Removed from wishlist',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer)
-                            toast.addEventListener('mouseleave', Swal.resumeTimer)
-                        }
-                    });
+                    showToast('success', 'Removed from wishlist');
                 } else {
                     throw new Error(data.message);
                 }
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Error removing from wishlist',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
+                showToast('error', 'Error', error.message || 'Error removing from wishlist');
             }
         }
 
         async function addToCart(productId) {
             try {
-                // Prevent event propagation
                 event.preventDefault();
                 event.stopPropagation();
 
                 const response = await fetch('/cart/add', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ productId, quantity: 1 })
                 });
 
                 const data = await response.json();
                 
-                // Check if product is not active
                 if (data.message && data.message.includes('not available')) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Product Unavailable',
-                        text: 'This product is currently not available',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                    // Optionally reload the page to update the UI
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 3000);
+                    showToast('error', 'Product Unavailable', 'This product is currently not available');
+                    setTimeout(() => window.location.reload(), 3000);
                     return;
                 }
                 
-                // If the response includes a success message, show success alert
                 if (data.message && data.message.includes('added to cart')) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: data.message,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer)
-                            toast.addEventListener('mouseleave', Swal.resumeTimer)
-                        }
-                    });
+                    showToast('success', 'Success', data.message);
                 } else if (data.message && data.message.includes('Maximum limit')) {
-                    // Handle quantity limit error
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Quantity Limit Reached',
-                        text: data.message,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
+                    showToast('warning', 'Quantity Limit Reached', data.message);
                 } else {
                     throw new Error(data.message || 'Failed to add to cart');
                 }
             } catch (error) {
                 console.error('Cart error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Error adding to cart',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
+                showToast('error', 'Error', error.message || 'Error adding to cart');
             }
         }
 
         async function toggleWishlist(productId) {
             try {
-                // Check if product is in wishlist
                 const checkResponse = await fetch(`/wishlist/check/${productId}`);
                 const checkData = await checkResponse.json();
 
                 if (checkData.success) {
                     if (checkData.isInWishlist) {
-                        // Remove from wishlist
                         const response = await fetch(`/wishlist/remove/${productId}`, {
                             method: 'DELETE'
                         });
                         const data = await response.json();
 
                         if (data.success) {
-                            // Update UI - change heart to outline
                             document.querySelector(`#wishlist-btn-${productId} i`)
                                 .classList.replace('fas', 'far');
+                            showToast('success', 'Removed from wishlist');
                         }
                     } else {
-                        // Add to wishlist
                         const response = await fetch('/wishlist/add', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ productId })
                         });
                         const data = await response.json();
 
                         if (data.success) {
-                            // Update UI - change heart to solid
                             document.querySelector(`#wishlist-btn-${productId} i`)
                                 .classList.replace('far', 'fas');
+                            showToast('success', 'Added to wishlist');
                         }
                     }
                 }
             } catch (error) {
                 console.error('Wishlist toggle error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error updating wishlist',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                showToast('error', 'Error', 'Error updating wishlist');
             }
         }
 
         function showUnavailableMessage() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Product Unavailable',
-                text: 'This product is currently not available in our store',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
+            showToast('info', 'Product Unavailable', 'This product is currently not available in our store');
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const ITEMS_PER_LOAD = 5;
+            let visibleItems = ITEMS_PER_LOAD;
+            const totalItems = parseInt(document.getElementById('wishlist-grid').dataset.totalItems);
+            const loadMoreBtn = document.getElementById('load-more');
+            const itemsShownSpan = document.getElementById('items-shown');
+            const wishlistGrid = document.getElementById('wishlist-grid');
+
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', function() {
+                    const hiddenItems = wishlistGrid.querySelectorAll('.hidden');
+                    const itemsToShow = Array.from(hiddenItems).slice(0, ITEMS_PER_LOAD);
+                    
+                    itemsToShow.forEach(item => {
+                        item.classList.remove('hidden');
+                        // Replace custom animation with Tailwind classes
+                        item.classList.add('animate-[fade-in_0.3s_ease-out]', 'opacity-0', 'translate-y-2');
+                        requestAnimationFrame(() => {
+                            item.classList.remove('opacity-0', 'translate-y-2');
+                        });
+                    });
+
+                    visibleItems += itemsToShow.length;
+                    itemsShownSpan.textContent = visibleItems;
+
+                    // Hide button if all items are shown
+                    if (visibleItems >= totalItems) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+
+                    // Smooth scroll to the last newly visible item
+                    if (itemsToShow.length > 0) {
+                        const lastNewItem = itemsToShow[itemsToShow.length - 1];
+                        lastNewItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }
+
+            // Update count when items are removed
+            window.updateWishlistCount = function() {
+                const count = document.querySelectorAll('[id^="wishlist-item-"]').length;
+                document.getElementById('wishlist-count').textContent = count;
+                
+                // Hide load more button if not needed
+                if (count <= ITEMS_PER_LOAD && loadMoreBtn) {
+                    loadMoreBtn.style.display = 'none';
+                }
+                
+                // Show empty state if no items
+                if (count === 0) {
+                    window.location.reload();
+                }
+            };
+
+            // Add this to your existing removeFromWishlist function
+            const originalRemoveFromWishlist = window.removeFromWishlist;
+            window.removeFromWishlist = async function(productId) {
+                await originalRemoveFromWishlist(productId);
+                updateWishlistCount();
+            };
+        });
     </script>
 </body>
 
