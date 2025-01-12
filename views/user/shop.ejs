@@ -21,23 +21,23 @@
     <!-- Breadcrumb -->
     <div class="bg-gray-300 pt-4">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm font-medium text-gray-500" aria-label="Breadcrumb">
-          <ol class="flex items-center space-x-2">
+        <nav class="flex" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
             <!-- Home Link -->
-            <li>
-              <a
-                href="/home"
-                class="text-gray-800 hover:text-gray-900 transition"
-              >
+            <li class="inline-flex items-center">
+              <a href="/home" 
+                 class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900">
+                <i class="fas fa-home mr-2"></i>
                 Home
               </a>
             </li>
             <!-- Separator -->
             <li>
-              <span class="text-gray-400">/</span>
+              <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-500 text-sm mx-2"></i>
+                <span class="text-sm font-medium text-gray-500">Shop</span>
+              </div>
             </li>
-            <!-- Current Page -->
-            <li class="text-gray-500">Shop</li>
           </ol>
         </nav>
       </div>
@@ -179,49 +179,61 @@
 
             <div
               id="productGrid"
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-16"
             >
               <!-- Dynamic product rendering here -->
               <% products.forEach(product => { %>
               <a href="/product/<%= product._id %>" 
-                 class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
+                 class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
                 <!-- Product Image with Discount Badge -->
-                <div class="relative aspect-square overflow-hidden">
+                <div class="relative aspect-[4/5] overflow-hidden">
                   <img 
                     src="<%= product.imageUrl[0] %>" 
                     alt="<%= product.productName %>"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   >
                   <% if (product.discountPrice < product.price) { %>
-                    <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                       -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
                     </div>
                   <% } %>
                 </div>
 
                 <!-- Product Info -->
-                <div class="p-3">
-                  <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
+                <div class="p-2">
+                  <h2 class="text-gray-800 text-sm font-medium truncate">
                     <%= product.productName %>
                   </h2>
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
+                  <div class="flex items-baseline gap-1 mt-1">
+                    <span class="text-base font-bold text-gray-900">₹<%= product.discountPrice %></span>
                     <% if (product.discountPrice < product.price) { %>
-                      <span class="text-sm text-gray-500 line-through">₹<%= product.price %></span>
-                      <span class="text-xs text-green-600 font-medium">
-                        <%= Math.round((product.price - product.discountPrice) / product.price * 100) %>% off
-                      </span>
+                      <span class="text-xs text-gray-500 line-through">₹<%= product.price %></span>
                     <% } %>
                   </div>
                 </div>
               </a>
               <% }) %>
             </div>
+
+            <div class="flex justify-center items-center space-x-4 mt-8 mb-16">
+                <button id="prevPage" class="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transform transition-transform duration-300 ease-in-out hover:bg-zinc-600 hover:scale-105 active:bg-zinc-700 active:scale-95">
+                    Previous
+                </button>
+                <span id="pageInfo" class="text-gray-700">
+                    Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                </span>
+                <button id="nextPage" class="px-4 py-2 bg-zinc-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transform transition-transform duration-300 ease-in-out hover:bg-zinc-600 hover:scale-105 active:bg-zinc-700 active:scale-95">
+                    Next
+                </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Added margin/padding before footer -->
+    <div class="pb-16"></div>
 
     <%- include("../partials/footer") %>
     <script>
@@ -237,81 +249,19 @@
           const maxPriceFilter = document.getElementById('maxPrice');
           const stockFilter = document.getElementById('stockFilter');
           const resetButton = document.getElementById('resetButton');
+          const prevPageBtn = document.getElementById('prevPage');
+          const nextPageBtn = document.getElementById('nextPage');
+          const currentPageSpan = document.getElementById('currentPage');
+          const totalPagesSpan = document.getElementById('totalPages');
 
           // Store original products data
           let products = <%- JSON.stringify(products) %>;
           const originalProducts = [...products];
 
           // Function to apply all filters
-          function applyFilters() {
-              let filteredProducts = [...originalProducts];
-
-              // Search filter
-              const searchTerm = searchInput.value.toLowerCase().trim();
-              if (searchTerm) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.productName.toLowerCase().includes(searchTerm) ||
-                      product.brand.toLowerCase().includes(searchTerm)
-                  );
-              }
-
-              // Gender filter
-              if (genderFilter.value) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.gender.toLowerCase() === genderFilter.value.toLowerCase()
-                  );
-              }
-
-              // Color filter
-              if (colorFilter.value) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.color.toLowerCase() === colorFilter.value.toLowerCase()
-                  );
-              }
-
-              // Price range filter
-              const minPrice = Number(minPriceFilter.value);
-              const maxPrice = Number(maxPriceFilter.value);
-              if (minPrice > 0) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.discountPrice >= minPrice
-                  );
-              }
-              if (maxPrice > 0) {
-                  filteredProducts = filteredProducts.filter(product =>
-                      product.discountPrice <= maxPrice
-                  );
-              }
-
-              // Stock filter
-              if (stockFilter.value) {
-                  filteredProducts = filteredProducts.filter(product => {
-                      if (stockFilter.value === 'inStock') return product.stock > 0;
-                      if (stockFilter.value === 'outOfStock') return product.stock === 0;
-                      return true;
-                  });
-              }
-
-              // Sort products
-              switch(sortFilter.value) {
-                  case 'priceLowToHigh':
-                      filteredProducts.sort((a, b) => a.discountPrice - b.discountPrice);
-                      break;
-                  case 'priceHighToLow':
-                      filteredProducts.sort((a, b) => b.discountPrice - a.discountPrice);
-                      break;
-                  case 'ratingHighToLow':
-                      filteredProducts.sort((a, b) => b.rating - a.rating);
-                      break;
-                  case 'newArrivals':
-                      filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                      break;
-                  default:
-                      // Keep original order
-                      break;
-              }
-
-              renderProducts(filteredProducts);
+          async function applyFilters() {
+              currentPage = 1; // Reset to first page when filters change
+              await fetchProducts(currentPage);
           }
 
           // Function to render products
@@ -327,31 +277,28 @@
 
               productGrid.innerHTML = productsToRender.map(product => `
                   <a href="/product/${product._id}" 
-                     class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
-                      <div class="relative aspect-square overflow-hidden">
+                     class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                      <div class="relative aspect-[4/5] overflow-hidden">
                           <img
                               src="${product.imageUrl[0]}"
                               alt="${product.productName}"
-                              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                               loading="lazy"
                           >
                           ${product.discountPrice < product.price ? `
-                              <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                              <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                                   -${Math.round((product.price - product.discountPrice) / product.price * 100)}%
                               </div>
                           ` : ''}
                       </div>
-                      <div class="p-3">
-                          <h2 class="text-gray-800 font-medium text-base mb-2 truncate">
+                      <div class="p-2">
+                          <h2 class="text-gray-800 text-sm font-medium truncate">
                               ${product.productName}
                           </h2>
-                          <div class="flex items-baseline gap-2">
-                              <span class="text-lg font-bold text-gray-900">₹${product.discountPrice}</span>
+                          <div class="flex items-baseline gap-1 mt-1">
+                              <span class="text-base font-bold text-gray-900">₹${product.discountPrice}</span>
                               ${product.discountPrice < product.price ? `
-                                  <span class="text-sm text-gray-500 line-through">₹${product.price}</span>
-                                  <span class="text-xs text-green-600 font-medium">
-                                      ${Math.round((product.price - product.discountPrice) / product.price * 100)}% off
-                                  </span>
+                                  <span class="text-xs text-gray-500 line-through">₹${product.price}</span>
                               ` : ''}
                           </div>
                       </div>
@@ -402,7 +349,7 @@
           });
 
           // Reset filters
-          resetButton.addEventListener('click', () => {
+          resetButton.addEventListener('click', async () => {
               searchInput.value = '';
               sortFilter.value = 'default';
               genderFilter.value = '';
@@ -410,8 +357,79 @@
               minPriceFilter.value = '';
               maxPriceFilter.value = '';
               stockFilter.value = '';
-              renderProducts(originalProducts);
+              await fetchProducts(1);
           });
+
+          // Add pagination state
+          let currentPage = 1;
+          let totalPages = 1;
+
+          // Function to fetch products with pagination
+          async function fetchProducts(page = 1) {
+              try {
+                  // Build query string with all current filters
+                  const queryParams = new URLSearchParams({
+                      page,
+                      search: searchInput.value,
+                      sort: sortFilter.value,
+                      gender: genderFilter.value,
+                      color: colorFilter.value,
+                      minPrice: minPriceFilter.value,
+                      maxPrice: maxPriceFilter.value,
+                      stock: stockFilter.value
+                  });
+
+                  const response = await fetch(`/shop?${queryParams.toString()}`, {
+                      headers: {
+                          'X-Requested-With': 'XMLHttpRequest'
+                      }
+                  });
+                  
+                  if (!response.ok) throw new Error('Network response was not ok');
+                  
+                  const data = await response.json();
+                  
+                  // Update pagination state
+                  currentPage = data.pagination.currentPage;
+                  totalPages = data.pagination.totalPages;
+                  
+                  // Update UI
+                  currentPageSpan.textContent = currentPage;
+                  totalPagesSpan.textContent = totalPages;
+                  prevPageBtn.disabled = !data.pagination.hasPrevPage;
+                  nextPageBtn.disabled = !data.pagination.hasNextPage;
+                  
+                  // Render products
+                  renderProducts(data.products);
+                  
+                  // Scroll to top of product grid smoothly
+                  productGrid.scrollIntoView({ behavior: 'smooth' });
+              } catch (error) {
+                  console.error('Error fetching products:', error);
+              }
+          }
+
+          // Add pagination event listeners
+          prevPageBtn.addEventListener('click', () => {
+              if (currentPage > 1) {
+                  fetchProducts(currentPage - 1);
+              }
+          });
+
+          nextPageBtn.addEventListener('click', () => {
+              if (currentPage < totalPages) {
+                  fetchProducts(currentPage + 1);
+              }
+          });
+
+          // Initialize pagination
+          const initialPagination = <%- JSON.stringify(pagination || { currentPage: 1, totalPages: 1 }) %>;
+          currentPage = initialPagination.currentPage;
+          totalPages = initialPagination.totalPages;
+          currentPageSpan.textContent = currentPage;
+          totalPagesSpan.textContent = totalPages;
+          prevPageBtn.disabled = !initialPagination.hasPrevPage;
+          nextPageBtn.disabled = !initialPagination.hasNextPage;
 
           // Initialize
           populateFilterOptions();
