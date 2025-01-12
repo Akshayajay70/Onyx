@@ -1,7 +1,7 @@
-import cartSchema from '../model/cartModel.js';
-import productSchema from '../model/productModel.js';
-import Offer from '../model/offerModel.js';
-import { calculateFinalPrice } from '../utils/calculateOffer.js';
+import cartSchema from '../../model/cartModel.js';
+import productSchema from '../../model/productModel.js';
+import Offer from '../../model/offerModel.js';
+import { calculateFinalPrice } from '../../utils/calculateOffer.js';
 
 const getCart = async (req, res) => {
     try {

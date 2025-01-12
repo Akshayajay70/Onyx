@@ -5,7 +5,7 @@ import productController from '../controller/user/viewProductController.js';
 import userMiddlewares from '../middlewares/userMiddlewares.js';
 import profileController from '../controller/user/profileController.js';
 import addressController from '../controller/user/addressController.js';
-import userCartController from '../controller/userCartController.js';
+import userCartController from '../controller/user/cartController.js';
 import userCheckoutController from '../controller/userCheckoutController.js';
 import userOrderController from '../controller/user/orderController.js';
 import wishlistController from '../controller/user/wishlistController.js';
