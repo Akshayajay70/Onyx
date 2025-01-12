@@ -123,7 +123,7 @@ const getDashboard = async (req, res) => {
         // Get completed orders count
         const completedOrders = await Order.countDocuments({
             orderDate: { $gte: startDate, $lte: endDate },
-            'order.status': 'delivered'
+            'items.order.status': 'delivered'
         });
 
         // Calculate monthly growth
@@ -176,11 +176,17 @@ const getDashboard = async (req, res) => {
         const topProducts = await Order.aggregate([
             {
                 $match: {
+                    orderDate: { $gte: startDate, $lte: endDate },
                     'payment.paymentStatus': 'completed',
-                    'order.status': { $ne: 'cancelled' }
+                    'items.order.status': { $ne: 'cancelled' }
                 }
             },
             { $unwind: '$items' },
+            {
+                $match: {
+                    'items.order.status': { $ne: 'cancelled' }
+                }
+            },
             {
                 $group: {
                     _id: '$items.product',
@@ -220,10 +226,15 @@ const getDashboard = async (req, res) => {
                 $match: {
                     orderDate: { $gte: startDate, $lte: endDate },
                     'payment.paymentStatus': 'completed',
-                    'order.status': { $ne: 'cancelled' }
+                    'items.order.status': { $ne: 'cancelled' }
                 }
             },
             { $unwind: '$items' },
+            {
+                $match: {
+                    'items.order.status': { $ne: 'cancelled' }
+                }
+            },
             {
                 $lookup: {
                     from: 'products',
@@ -612,7 +623,7 @@ const getDashboardData = async (req, res) => {
 
                 const completedOrders = await Order.countDocuments({
                     orderDate: { $gte: startDate, $lte: endDate },
-                    'order.status': 'delivered'
+                    'items.order.status': 'delivered'
                 });
 
                 // Calculate growth percentage for custom range
@@ -647,10 +658,15 @@ const getDashboardData = async (req, res) => {
                         $match: {
                             orderDate: { $gte: startDate, $lte: endDate },
                             'payment.paymentStatus': 'completed',
-                            'order.status': { $ne: 'cancelled' }
+                            'items.order.status': { $ne: 'cancelled' }
                         }
                     },
                     { $unwind: '$items' },
+                    {
+                        $match: {
+                            'items.order.status': { $ne: 'cancelled' }
+                        }
+                    },
                     {
                         $group: {
                             _id: '$items.product',
@@ -690,10 +706,15 @@ const getDashboardData = async (req, res) => {
                         $match: {
                             orderDate: { $gte: startDate, $lte: endDate },
                             'payment.paymentStatus': 'completed',
-                            'order.status': { $ne: 'cancelled' }
+                            'items.order.status': { $ne: 'cancelled' }
                         }
                     },
                     { $unwind: '$items' },
+                    {
+                        $match: {
+                            'items.order.status': { $ne: 'cancelled' }
+                        }
+                    },
                     {
                         $lookup: {
                             from: 'products',
@@ -760,7 +781,7 @@ const getDashboardData = async (req, res) => {
 
         const completedOrders = await Order.countDocuments({
             orderDate: { $gte: startDate, $lte: endDate },
-            'order.status': 'delivered'
+            'items.order.status': 'delivered'
         });
 
         // Calculate growth percentage

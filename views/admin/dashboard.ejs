@@ -24,18 +24,16 @@
         
       </header>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <!-- Revenue Card -->
-        <div
-          class="p-6 bg-zinc-800 rounded-lg shadow-md"
-        >
-          <h2 class="text-gray-400 text-lg">Revenue</h2>
-          <div class="flex items-center justify-between mt-2">
-            <p class="text-xl font-bold revenue-value">₹ <%= totalRevenue.toLocaleString() %></p>
-            <p class="growth-percentage text-sm font-semibold text-gray-400">
-              <%= growthPercentage %>%
-            </p>
-          </div>
+        <div class="p-4 md:p-6 bg-zinc-800 rounded-lg shadow-md">
+            <h2 class="text-gray-400 text-base md:text-lg">Revenue</h2>
+            <div class="flex items-center justify-between mt-2">
+                <p class="text-lg md:text-xl font-bold revenue-value">₹ <%= totalRevenue.toLocaleString() %></p>
+                <p class="growth-percentage text-sm font-semibold text-gray-400">
+                    <%= growthPercentage %>%
+                </p>
+            </div>
         </div>
 
         <!-- Orders Card -->
@@ -66,113 +64,87 @@
       </section>
 
       <!-- Time Frame and Date Filter -->
-      <div class="flex flex-wrap justify-end items-center gap-4 mb-4">
+      <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-4 mb-4">
           <!-- Time Frame Buttons -->
-          <div class="flex space-x-2">
+          <div class="flex flex-wrap gap-2">
               <button onclick="changeTimeFrame('daily')" 
-                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'daily' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      class="timeframe-btn flex-1 sm:flex-none px-3 py-2 text-sm md:px-4 md:py-2 md:text-base rounded-md <%= timeFrame === 'daily' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
                       data-timeframe="daily">
                   Daily
               </button>
               <button onclick="changeTimeFrame('weekly')" 
-                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'weekly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      class="timeframe-btn flex-1 sm:flex-none px-3 py-2 text-sm md:px-4 md:py-2 md:text-base rounded-md <%= timeFrame === 'weekly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
                       data-timeframe="weekly">
                   Weekly
               </button>
               <button onclick="changeTimeFrame('monthly')" 
-                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'monthly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      class="timeframe-btn flex-1 sm:flex-none px-3 py-2 text-sm md:px-4 md:py-2 md:text-base rounded-md <%= timeFrame === 'monthly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
                       data-timeframe="monthly">
                   Monthly
               </button>
               <button onclick="changeTimeFrame('yearly')" 
-                      class="timeframe-btn px-4 py-2 rounded-md <%= timeFrame === 'yearly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
+                      class="timeframe-btn flex-1 sm:flex-none px-3 py-2 text-sm md:px-4 md:py-2 md:text-base rounded-md <%= timeFrame === 'yearly' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800' %>"
                       data-timeframe="yearly">
                   Yearly
               </button>
           </div>
 
           <!-- Custom Date Range -->
-          <div class="flex items-center space-x-2">
-              <input 
-                  type="date" 
-                  id="startDate" 
-                  class="px-3 py-2 rounded-md text-gray-800 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-              <span class="text-white">to</span>
-              <input 
-                  type="date" 
-                  id="endDate" 
-                  class="px-3 py-2 rounded-md text-gray-800 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-              <button 
-                  onclick="applyCustomDateRange()"
-                  class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div class="flex gap-2 items-center">
+                  <input type="date" 
+                         id="startDate" 
+                         class="flex-1 px-2 py-1 md:px-3 md:py-2 text-sm md:text-base rounded-md text-gray-800 bg-gray-100">
+                  <span class="text-white">to</span>
+                  <input type="date" 
+                         id="endDate" 
+                         class="flex-1 px-2 py-1 md:px-3 md:py-2 text-sm md:text-base rounded-md text-gray-800 bg-gray-100">
+              </div>
+              <button onclick="applyCustomDateRange()"
+                      class="w-full sm:w-auto px-3 py-1 md:px-4 md:py-2 text-sm md:text-base bg-blue-500 text-white rounded-md">
                   Apply
               </button>
           </div>
       </div>
 
       <!-- Sales Chart -->
-      <section class="bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-semibold mb-4">Sales Summary</h2>
-        <div class="relative" style="min-height: 400px; max-height: 70vh;">
+      <section class="bg-zinc-800 rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
+        <h2 class="text-lg md:text-xl font-semibold mb-4">Sales Summary</h2>
+        <div class="relative h-[300px] md:h-[400px] lg:h-[500px]">
           <canvas id="salesChart"></canvas>
         </div>
       </section>
 
       <!-- Top Selling Sections Container -->
-      <div class="flex flex-col lg:flex-row gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <!-- Top Selling Products Section -->
-          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-6 flex-1 border border-zinc-700">
-              <div class="flex justify-between items-center mb-6">
+          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-4 md:p-6">
+              <div class="flex justify-between items-center mb-4 md:mb-6">
                   <div>
-                      <h2 class="text-xl font-bold text-white">Top Selling Products</h2>
-                      <p class="text-zinc-400 text-sm mt-1">Best performing products by sales</p>
+                      <h2 class="text-lg md:text-xl font-bold text-white">Top Products</h2>
+                      <p class="text-xs md:text-sm text-zinc-400 mt-1">Best performing products</p>
                   </div>
               </div>
-              <div class="space-y-4 top-products-container">
+              <div class="space-y-3 md:space-y-4">
                   <% topProducts.forEach((product, index) => { %>
-                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-xl overflow-hidden flex items-center 
-                                  transform transition-all duration-300 hover:scale-[1.02] hover:from-zinc-700 hover:to-zinc-800
-                                  border border-zinc-600/50 hover:border-zinc-500 shadow-lg group">
-                          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b <%= 
-                              index === 0 ? 'from-yellow-500 to-amber-600' : 
-                              index === 1 ? 'from-slate-400 to-slate-500' :
-                              'from-amber-700 to-amber-800'
-                          %>"></div>
-                          <div class="relative w-24 h-24 flex-shrink-0 m-3">
-                              <img src="<%= product.imageUrl %>" 
-                                   alt="<%= product.productName %>" 
-                                   class="w-full h-full object-cover rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300">
-                              <div class="absolute -top-2 -left-2 <%= 
-                                  index === 0 ? 'bg-gradient-to-br from-yellow-500 to-amber-600' : 
-                                  index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
-                                  'bg-gradient-to-br from-amber-700 to-amber-800'
-                              %> text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
-                                  <%= index + 1 %>
+                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-lg p-3 md:p-4">
+                          <div class="flex items-center gap-3 md:gap-4">
+                              <div class="w-16 h-16 md:w-24 md:h-24 relative flex-shrink-0">
+                                  <img src="<%= product.imageUrl %>" 
+                                       alt="<%= product.productName %>" 
+                                       class="w-full h-full object-cover rounded-lg">
                               </div>
-                          </div>
-                          <div class="flex-1 p-4">
-                              <div class="flex justify-between items-start">
-                                  <div>
-                                      <h3 class="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors duration-300">
-                                          <%= product.productName %>
-                                      </h3>
-                                      <p class="text-zinc-400 text-sm font-medium"><%= product.brand %></p>
-                                      <p class="text-zinc-400 text-sm mt-2">
-                                          ₹<%= product.totalRevenue.toLocaleString() %>
-                                      </p>
-                                  </div>
-                                  <div class="text-right">
-                                      <div class="flex items-center justify-end mt-2">
-                                          <svg class="w-4 h-4 text-emerald-400 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                              <path d="M16 3H8C6.34315 3 5 4.34315 5 6V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V6C19 4.34315 17.6569 3 16 3Z M9 7H15 M9 11H15 M9 15H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                          </svg>
-                                          <span class="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                                              <%= product.totalQuantity %> units
-                                          </span>
-                                      </div>
+                              <div class="flex-1 min-w-0">
+                                  <h3 class="text-sm md:text-base font-semibold text-white truncate">
+                                      <%= product.productName %>
+                                  </h3>
+                                  <p class="text-xs md:text-sm text-zinc-400 mt-1">
+                                      ₹<%= product.totalRevenue.toLocaleString() %>
+                                  </p>
+                                  <div class="flex items-center mt-2">
+                                      <span class="text-sm md:text-base font-semibold text-emerald-400">
+                                          <%= product.totalQuantity %> units
+                                      </span>
                                   </div>
                               </div>
                           </div>
@@ -182,51 +154,29 @@
           </section>
 
           <!-- Top Categories Section -->
-          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-6 flex-1 border border-zinc-700">
-              <div class="flex justify-between items-center mb-6">
+          <section class="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl shadow-xl p-4 md:p-6">
+              <div class="flex justify-between items-center mb-4 md:mb-6">
                   <div>
-                      <h2 class="text-xl font-bold text-white">Top Categories</h2>
-                      <p class="text-zinc-400 text-sm mt-1">Best performing categories by sales</p>
+                      <h2 class="text-lg md:text-xl font-bold text-white">Top Categories</h2>
+                      <p class="text-xs md:text-sm text-zinc-400 mt-1">Best performing categories</p>
                   </div>
               </div>
-              <div class="space-y-4 top-categories-container">
+              <div class="space-y-3 md:space-y-4">
                   <% topCategories.forEach((category, index) => { %>
-                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-xl overflow-hidden
-                                  transform transition-all duration-300 hover:scale-[1.02] hover:from-zinc-700 hover:to-zinc-800
-                                  border border-zinc-600/50 hover:border-zinc-500 shadow-lg group p-4">
-                          <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b <%= 
-                              index === 0 ? 'from-yellow-500 to-amber-600' : 
-                              index === 1 ? 'from-slate-400 to-slate-500' :
-                              'from-amber-700 to-amber-800'
-                          %>"></div>
-                          <div class="flex items-center">
-                              <div class="<%= 
-                                  index === 0 ? 'bg-gradient-to-br from-yellow-500 to-amber-600' : 
-                                  index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
-                                  'bg-gradient-to-br from-amber-700 to-amber-800'
-                              %> w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold text-white shadow-lg mr-4">
-                                  <%= index + 1 %>
-                              </div>
-                              <div class="flex-1">
-                                  <div class="flex justify-between items-start">
-                                      <div>
-                                          <h3 class="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors duration-300">
-                                              <%= category.categoryName %>
-                                          </h3>
-                                          <p class="text-zinc-400 text-sm mt-2">
-                                              ₹<%= category.totalRevenue.toLocaleString() %>
-                                          </p>
-                                      </div>
-                                      <div class="text-right">
-                                          <div class="flex items-center justify-end mt-2">
-                                              <svg class="w-4 h-4 text-emerald-400 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                                  <path d="M20 7H10C8.89543 7 8 7.89543 8 9V19C8 20.1046 8.89543 21 10 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z M14 3H4C2.89543 3 2 3.89543 2 5V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                              </svg>
-                                              <span class="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                                                  <%= category.totalQuantity %> units
-                                              </span>
-                                          </div>
-                                      </div>
+                      <div class="relative bg-gradient-to-r from-zinc-700/50 to-zinc-800/50 rounded-lg p-3 md:p-4">
+                          <div class="flex items-center gap-3 md:gap-4">
+                              
+                              <div class="flex-1 min-w-0">
+                                  <h3 class="text-sm md:text-base font-semibold text-white truncate">
+                                      <%= category.categoryName %>
+                                  </h3>
+                                  <p class="text-xs md:text-sm text-zinc-400 mt-1">
+                                      ₹<%= category.totalRevenue.toLocaleString() %>
+                                  </p>
+                                  <div class="flex items-center mt-2">
+                                      <span class="text-sm md:text-base font-semibold text-emerald-400">
+                                          <%= category.totalQuantity %> units
+                                      </span>
                                   </div>
                               </div>
                           </div>
@@ -235,6 +185,22 @@
               </div>
           </section>
       </div>
+
+      <!-- Footer -->
+      <footer class="mt-auto py-4 border-t border-zinc-700">
+          <div class="container mx-auto px-4">
+              <div class="flex flex-col sm:flex-row justify-between items-center">
+                  <div class="text-zinc-400 text-sm mb-2 sm:mb-0">
+                      © <%= new Date().getFullYear() %> Onyx. All rights reserved.
+                  </div>
+                  <div class="flex items-center space-x-4">
+                      <span class="text-zinc-400 text-sm">
+                          Admin Dashboard v1.0
+                      </span>
+                  </div>
+              </div>
+          </div>
+      </footer>
     </main>
 
     <script>
