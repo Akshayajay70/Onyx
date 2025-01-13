@@ -204,39 +204,7 @@
     </main>
 
     <script>
-      // Improved mobile sidebar toggle functionality
-      document.addEventListener("DOMContentLoaded", function () {
-        const sidebarToggle = document.getElementById("sidebar-toggle");
-        const mobileSidebar = document.getElementById("mobile-sidebar");
-
-        if (sidebarToggle && mobileSidebar) {
-          sidebarToggle.addEventListener("click", function () {
-            const isHidden =
-              mobileSidebar.classList.contains("-translate-x-full");
-
-            mobileSidebar.classList.toggle("-translate-x-full");
-            sidebarToggle.setAttribute(
-              "aria-expanded",
-              isHidden ? "true" : "false"
-            );
-            mobileSidebar.setAttribute("aria-hidden", !isHidden);
-          });
-
-          // Close sidebar when clicking outside
-          document.addEventListener("click", function (event) {
-            if (
-              !mobileSidebar.contains(event.target) &&
-              !sidebarToggle.contains(event.target) &&
-              !mobileSidebar.classList.contains("-translate-x-full")
-            ) {
-              mobileSidebar.classList.add("-translate-x-full");
-              sidebarToggle.setAttribute("aria-expanded", "false");
-              mobileSidebar.setAttribute("aria-hidden", "true");
-            }
-          });
-        }
-      });
-
+      
       let salesChart;
 
       async function changeTimeFrame(timeFrame) {

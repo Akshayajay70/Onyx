@@ -15,90 +15,85 @@
   <body class="mybg-green text-white min-h-screen flex flex-col">
     <%- include('../partials/sidebar') %>
 
-    <main class="ml-64 p-8">
-      <div class="bg-gray-800 p-6 rounded-lg">
-        <header class="flex items-center justify-between mb-4">
-          <h1 class="text-2xl font-bold text-gray-200">Manage Categories</h1>
-          <!-- Add Category Button -->
-          <button
-            onclick="openAddModal()"
-            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-          >
-            Add Category
-          </button>
-        </header>
+    <!-- Main Content -->
+    <div class="lg:ml-64 transition-all" id="main-content">
+      <main class="p-4 lg:p-8">
+        <div class="bg-zinc-800 rounded-lg p-4 sm:p-6">
+          <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-200">Manage Categories</h1>
+            <button
+              onclick="openAddModal()"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto flex items-center justify-center gap-2"
+            >
+              <i class="fas fa-plus"></i>
+              <span>Add Category</span>
+            </button>
+          </header>
 
-        <!-- List of Categories -->
-        <div class="space-y-4">
-          <% categories.forEach(category => { %>
-          <div
-            class="bg-gray-700 p-4 rounded-lg flex items-center justify-between"
-          >
-            <div>
-              <h2 class="text-lg font-semibold <%= category.isActive ? 'text-white' : 'text-gray-400' %>">
-                <%= category.name %>
-                <span class="text-sm ml-2 <%= category.isActive ? 'text-green-500' : 'text-red-500' %>">
-                  (<%= category.isActive ? 'Active' : 'Hidden' %>)
-                </span>
-              </h2>
-              <p class="text-sm text-gray-400"><%= category.description %></p>
+          <!-- List of Categories -->
+          <div class="space-y-4">
+            <% categories.forEach(category => { %>
+            <div class="bg-zinc-700 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="w-full sm:w-auto">
+                <h2 class="text-base sm:text-lg font-semibold <%= category.isActive ? 'text-white' : 'text-gray-400' %>">
+                  <%= category.name %>
+                  <span class="text-xs sm:text-sm ml-2 <%= category.isActive ? 'text-green-500' : 'text-red-500' %>">
+                    (<%= category.isActive ? 'Active' : 'Hidden' %>)
+                  </span>
+                </h2>
+                <p class="text-xs sm:text-sm text-gray-400 mt-1"><%= category.description %></p>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button
+                  onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
+                >
+                  Edit
+                </button>
+                <button
+                  onclick="confirmToggleCategory('<%= category._id %>', <%= category.isActive %>)"
+                  class="<%= category.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' %> 
+                         text-white px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
+                >
+                  <%= category.isActive ? 'Hide' : 'Show' %>
+                </button>
+              </div>
             </div>
-            <div class="flex space-x-4">
-
-              <!-- Edit Button -->
-              <button
-                onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
-                class="text-green-500 hover:text-green-400"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-
-              <!-- Toggle Button -->
-              <button
-                onclick="confirmToggleCategory('<%= category._id %>', <%= category.isActive %>)"
-                class="text-<%= category.isActive ? 'red' : 'green' %>-500 hover:text-<%= category.isActive ? 'red' : 'green' %>-400"
-              >
-                <i class="fas fa-<%= category.isActive ? 'eye-slash' : 'eye' %>"></i>
-              </button>
-            </div>
+            <% }); %>
           </div>
-          <% }); %>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
-    <!-- Add Category Modal -->
-    <div
-      id="addModal"
-      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-    >
-      <div class="bg-gray-800 p-6 rounded-lg w-96">
+    <!-- Modals -->
+    <div id="addModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-zinc-900 p-6 rounded-lg w-full max-w-md">
         <h2 class="text-xl font-bold text-gray-200 mb-4">Add Category</h2>
         <form id="addCategoryForm" action="/admin/category/add" method="POST">
           <input
             type="text"
             name="categoryName"
             placeholder="Category Name"
-            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            class="w-full p-2 mb-4 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-gray-200"
             required
           />
           <textarea
             name="categoryDescription"
             placeholder="Category Description"
-            class="w-full p-2 mb-4 bg-gray-700 border border-gray-600 rounded"
+            class="w-full p-2 mb-4 bg-zinc-800 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-gray-200 min-h-[100px]"
             required
           ></textarea>
-          <div class="flex justify-end space-x-4">
+          <div class="flex flex-col sm:flex-row justify-end gap-3">
             <button
               type="button"
               onclick="closeAddModal()"
-              class="bg-gray-600 text-white px-4 py-2 rounded-lg"
+              class="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="bg-blue-500 text-white px-4 py-2 rounded-lg"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
             >
               Add
             </button>

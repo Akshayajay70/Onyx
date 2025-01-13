@@ -7,15 +7,24 @@ import upload from '../../utils/multer.js'
 // Render Product Management Page
 const renderProductPage = async (req, res) => {
     try {
-        // Fetch products with populated references
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10; // Items per page
+        const skip = (page - 1) * limit;
+
+        // Get total count for pagination
+        const totalProducts = await Product.countDocuments();
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        // Fetch paginated products with populated references
         const products = await Product.find()
             .populate('categoriesId')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
         // Sanitize products for JSON serialization
         const sanitizedProducts = products.map(product => {
             const sanitized = product.toObject();
-            // Ensure all necessary fields are present
             return {
                 ...sanitized,
                 _id: sanitized._id.toString(),
@@ -29,7 +38,12 @@ const renderProductPage = async (req, res) => {
 
         res.render('admin/product', {
             products: sanitizedProducts,
-            categories: await Category.find()
+            categories: await Category.find(),
+            currentPage: page,
+            totalPages,
+            totalProducts,
+            startIndex: skip,
+            endIndex: skip + products.length
         });
     } catch (error) {
         console.error('Error rendering product page:', error);

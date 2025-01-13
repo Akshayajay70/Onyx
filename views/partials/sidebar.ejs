@@ -1,73 +1,65 @@
 <!-- sidebar.ejs -->
-<aside
-  class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg md:block hidden"
->
+<aside class="fixed top-0 left-0 w-64 h-full bg-zinc-900 p-5 shadow-lg md:block hidden z-50 overflow-y-auto">
   <!-- Logo -->
   <div class="flex items-center justify-center mb-8">
-    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-12" />
+    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-8 md:h-10 lg:h-12" />
   </div>
 
   <!-- Navigation Links -->
-  <nav class="space-y-6 text-sm" aria-label="Main Navigation">
-    <a
-      href="/admin/dashboard"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">dashboard</i>
-      <span>Dashboard</span>
+  <nav class="space-y-2 md:space-y-4" aria-label="Main Navigation">
+    <a href="/admin/dashboard" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">dashboard</i>
+      <span class="text-sm md:text-base">Dashboard</span>
     </a>
-    <a
-      href="/admin/product"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">inventory_2</i>
-      <span>Products</span>
+
+    <a href="/admin/product" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">inventory_2</i>
+      <span class="text-sm md:text-base">Products</span>
     </a>
-    <a
-      href="/admin/userList"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">people</i>
-      <span>Users</span>
+
+    <a href="/admin/userList" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">people</i>
+      <span class="text-sm md:text-base">Users</span>
     </a>
-    <a
-      href="/admin/category"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">category</i>
-      <span>Categories</span>
+
+    <a href="/admin/category" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">category</i>
+      <span class="text-sm md:text-base">Categories</span>
     </a>
-    <a
-      href="/admin/orders"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">shopping_cart</i>
-      <span>Orders</span>
+
+    <a href="/admin/orders" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">shopping_cart</i>
+      <span class="text-sm md:text-base">Orders</span>
     </a>
-    <a href="/admin/offers" class="flex items-center space-x-3 text-gray-400 hover:text-white">
-      <span class="material-icons">local_offer</span>
-      <span>Offers</span>
+
+    <a href="/admin/offers" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <span class="material-icons text-lg md:text-xl lg:text-2xl">local_offer</span>
+      <span class="text-sm md:text-base">Offers</span>
     </a>
-    <a
-      href="/admin/coupon"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">card_giftcard</i>
-      <span>Coupon</span>
+
+    <a href="/admin/coupon" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">card_giftcard</i>
+      <span class="text-sm md:text-base">Coupon</span>
     </a>
-    <a
-      href="/admin/sales-report"
-      class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-    >
-      <i class="material-icons">assessment</i>
-      <span>Sales Report</span>
+
+    <a href="/admin/sales-report" 
+       class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-zinc-800 group">
+      <i class="material-icons text-lg md:text-xl lg:text-2xl">assessment</i>
+      <span class="text-sm md:text-base">Sales Report</span>
     </a>
-    <form action="/admin/logout" method="get">
-      <button
-        type="submit"
-        class="flex items-center space-x-2 px-4 py-2 bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
-      >
-        <i class="material-icons">logout</i>
+
+    <!-- Logout Button -->
+    <form action="/admin/logout" method="get" class="mt-8">
+      <button type="submit" 
+              class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-700 text-white text-sm md:text-base font-semibold rounded-lg hover:bg-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900">
+        <i class="material-icons text-lg md:text-xl lg:text-2xl">logout</i>
         <span>Logout</span>
       </button>
     </form>
@@ -77,66 +69,122 @@
 <!-- Mobile Header and Sidebar -->
 <div class="md:hidden">
   <!-- Mobile Header -->
-  <header
-    class="fixed top-0 left-0 w-full bg-zinc-900 text-white p-4 flex justify-between items-center z-50"
-  >
-    <button
-      id="sidebar-toggle"
-      class="text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-zinc-900 rounded-lg p-1"
-      aria-label="Toggle Menu"
-      aria-expanded="false"
-    >
-      <i class="material-icons">menu</i>
+  <header class="fixed top-0 left-0 w-full bg-zinc-900 text-white p-3 flex justify-between items-center z-50 shadow-lg">
+    <button id="sidebar-toggle" 
+            class="text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-zinc-900 rounded-lg p-1"
+            aria-label="Toggle Menu"
+            aria-expanded="false">
+      <i class="material-icons text-2xl">menu</i>
     </button>
-    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-8" />
+    <img src="/images/whitelogo.png" alt="Onyx Logo" class="h-6" />
   </header>
 
+  <!-- Add spacing div for mobile -->
+  <div class="h-14 md:hidden"><!-- Spacer for mobile header --></div>
+
   <!-- Mobile Sidebar -->
-  <div
-    id="mobile-sidebar"
-    class="fixed top-0 left-0 w-full h-full bg-zinc-900 p-5 shadow-lg transform -translate-x-full transition-transform duration-300 z-40"
-    aria-hidden="true"
-  >
-    <nav class="mt-16 space-y-6 text-sm" aria-label="Mobile Navigation">
-      <!-- Same navigation items as desktop, but with proper mobile styling -->
-      <a
-        href="/admin/dashboard"
-        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-      >
-        <i class="material-icons">dashboard</i>
-        <span>Dashboard</span>
+  <div id="mobile-sidebar" 
+       class="fixed top-0 left-0 w-full h-full bg-zinc-900 p-4 transform -translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto"
+       aria-hidden="true">
+    <!-- Add padding top to prevent content hiding behind mobile header -->
+    <div class="pt-16"><!-- Additional top padding for mobile sidebar content --></div>
+    <nav class="space-y-3" aria-label="Mobile Navigation">
+      <!-- Mobile Navigation Links -->
+      <a href="/admin/dashboard" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">dashboard</i>
+        <span class="text-base">Dashboard</span>
       </a>
-      <a
-        href="#"
-        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-      >
-        <i class="material-icons">inventory_2</i>
-        <span>Products</span>
+      <a href="/admin/product" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">inventory_2</i>
+        <span class="text-base">Products</span>
       </a>
-      <a
-        href="/admin/userList"
-        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-      >
-        <i class="material-icons">people</i>
-        <span>Users</span>
+      <a href="/admin/userList" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">people</i>
+        <span class="text-base">Users</span>
       </a>
-      <a
-        href="/admin/category"
-        class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors"
-      >
-        <i class="material-icons">category</i>
-        <span>Categories</span>
+      <a href="/admin/category" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">category</i>
+        <span class="text-base">Categories</span>
       </a>
-      <form action="/admin/logout" method="get">
-        <button
-          type="submit"
-          class="flex items-center space-x-2 px-4 py-2 bg-red-700 text-white font-semibold rounded-lg hover:bg-red-900 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
-        >
-          <i class="material-icons">logout</i>
+      <a href="/admin/orders" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">shopping_cart</i>
+        <span class="text-base">Orders</span>
+      </a>
+      <a href="/admin/offers" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">local_offer</i>
+        <span class="text-base">Offers</span>
+      </a>
+        <a href="/admin/coupon  " 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">card_giftcard</i>
+        <span class="text-base">Coupon</span>
+      </a>
+      <a href="/admin/sales-report" 
+         class="flex items-center space-x-3 text-gray-400 hover:text-white transition-colors p-3 rounded-lg hover:bg-zinc-800">
+        <i class="material-icons text-xl">assessment</i>
+        <span class="text-base">Sales Report</span>
+      </a>
+      <!-- Repeat for other navigation items with similar styling -->
+
+      <!-- Mobile Logout Button -->
+      <form action="/admin/logout" method="get" class="mt-6">
+        <button type="submit" 
+                class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-700 text-white text-base font-semibold rounded-lg hover:bg-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+          <i class="material-icons text-2xl">logout</i>
           <span>Logout</span>
         </button>
       </form>
-      <!-- ... (repeat for other nav items) ... -->
     </nav>
   </div>
 </div>
+
+<!-- Mobile Sidebar Overlay -->
+<div id="sidebar-overlay" 
+     class="fixed inset-0 bg-black bg-opacity-50 hidden md:hidden z-30" 
+     aria-hidden="true">
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const mobileSidebar = document.getElementById("mobile-sidebar");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
+
+    function toggleSidebar() {
+      const isExpanded = sidebarToggle.getAttribute("aria-expanded") === "true";
+      sidebarToggle.setAttribute("aria-expanded", !isExpanded);
+      mobileSidebar.classList.toggle("-translate-x-full");
+      mobileSidebar.setAttribute("aria-hidden", isExpanded);
+      sidebarOverlay.classList.toggle("hidden");
+      document.body.classList.toggle("overflow-hidden");
+    }
+
+    if (sidebarToggle && mobileSidebar && sidebarOverlay) {
+      sidebarToggle.addEventListener("click", toggleSidebar);
+      sidebarOverlay.addEventListener("click", toggleSidebar);
+
+      // Close sidebar when clicking outside
+      document.addEventListener("click", function (event) {
+        if (!mobileSidebar.contains(event.target) && 
+            !sidebarToggle.contains(event.target) && 
+            !mobileSidebar.classList.contains("-translate-x-full")) {
+          toggleSidebar();
+        }
+      });
+
+      // Handle escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && 
+            !mobileSidebar.classList.contains("-translate-x-full")) {
+          toggleSidebar();
+        }
+      });
+    }
+  });
+</script>

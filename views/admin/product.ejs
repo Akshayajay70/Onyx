@@ -37,85 +37,125 @@
     <div class="lg:ml-64 transition-all" id="main-content">
       <header class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700">
         <button id="toggleSidebar" class="text-white lg:hidden">
-          <i class="fas fa-bars"></i>
+          
         </button>
         <h1 class="text-2xl font-semibold text-gray-200">Product Management</h1>
-        <button id="addProductBtn" class="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-6 rounded-lg shadow transition duration-300">
-          Add New Product
-        </button>
       </header>
 
       <main class="p-4 lg:p-8">
-        <div class="bg-zinc-800 rounded-lg p-6 overflow-x-auto">
-          <table class="min-w-full text-left text-gray-400 table-auto">
-            <thead>
-              <tr class="border-b border-gray-700">
-                <th class="py-3 px-4">Product Name</th>
-                <th class="py-3 px-4">Brand</th>
-                <th class="py-3 px-4">Category</th>
-                <th class="py-3 px-4">Gender</th>
-                <th class="py-3 px-4">Price</th>
-                <th class="py-3 px-4">Stock</th>
-                <th class="py-3 px-4">Color</th>
-                <th class="py-3 px-4">Description</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% products.forEach((product) => { %>
-              <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= product.productName %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= product.brand %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= product.categoriesId.name %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="capitalize font-medium"><%= product.gender %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="text-sm">
-                    <div class="font-medium">₹<%= product.price %></div>
-                  </div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium <%= product.stock < 10 ? 'text-red-500' : 'text-green-500' %>">
-                    <%= product.stock %>
-                  </div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= product.color %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium text-sm">
-                    <%= product.description %>
-                  </div>
-                </td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 rounded-full text-xs <%= product.isActive ? 'bg-green-500' : 'bg-red-500' %>">
-                    <%= product.isActive ? 'Active' : 'Inactive' %>
-                  </span>
-                </td>
-                <td class="py-3 px-4 space-x-3 flex">
-                  <button class="edit-product"
-                          data-id="<%= product._id %>"
-                          type="button">
-                    Edit
-                  </button>
-                  <button class="toggle-status <%= product.isActive ? 'text-gray-500' : 'text-green-500' %>" 
-                          data-id="<%= product._id %>" 
-                          data-active="<%= product.isActive %>">
-                    <i class="fas <%= product.isActive ? 'fa-eye-slash' : 'fa-eye' %>"></i>
-                  </button>
-                </td>
-              </tr>
-              <% }); %>
-            </tbody>
-          </table>
+        <div class="overflow-x-auto">
+          <div class="min-w-full bg-zinc-800 rounded-lg shadow-md">
+            <!-- Table Header with Add Product Button -->
+            <div class="p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 class="text-xl md:text-2xl font-semibold text-gray-200">Products</h2>
+              <button id="addProductBtn" 
+                      class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors w-full sm:w-auto justify-center">
+                <i class="fas fa-plus"></i>
+                <span>Add Product</span>
+              </button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-zinc-700">
+                <thead class="bg-zinc-900">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Image</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Product</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider hidden md:table-cell">Brand</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider hidden lg:table-cell">Category</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Price</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider hidden sm:table-cell">Stock</th>
+                    <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider hidden sm:table-cell">Status</th>
+                    <th class="px-4 py-3 text-right text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-700">
+                  <% products.forEach(product => { %>
+                    <tr class="hover:bg-zinc-700/50 transition-colors">
+                      <td class="px-4 py-3 whitespace-nowrap">
+                        <img src="<%= product.imageUrl[0] %>" 
+                             alt="<%= product.productName %>" 
+                             class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg">
+                      </td>
+                      <td class="px-4 py-3">
+                        <div class="flex flex-col">
+                          <span class="text-sm md:text-base font-medium text-gray-200"><%= product.productName %></span>
+                          <span class="text-xs text-gray-400 md:hidden"><%= product.brand %></span>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3 text-sm md:text-base text-gray-300 hidden md:table-cell"><%= product.brand %></td>
+                      <td class="px-4 py-3 text-sm md:text-base text-gray-300 hidden lg:table-cell"><%= product.categoriesId.name %></td>
+                      <td class="px-4 py-3 text-sm md:text-base text-gray-200">₹<%= product.price.toLocaleString() %></td>
+                      <td class="px-4 py-3 text-sm md:text-base text-gray-300 hidden sm:table-cell"><%= product.stock %></td>
+                      <td class="px-4 py-3 text-sm md:text-base text-gray-300 hidden sm:table-cell"><%= product.isActive ? 'Active' : 'Inactive' %></td>
+                      <td class="px-4 py-3">
+                        <div class="flex flex-col sm:flex-row gap-2 justify-end">
+                          <button class="edit-product bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm transition-colors duration-200 w-full sm:w-auto"
+                                  data-id="<%= product._id %>"
+                                  type="button">
+                                  Edit
+                          </button>
+                          
+                          <button class="toggle-status px-3 py-1 rounded-md text-sm transition-colors duration-200 w-full sm:w-auto
+                                       <%= product.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' %> text-white" 
+                                  data-id="<%= product._id %>" 
+                                  data-active="<%= product.isActive %>">
+                            <%= product.isActive ? 'Hide' : 'Show' %>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Page Info -->
+            <div class="px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-zinc-700">
+                <div class="text-sm text-gray-400 mb-4 sm:mb-0">
+                    Showing <span class="font-medium"><%= startIndex + 1 %></span> to 
+                    <span class="font-medium"><%= endIndex %></span> of 
+                    <span class="font-medium"><%= totalProducts %></span> products
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="flex items-center gap-2">
+                    <% if (currentPage > 1) { %>
+                        <a href="?page=1" 
+                           class="px-3 py-1 bg-zinc-700 text-gray-300 rounded hover:bg-zinc-600 text-sm transition-colors">
+                                First
+                            </a>
+                            <a href="?page=<%= currentPage - 1 %>" 
+                               class="px-3 py-1 bg-zinc-700 text-gray-300 rounded hover:bg-zinc-600 text-sm transition-colors">
+                                Previous
+                            </a>
+                    <% } %>
+
+                    <!-- Page Numbers -->
+                    <div class="flex gap-1">
+                        <% for(let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <a href="?page=<%= i %>" 
+                               class="px-3 py-1 rounded text-sm <%= currentPage === i ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-gray-300 hover:bg-zinc-600' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                    </div>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?page=<%= currentPage + 1 %>" 
+                           class="px-3 py-1 bg-zinc-700 text-gray-300 rounded hover:bg-zinc-600 text-sm transition-colors">
+                                Next
+                            </a>
+                            <a href="?page=<%= totalPages %>" 
+                               class="px-3 py-1 bg-zinc-700 text-gray-300 rounded hover:bg-zinc-600 text-sm transition-colors">
+                                Last
+                            </a>
+                    <% } %>
+                </div>
+            </div>
+
+          </div>
         </div>
       </main>
     </div>
@@ -477,9 +517,7 @@
                     title: 'Processing...',
                     text: 'Please wait while we process your request',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+                    confirmButtonColor: '#10B981',
                 });
 
                 const formData = new FormData(this);
@@ -904,9 +942,7 @@
               title: 'Processing...',
               text: 'Please wait while we save the product',
               allowOutsideClick: false,
-              didOpen: () => {
-                Swal.showLoading();
-              }
+              confirmButtonColor: '#10B981',
             });
 
             const url = productId 
