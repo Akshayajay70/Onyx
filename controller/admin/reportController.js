@@ -6,7 +6,10 @@ const reportController = {
     getSalesReport: async (req, res) => {
         try {
             const { startDate, endDate, period } = req.query;
-            let query = { orderStatus: { $ne: 'cancelled' } };
+            let query = { 
+                'items.order.status': { $ne: 'cancelled' },
+                'payment.paymentStatus': { $ne: 'failed' }
+            };
             let dateRange = {};
 
             // Handle different period types
@@ -47,22 +50,21 @@ const reportController = {
                 .populate('userId', 'firstName lastName email')
                 .sort({ createdAt: -1 });
 
-            // Calculate metrics using discounted prices
+            // Calculate metrics
             const metrics = {
                 totalOrders: orders.length,
                 totalSales: orders.reduce((sum, order) => sum + order.totalAmount, 0),
                 totalDiscount: orders.reduce((sum, order) => {
-                    const couponDiscount = order.couponDiscount || 0;
-                    const otherDiscounts = order.discount || 0;
-                    return sum + couponDiscount + otherDiscounts;
+                    const couponDiscount = order.coupon?.discount || 0;
+                    return sum + couponDiscount;
                 }, 0),
                 netRevenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
             };
 
-            // Calculate average order value from net revenue
+            // Calculate average order value
             metrics.averageOrderValue = orders.length ? metrics.netRevenue / orders.length : 0;
 
-            // Group orders by date with discounted prices
+            // Group orders by date
             const dailyData = orders.reduce((acc, order) => {
                 const date = order.createdAt.toISOString().split('T')[0];
                 if (!acc[date]) {
@@ -76,7 +78,7 @@ const reportController = {
                 
                 acc[date].orders++;
                 acc[date].sales += order.totalAmount;
-                acc[date].discount += (order.couponDiscount || 0) + (order.discount || 0);
+                acc[date].discount += (order.coupon?.discount || 0);
                 acc[date].netRevenue += order.totalAmount;
                 
                 return acc;
@@ -104,98 +106,58 @@ const reportController = {
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'order.status': { $ne: 'cancelled' }
-            }).populate('userId', 'firstName lastName email');
+                'items.order.status': { $ne: 'cancelled' },
+                'payment.paymentStatus': { $ne: 'pending' }
+            })
+            .populate('userId', 'firstName lastName email')
+            .populate('items.product', 'name')
+            .lean();
 
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Sales Report');
 
-            // Add title and date range
-            worksheet.mergeCells('A1:H1');
-            worksheet.getCell('A1').value = 'Sales Report';
-            worksheet.getCell('A1').font = { size: 16, bold: true };
-            worksheet.getCell('A1').alignment = { horizontal: 'center' };
-
-            worksheet.mergeCells('A2:H2');
-            worksheet.getCell('A2').value = `Period: ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`;
-            worksheet.getCell('A2').alignment = { horizontal: 'center' };
-
-            // Add headers
-            worksheet.addRow(['']);  // Empty row for spacing
-            const headers = [
-                'Order ID',
-                'Date',
-                'Customer',
-                'Items',
-                'Original Amount',
-                'Discount',
-                'Final Amount',
-                'Payment Status'
+            worksheet.columns = [
+                { header: 'Order ID', key: 'orderId', width: 15 },
+                { header: 'Date', key: 'date', width: 12 },
+                { header: 'Customer', key: 'customer', width: 20 },
+                { header: 'Items', key: 'items', width: 30 },
+                { header: 'Status', key: 'status', width: 15 },
+                { header: 'Payment Method', key: 'paymentMethod', width: 15 },
+                { header: 'Amount', key: 'amount', width: 12 }
             ];
 
-            const headerRow = worksheet.addRow(headers);
-            headerRow.font = { bold: true };
-            headerRow.eachCell(cell => {
-                cell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF333333' }
-                };
-                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            });
+            // Style header
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFE0E0E0' }
+            };
 
             // Add data
             orders.forEach(order => {
-                const itemsList = order.items.map(item => 
-                    `${item.quantity}x ${item.product.productName}`
-                ).join('\n');
-
-                const originalAmount = order.items.reduce((sum, item) => 
-                    sum + (item.price * item.quantity), 0);
-
-                worksheet.addRow([
-                    order.orderCode,
-                    new Date(order.orderDate).toLocaleDateString(),
-                    `${order.userId.firstName} ${order.userId.lastName}`,
-                    itemsList,
-                    originalAmount.toFixed(2),
-                    (order.coupon?.discount || 0).toFixed(2),
-                    order.totalAmount.toFixed(2),
-                    order.payment.paymentStatus
-                ]);
+                worksheet.addRow({
+                    orderId: order.orderCode,
+                    date: new Date(order.createdAt).toLocaleDateString(),
+                    customer: `${order.userId?.firstName || ''} ${order.userId?.lastName || ''}`,
+                    items: order.items.map(item => 
+                        `${item.quantity}x ${item.product?.name || 'Unknown'}`
+                    ).join('\n'),
+                    status: order.items[0]?.order?.status || 'N/A',
+                    paymentMethod: `${order.payment.method} (${order.payment.paymentStatus})`,
+                    amount: order.totalAmount.toFixed(2)
+                });
             });
 
-            // Add totals
-            worksheet.addRow(['']);  // Empty row
-            const totals = orders.reduce((acc, order) => ({
-                originalAmount: acc.originalAmount + order.items.reduce((sum, item) => 
-                    sum + (item.price * item.quantity), 0),
-                discount: acc.discount + (order.coupon?.discount || 0),
-                finalAmount: acc.finalAmount + order.totalAmount
-            }), { originalAmount: 0, discount: 0, finalAmount: 0 });
-
-            const totalRow = worksheet.addRow([
-                'TOTALS',
-                '',
-                '',
-                '',
-                totals.originalAmount.toFixed(2),
-                totals.discount.toFixed(2),
-                totals.finalAmount.toFixed(2),
-                ''
-            ]);
-            totalRow.font = { bold: true };
-
-            // Style the worksheet
-            worksheet.columns.forEach(column => {
-                column.width = 15;
-                column.alignment = { vertical: 'middle', horizontal: 'left' };
-            });
-
+            // Set response headers
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             res.setHeader('Content-Disposition', `attachment; filename=sales-report-${startDate}-${endDate}.xlsx`);
 
-            await workbook.xlsx.write(res);
+            // Write to response
+            return workbook.xlsx.write(res).then(() => {
+                res.status(200).end();
+            });
+
         } catch (error) {
             console.error('Excel download error:', error);
             res.status(500).json({ success: false, message: 'Error downloading report' });
@@ -210,76 +172,47 @@ const reportController = {
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'order.status': { $ne: 'cancelled' }
-            }).populate('userId', 'firstName lastName email');
+                'items.order.status': { $ne: 'cancelled' },
+                'payment.paymentStatus': { $ne: 'pending' }
+            })
+            .populate('userId', 'firstName lastName email')
+            .populate('items.product', 'name')
+            .lean();
 
-            const doc = new PDFDocument({ margin: 30, size: 'A4' });
+            const doc = new PDFDocument();
+
+            // Set response headers
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename=sales-report-${startDate}-${endDate}.pdf`);
 
             // Pipe the PDF to the response
             doc.pipe(res);
 
-            // Add header with logo (if you have one)
-            doc.fontSize(20).text('Sales Report', { align: 'center' });
+            // Add content
+            doc.fontSize(16).text('Sales Report', { align: 'center' });
             doc.moveDown();
             doc.fontSize(12).text(`Period: ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`, { align: 'center' });
             doc.moveDown();
 
-            // Add summary section
-            const totals = orders.reduce((acc, order) => ({
-                totalOrders: acc.totalOrders + 1,
-                originalAmount: acc.originalAmount + order.items.reduce((sum, item) => 
-                    sum + (item.price * item.quantity), 0),
-                discount: acc.discount + (order.coupon?.discount || 0),
-                finalAmount: acc.finalAmount + order.totalAmount
-            }), { totalOrders: 0, originalAmount: 0, discount: 0, finalAmount: 0 });
-
-            // Create summary table
-            const summaryTable = {
-                title: "Summary",
-                headers: ["Metric", "Value"],
-                rows: [
-                    ["Total Orders", totals.totalOrders.toString()],
-                    ["Original Amount", `₹${totals.originalAmount.toFixed(2)}`],
-                    ["Total Discount", `₹${totals.discount.toFixed(2)}`],
-                    ["Net Revenue", `₹${totals.finalAmount.toFixed(2)}`]
-                ]
+            // Create the table
+            const table = {
+                headers: ['Order ID', 'Date', 'Customer', 'Amount', 'Status'],
+                rows: orders.map(order => [
+                    order.orderCode,
+                    new Date(order.createdAt).toLocaleDateString(),
+                    `${order.userId?.firstName || ''} ${order.userId?.lastName || ''}`,
+                    `₹${order.totalAmount.toFixed(2)}`,
+                    order.items[0]?.order?.status || 'N/A'
+                ])
             };
 
-            await doc.table(summaryTable, {
+            // Add table to document
+            doc.table(table, {
                 prepareHeader: () => doc.font('Helvetica-Bold').fontSize(10),
                 prepareRow: () => doc.font('Helvetica').fontSize(10)
             });
 
-            doc.moveDown();
-
-            // Create orders table
-            const tableData = {
-                title: "Order Details",
-                headers: ["Order ID", "Date", "Customer", "Amount", "Status"],
-                rows: orders.map(order => [
-                    order.orderCode,
-                    new Date(order.orderDate).toLocaleDateString(),
-                    `${order.userId.firstName} ${order.userId.lastName}`,
-                    `₹${order.totalAmount.toFixed(2)}`,
-                    order.order.status
-                ])
-            };
-
-            await doc.table(tableData, {
-                prepareHeader: () => doc.font('Helvetica-Bold').fontSize(10),
-                prepareRow: () => doc.font('Helvetica').fontSize(10),
-                width: 500
-            });
-
-            // Add footer
-            doc.moveDown();
-            doc.fontSize(8).text(
-                `Generated on ${new Date().toLocaleString()}`,
-                { align: 'center', color: 'grey' }
-            );
-
+            // Finalize PDF file
             doc.end();
 
         } catch (error) {
