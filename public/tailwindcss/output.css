@@ -698,6 +698,14 @@ video {
   bottom: -1.5rem;
 }
 
+.-right-1 {
+  right: -0.25rem;
+}
+
+.-top-1 {
+  top: -0.25rem;
+}
+
 .z-20 {
   z-index: 20;
 }
@@ -2373,6 +2381,11 @@ video {
   line-height: 1rem;
 }
 
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -3190,6 +3203,11 @@ video {
 .focus\:ring-indigo-500:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(99 102 241 / var(--tw-ring-opacity, 1));
+}
+
+.focus\:ring-zinc-600:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(82 82 91 / var(--tw-ring-opacity, 1));
 }
 
 .focus\:ring-offset-2:focus {

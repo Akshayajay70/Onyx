@@ -4,6 +4,39 @@ import path from 'path';
 import fs from 'fs';
 import upload from '../../utils/multer.js'
 
+// Add these validation functions at the top of the file
+const validateProductName = (name) => {
+    // Remove extra spaces and check length
+    const trimmedName = name.trim();
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+        throw new Error('Product name must be between 3 and 50 characters');
+    }
+    
+    // Allow letters, numbers, spaces, and basic punctuation
+    const nameRegex = /^[a-zA-Z0-9\s]+$/;
+    if (!nameRegex.test(trimmedName)) {
+        throw new Error('Product name contains invalid characters');
+    }
+    
+    return trimmedName;
+};
+
+const validateBrand = (brand) => {
+    // Remove extra spaces and check length
+    const trimmedBrand = brand.trim();
+    if (trimmedBrand.length < 2 || trimmedBrand.length > 30) {
+        throw new Error('Brand name must be between 2 and 30 characters');
+    }
+    
+    // Allow letters, numbers, spaces, and hyphens
+    const brandRegex = /^[a-zA-Z0-9\s]+$/;
+    if (!brandRegex.test(trimmedBrand)) {
+        throw new Error('Brand name contains invalid characters');
+    }
+    
+    return trimmedBrand;
+};
+
 // Render Product Management Page
 const renderProductPage = async (req, res) => {
     try {
@@ -89,17 +122,36 @@ const addProduct = async (req, res) => {
                 stock
             } = req.body;
 
-            // Additional validation
+            // Validate required fields
             if (!productName || !brand || !categoriesId || !price || !stock) {
                 return res.status(400).json({ message: 'All fields are required' });
+            }
+
+            // Validate product name and brand
+            let validatedName, validatedBrand;
+            try {
+                validatedName = validateProductName(productName);
+                validatedBrand = validateBrand(brand);
+            } catch (validationError) {
+                return res.status(400).json({ message: validationError.message });
+            }
+
+            // Check for duplicate product name
+            const existingProduct = await Product.findOne({
+                productName: validatedName,
+                _id: { $ne: req.params.id } // Exclude current product when updating
+            });
+            
+            if (existingProduct) {
+                return res.status(400).json({ message: 'A product with this name already exists' });
             }
 
             // Process and save the images
             const imageUrls = req.files.map(file => `/uploads/products/${file.filename}`);
 
             const newProduct = new Product({
-                productName: productName.trim(),
-                brand: brand.trim(),
+                productName: validatedName,
+                brand: validatedBrand,
                 gender,
                 categoriesId,
                 color: color.trim(),
@@ -125,7 +177,7 @@ const addProduct = async (req, res) => {
             }
             
             console.error('Error adding product:', error);
-            res.status(500).json({ message: error.message || 'Internal server error' });
+            res.status(400).json({ message: error.message || 'Error adding product' });
         }
     });
 };
@@ -199,6 +251,25 @@ const updateProduct = async (req, res) => {
                 return res.status(400).json({ message: 'All required fields must be filled' });
             }
 
+            // Validate product name and brand
+            let validatedName, validatedBrand;
+            try {
+                validatedName = validateProductName(req.body.productName);
+                validatedBrand = validateBrand(req.body.brand);
+            } catch (validationError) {
+                return res.status(400).json({ message: validationError.message });
+            }
+
+            // Check for duplicate product name (excluding current product)
+            const existingProductName = await Product.findOne({
+                productName: validatedName,
+                _id: { $ne: req.params.id }
+            });
+            
+            if (existingProductName) {
+                return res.status(400).json({ message: 'A product with this name already exists' });
+            }
+
             // Handle image updates
             let updatedImageUrls = [...existingProduct.imageUrl];
 
@@ -227,8 +298,8 @@ const updateProduct = async (req, res) => {
 
             // Update product fields
             const updatedProduct = {
-                productName: productName.trim(),
-                brand: brand.trim(),
+                productName: validatedName,
+                brand: validatedBrand,
                 gender,
                 categoriesId,
                 color: color.trim(),
