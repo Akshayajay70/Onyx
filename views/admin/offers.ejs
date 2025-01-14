@@ -23,170 +23,212 @@
                 </button>
             </div>
 
-            <!-- Offers List -->
-            <div class="grid gap-4">
-                <% offers.forEach(offer => { %>
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <div class="flex justify-between items-start">
+            <!-- Table container -->
+            <div class="bg-zinc-700 rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-600">
+                        <thead class="bg-zinc-800">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Offer Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Discount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-600">
+                            <% if (offers && offers.length > 0) { %>
+                                <% offers.forEach(offer => { %>
+                                    <% 
+                                    const now = new Date();
+                                    const endDate = new Date(offer.endDate);
+                                    const isExpired = endDate < now;
+                                    %>
+                                    <tr class="hover:bg-zinc-600 relative">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="text-sm text-gray-200"><%= offer.name %></div>
+                                                <% if (isExpired) { %>
+                                                    <span class="ml-2 px-2 py-1 text-xs font-medium bg-red-500/10 text-red-400 rounded-full">
+                                                        Expired
+                                                    </span>
+                                                <% } else if (now < new Date(offer.startDate)) { %>
+                                                    <span class="ml-2 px-2 py-1 text-xs font-medium bg-yellow-500/10 text-yellow-400 rounded-full">
+                                                        Scheduled
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="ml-2 px-2 py-1 text-xs font-medium bg-green-500/10 text-green-400 rounded-full">
+                                                        Active
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-200">
+                                                <%= offer.categoryId ? 'Category' : 'Product' %>
+                                            </div>
+                                            <div class="text-xs text-gray-400">
+                                                <% if (offer.categoryId) { %>
+                                                    <%= offer.categoryId.name %>
+                                                <% } else { %>
+                                                    <%= offer.productIds.length %> products
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-200">
+                                                <span class="font-medium"><%= offer.discount %>%</span>
+                                                <span class="text-gray-400">off</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-200">
+                                                <%= new Date(offer.startDate).toLocaleDateString() %> - 
+                                                <%= new Date(offer.endDate).toLocaleDateString() %>
+                                            </div>
+                                            <div class="text-xs text-gray-400">
+                                                <%= new Date(offer.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %> - 
+                                                <%= new Date(offer.endDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button onclick="editOffer(this)" 
+                                                        data-offer="<%= encodeURIComponent(JSON.stringify(offer)) %>"
+                                                        class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                    Edit
+                                                </button>
+                                                <button onclick="deleteOffer('<%= offer._id %>')"
+                                                        class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                                        <div class="flex flex-col items-center">
+                                            <i class="fas fa-tag text-4xl mb-3"></i>
+                                            <p>No offers found</p>
+                                            <p class="text-sm mt-1">Create your first offer by clicking the Add New button</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div id="offerModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div class="bg-zinc-800 rounded-lg shadow-xl w-[480px] max-w-full">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-zinc-700">
+                        <h3 class="text-lg font-medium text-white" id="modalTitle">Add New Offer</h3>
+                        <button onclick="closeOfferModal()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-4 space-y-4">
+                        <form id="offerForm" onsubmit="handleOfferSubmit(event)" class="space-y-4">
+                            <input type="hidden" id="offerId" value="">
+                            
+                            <!-- Offer Name -->
                             <div>
-                                <h3 class="text-lg font-semibold"><%= offer.name %></h3>
-                                <p class="text-gray-600">
-                                    <% if (offer.categoryId) { %>
-                                        Category: <%= offer.categoryId.name %>
-                                    <% } else { %>
-                                        Products: 
-                                        <% offer.productIds.forEach((product, index) => { %>
-                                            <%= product.productName %><%= index < offer.productIds.length - 1 ? ', ' : '' %>
-                                        <% }) %>
-                                    <% } %>
-                                </p>
-                                <p class="text-gray-600">Discount: <%= offer.discount %>%</p>
-                                <p class="text-gray-600">
-                                    Valid: <%= new Date(offer.startDate).toLocaleDateString() %> - 
-                                    <%= new Date(offer.endDate).toLocaleDateString() %>
-                                </p>
+                                <label for="offerName" class="block text-sm text-gray-300 mb-1">Offer Name</label>
+                                <input type="text" id="offerName" placeholder="Enter offer name"
+                                       class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                              focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400">
                             </div>
-                            <div class="flex space-x-2">
-                                <button onclick="editOffer(this)" 
-                                        data-offer="<%- encodeURIComponent(JSON.stringify(offer)) %>"
-                                        class="text-blue-500 hover:text-blue-700">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick="deleteOffer('<%= offer._id %>')"
-                                        class="text-red-500 hover:text-red-700">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+
+                            <!-- Offer Type -->
+                            <div>
+                                <label for="offerType" class="block text-sm text-gray-300 mb-1">Offer Type</label>
+                                <select id="offerType" onchange="handleTypeChange()"
+                                        class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                               focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select Type</option>
+                                    <option value="category">Category</option>
+                                    <option value="product">Products</option>
+                                </select>
                             </div>
-                        </div>
-                    </div>
-                <% }); %>
-            </div>
-        </div>
-    </div>
 
-    <!-- Offer Modal -->
-    <div id="offerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
-        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto">
-            <!-- Modal Header -->
-            <div class="py-4 px-6 border-b border-gray-200">
-                <h2 id="modalTitle" class="text-xl font-semibold text-gray-800"></h2>
-            </div>
+                            <!-- Selection Area -->
+                            <div id="selectionDiv" class="hidden">
+                                <label class="block text-sm text-gray-300 mb-1">
+                                    Select <span id="selectionType">Items</span>
+                                </label>
 
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="offerForm" onsubmit="handleOfferSubmit(event)">
-                    <input type="hidden" id="offerId">
-                    
-                    <!-- Offer Name -->
-                    <div class="mb-4">
-                        <label for="offerName" class="block text-sm font-medium text-gray-700 mb-1">
-                            Offer Name
-                        </label>
-                        <input type="text" id="offerName" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <!-- Offer Type -->
-                    <div class="mb-4">
-                        <label for="offerType" class="block text-sm font-medium text-gray-700 mb-1">
-                            Apply To
-                        </label>
-                        <select id="offerType"  onchange="handleTypeChange()"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select Type</option>
-                            <option value="category">Category</option>
-                            <option value="product">Products</option>
-                        </select>
-                    </div>
-
-                    <!-- Dynamic Selection -->
-                    <div id="selectionDiv" class="mb-4 hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Select <span id="selectionType"></span>
-                        </label>
-                        
-                        <!-- Category Selection -->
-                        <div id="categorySelection" class="hidden">
-                            <select id="categorySelect" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Select Category</option>
-                            </select>
-                        </div>
-
-                        <!-- Product Selection -->
-                        <div id="productSelection" class="hidden">
-                            <div class="border border-gray-300 rounded-md shadow-sm">
-                                <!-- Search Box -->
-                                <div class="p-3 border-b border-gray-200">
-                                    <input type="text" id="productSearch" 
-                                           placeholder="Search products..." 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <!-- Category Selection -->
+                                <div id="categorySelection" class="hidden">
+                                    <select id="categorySelect" 
+                                            class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                                   focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Select Category</option>
+                                    </select>
                                 </div>
-                                
-                                <!-- Product List -->
-                                <div class="max-h-48 overflow-y-auto p-3">
-                                    <div id="productList" class="space-y-2">
-                                        <!-- Products populated here -->
-                                    </div>
-                                </div>
-                                
-                                <!-- Selection Counter -->
-                                <div class="p-3 border-t border-gray-200 bg-gray-50 rounded-b-md">
+
+                                <!-- Product Selection -->
+                                <div id="productSelection" class="hidden space-y-2">
+                                    <input type="text" id="productSearch" placeholder="Search products..." 
+                                           class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                                  focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                    
                                     <div class="flex justify-between items-center text-sm">
-                                        <span class="text-gray-600">
-                                            Selected: <span id="selectedCount" class="font-medium">0</span>
-                                        </span>
-                                        <button type="button" onclick="toggleAllProducts()" 
-                                                class="text-blue-600 hover:text-blue-800 font-medium">
-                                            Select All
-                                        </button>
+                                        <button type="button" onclick="toggleAllProducts()"
+                                                class="text-blue-400 hover:text-blue-300">Toggle All</button>
+                                        <span class="text-gray-400">Selected: <span id="selectedCount">0</span></span>
+                                    </div>
+                                    
+                                    <div id="productList" class="max-h-32 overflow-y-auto bg-zinc-700/50 rounded-lg border border-zinc-600">
+                                        <!-- Products will be populated here -->
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Discount -->
-                    <div class="mb-4">
-                        <label for="discount" class="block text-sm font-medium text-gray-700 mb-1">
-                            Discount (%)
-                        </label>
-                        <input type="number" 
-                               id="discount"  
-                               placeholder="Enter discount (1-90%)"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+                            <!-- Discount -->
+                            <div>
+                                <label for="discount" class="block text-sm text-gray-300 mb-1">Discount (%)</label>
+                                <input type="number" id="discount" placeholder="Enter discount percentage"
+                                       class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                              focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
 
-                    <!-- Date Range -->
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">
-                                Start Date
-                            </label>
-                            <input type="datetime-local" id="startDate" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
-                                End Date
-                            </label>
-                            <input type="datetime-local" id="endDate" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
+                            <!-- Date Range -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="startDate" class="block text-sm text-gray-300 mb-1">Start Date</label>
+                                    <input type="datetime-local" id="startDate" 
+                                           class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                                  focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="endDate" class="block text-sm text-gray-300 mb-1">End Date</label>
+                                    <input type="datetime-local" id="endDate" 
+                                           class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                                  focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
 
-                    <!-- Modal Footer -->
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="closeOfferModal()"
-                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Cancel
-                        </button>
-                        <button type="submit" id="submitButton"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Save Offer
-                        </button>
+                            <!-- Modal Footer -->
+                            <div class="flex justify-end space-x-2 pt-4 border-t border-zinc-700">
+                                <button type="button" onclick="closeOfferModal()"
+                                        class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-lg hover:bg-zinc-600">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="submitButton"
+                                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-500">
+                                    Save Offer
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -240,16 +282,15 @@
             
             products.forEach(product => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center p-2 hover:bg-gray-50 rounded';
+                div.className = 'flex items-center p-2 hover:bg-zinc-600';
                 div.innerHTML = `
                     <input type="checkbox" 
                            id="product_${product._id}" 
                            value="${product._id}"
-                           class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500"
-                           onchange="updateSelectedCount()">
-                    <label for="product_${product._id}" class="flex-1 cursor-pointer">
+                           class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 bg-zinc-600 border-gray-500">
+                    <label for="product_${product._id}" class="flex-1 cursor-pointer text-gray-200">
                         <div class="font-medium">${product.productName}</div>
-                        <div class="text-sm text-gray-500">${product.brand}</div>
+                        <div class="text-sm text-gray-400">${product.brand || ''}</div>
                     </label>
                 `;
                 productList.appendChild(div);
@@ -474,9 +515,24 @@
                 const startDate = new Date(offer.startDate);
                 const endDate = new Date(offer.endDate);
                 
-                // Format dates to ISO string and take only the date-time part
-                document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
-                document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
+                // Format dates with local timezone
+                document.getElementById('startDate').value = startDate.toLocaleString('sv-SE', { 
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).slice(0, 16).replace(' ', 'T');
+
+                document.getElementById('endDate').value = endDate.toLocaleString('sv-SE', { 
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).slice(0, 16).replace(' ', 'T');
                 
                 // Setup UI based on type
                 handleTypeChange();

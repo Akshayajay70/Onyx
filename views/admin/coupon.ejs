@@ -25,175 +25,218 @@
       </header>
 
       <main class="p-4 lg:p-8">
-        <div class="bg-zinc-800 rounded-lg p-6 overflow-x-auto">
-          <table class="min-w-full text-left text-gray-400 table-auto">
-            <thead>
-              <tr class="border-b border-gray-700">
-                <th class="py-3 px-4">Code</th>
-                <th class="py-3 px-4">Discount %</th>
-                <th class="py-3 px-4">Valid From</th>
-                <th class="py-3 px-4">Valid Until</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% coupons.forEach((coupon) => { %>
-              <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= coupon.code %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= coupon.discountPercentage %>%</div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= new Date(coupon.startDate).toLocaleDateString() %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <div class="font-medium"><%= new Date(coupon.expiryDate).toLocaleDateString() %></div>
-                </td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 rounded-full text-xs <%= coupon.isActive ? 'bg-green-500' : 'bg-red-500' %>">
-                    <%= coupon.isActive ? 'Active' : 'Inactive' %>
-                  </span>
-                </td>
-                <td class="py-3 px-4 space-x-3 flex">
-                  <button class="edit-coupon text-yellow-500 hover:text-yellow-300 transition"
-                          data-id="<%= coupon._id %>">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="delete-coupon text-red-500 hover:text-red-300 transition" 
-                          data-id="<%= coupon._id %>">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                  <button class="toggle-status <%= coupon.isActive ? 'text-gray-500' : 'text-green-500' %>" 
-                          data-id="<%= coupon._id %>" 
-                          data-active="<%= coupon.isActive %>">
-                    <i class="fas <%= coupon.isActive ? 'fa-eye-slash' : 'fa-eye' %>"></i>
-                  </button>
-                </td>
-              </tr>
-              <% }); %>
-            </tbody>
-          </table>
+        <div class="mt-4">
+            <!-- Table container -->
+            <div class="bg-zinc-700 rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-600">
+                        <thead class="bg-zinc-800">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Code</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Discount</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Duration</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Usage</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-600">
+                            <% coupons.forEach(coupon => { %>
+                                <% 
+                                const now = new Date();
+                                const startDate = new Date(coupon.startDate);
+                                const expiryDate = new Date(coupon.expiryDate);
+                                const isExpired = expiryDate < now;
+                                const isScheduled = startDate > now;
+                                %>
+                                <tr class="hover:bg-zinc-600">
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-200 font-medium"><%= coupon.code %></div>
+                                        <div class="text-xs text-gray-400"><%= coupon.description %></div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-200">
+                                            <span class="font-medium"><%= coupon.discountPercentage %>%</span>
+                                            <% if (coupon.maximumDiscount) { %>
+                                                <span class="text-xs text-gray-400">up to ₹<%= coupon.maximumDiscount %></span>
+                                            <% } %>
+                                        </div>
+                                        <% if (coupon.minimumPurchase > 0) { %>
+                                            <div class="text-xs text-gray-400">Min. ₹<%= coupon.minimumPurchase %></div>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-200">
+                                            <%= startDate.toLocaleDateString() %> - <%= expiryDate.toLocaleDateString() %>
+                                        </div>
+                                        <div class="text-xs text-gray-400">
+                                            <%= startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %> - 
+                                            <%= expiryDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-200">
+                                            <%= coupon.usedCouponCount %> used
+                                            <% if (coupon.totalCoupon) { %>
+                                                <span class="text-gray-400">/ <%= coupon.totalCoupon %></span>
+                                            <% } %>
+                                        </div>
+                                        <div class="text-xs text-gray-400">
+                                            Limit: <%= coupon.userUsageLimit %>/user
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <% if (isExpired) { %>
+                                            <span class="px-2 py-1 text-xs font-medium bg-red-500/10 text-red-400 rounded-full">
+                                                Expired
+                                            </span>
+                                        <% } else if (isScheduled) { %>
+                                            <span class="px-2 py-1 text-xs font-medium bg-yellow-500/10 text-yellow-400 rounded-full">
+                                                Scheduled
+                                            </span>
+                                        <% } else if (coupon.isActive) { %>
+                                            <span class="px-2 py-1 text-xs font-medium bg-green-500/10 text-green-400 rounded-full">
+                                                Active
+                                            </span>
+                                        <% } else { %>
+                                            <span class="px-2 py-1 text-xs font-medium bg-gray-500/10 text-gray-400 rounded-full">
+                                                Inactive
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex space-x-2">
+                                            <!-- Edit Button -->
+                                            <button class="edit-coupon px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                                                    data-id="<%= coupon._id %>"
+                                                    <%= isExpired ? '' : '' %>>
+                                                Edit
+                                            </button>
+
+                                            <!-- Toggle Status Button -->
+                                            <button class="toggle-status px-3 py-1 <%= coupon.isActive ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700' %> text-white rounded-lg transition"
+                                                    data-id="<%= coupon._id %>"
+                                                    data-active="<%= coupon.isActive %>">
+                                                <%= coupon.isActive ? 'Hide' : 'Show' %>
+                                            </button>
+
+                                            <!-- Delete Button -->
+                                            <button class="delete-coupon px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                                                    data-id="<%= coupon._id %>">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
       </main>
     </div>
 
-    <!-- Coupon Modal -->
-    <div id="couponModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-      <div class="bg-zinc-900 rounded-lg w-[90%] md:w-[600px] max-h-[90vh] overflow-y-auto p-6">
-        <h2 id="modalTitle" class="text-xl font-bold text-gray-100 mb-4">Add New Coupon</h2>
-        <form id="couponForm">
-          <input type="hidden" id="couponId" name="couponId">
-          
-          <div id="formErrorMessage" class="hidden bg-red-500 text-white p-3 rounded mb-4"></div>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-gray-400 mb-1">Coupon Code</label>
-              <input type="text" 
-                     name="code" 
-                     id="code" 
-                     
-                     class="uppercase w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                     placeholder="e.g., SUMMER2024">
-              <p class="text-xs text-gray-500 mt-1">Only uppercase letters and numbers allowed</p>
+    <!-- Modal -->
+    <div id="couponModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-zinc-800 rounded-lg shadow-xl w-[480px] max-w-full">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-zinc-700">
+                <h3 class="text-lg font-medium text-white" id="modalTitle">Add New Coupon</h3>
+                <button type="button" class="close-modal text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
 
-            <div>
-              <label class="block text-gray-400 mb-1">Description</label>
-              <textarea name="description" 
-                        id="description" 
-                        rows="2"
-                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                        placeholder="Brief description of the coupon"></textarea>
+            <!-- Modal Body -->
+            <div class="p-4">
+                <form id="couponForm" class="space-y-4">
+                    <input type="hidden" id="couponId">
+                    
+                    <!-- Coupon Code -->
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-1">Coupon Code</label>
+                        <input type="text" id="code" placeholder="Enter code"
+                               class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                      focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400">
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-1">Description</label>
+                        <textarea id="description" rows="2" placeholder="Brief description"
+                                  class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                         focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"></textarea>
+                    </div>
+
+                    <!-- Discount Settings -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Discount (%)</label>
+                            <input type="number" id="discountPercentage" min="1" max="90"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Min. Purchase (₹)</label>
+                            <input type="number" id="minimumPurchase" min="0"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Max. Discount (₹)</label>
+                            <input type="number" id="maximumDiscount" min="0"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Usage Limits -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Total Coupons</label>
+                            <input type="number" id="totalCoupon" min="0"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Uses Per User</label>
+                            <input type="number" id="userUsageLimit" min="1" value="1"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">Start Date</label>
+                            <input type="datetime-local" id="startDate"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-1">End Date</label>
+                            <input type="datetime-local" id="expiryDate"
+                                   class="w-full px-3 py-2 bg-zinc-700/50 border border-zinc-600 text-white rounded-lg 
+                                          focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex justify-end space-x-2 pt-4 border-t border-zinc-700">
+                        <button type="button" id="cancelModal"
+                                class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-lg hover:bg-zinc-600">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-500">
+                            Save Coupon
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-gray-400 mb-1">Discount Percentage</label>
-                <input type="number" 
-                       name="discountPercentage" 
-                       id="discountPercentage" 
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                       placeholder="Enter percentage (1-90)">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Minimum Purchase (₹)</label>
-                <input type="number" 
-                       name="minimumPurchase" 
-                       id="minimumPurchase" 
-                       min="0"
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                       placeholder="0 for no minimum">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Maximum Discount (₹)</label>
-                <input type="number" 
-                       name="maximumDiscount" 
-                       id="maximumDiscount" 
-                       min="0"
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                       placeholder="0 for no limit">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Start Date</label>
-                <input type="datetime-local" 
-                       name="startDate" 
-                       id="startDate" 
-                       
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Expiry Date</label>
-                <input type="datetime-local" 
-                       name="expiryDate" 
-                       id="expiryDate" 
-                       
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Total Coupons</label>
-                <input type="number" 
-                       name="totalCoupon" 
-                       id="totalCoupon" 
-                       min="0"
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200"
-                       placeholder="0 for unlimited">
-              </div>
-
-              <div>
-                <label class="block text-gray-400 mb-1">Usage Limit Per User</label>
-                <input type="number" 
-                       name="userUsageLimit" 
-                       id="userUsageLimit" 
-                       min="1"
-                       value="1"
-                       
-                       class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-end mt-6 space-x-4">
-            <button type="button" 
-                    id="cancelModal" 
-                    class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg">
-              Cancel
-            </button>
-            <button type="submit"
-                    class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">
-              Save Coupon
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
     </div>
 
     <script>
@@ -212,9 +255,11 @@
         });
 
         // Close modal
-        document.getElementById('cancelModal').addEventListener('click', () => {
-          couponModal.classList.add('hidden');
-          couponForm.reset();
+        document.querySelectorAll('.close-modal, #cancelModal').forEach(button => {
+          button.addEventListener('click', () => {
+            couponModal.classList.add('hidden');
+            couponForm.reset();
+          });
         });
 
         // Form submission handler

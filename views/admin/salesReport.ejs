@@ -162,7 +162,7 @@
                                                 'processing': 'bg-indigo-100 text-indigo-800',
                                                 'shipped': 'bg-purple-100 text-purple-800'
                                             }[status] || 'bg-gray-100 text-gray-800'; %>
-                                            <span class="<%= index > 0 ? 'mt-1' : '' %> px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= statusColor %>">
+                                            <span class="<%= index > 0 ? 'mt-1' : '' %> px-2 flex text-xs leading-5 font-semibold rounded-full <%= statusColor %>">
                                                 <%= status %>
                                             </span>
                                         <% }); %>
@@ -178,9 +178,6 @@
                                             'cancelled': 'bg-red-100 text-red-800',
                                             'refund processing': 'bg-yellow-100 text-yellow-800'
                                         }[paymentStatus] || 'bg-gray-100 text-gray-800'; %>
-                                        <span class="mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= paymentStatusColor %>">
-                                            <%= paymentStatus %>
-                                        </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         ₹<%= order.totalAmount.toFixed(2) %>

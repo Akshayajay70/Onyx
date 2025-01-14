@@ -106,11 +106,11 @@ const reportController = {
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'items.order.status': { $ne: 'cancelled' },
-                'payment.paymentStatus': { $ne: 'pending' }
+                'items.order.status': { $ne: 'pending', $ne: 'cancelled' },
+                'payment.paymentStatus': { $ne: 'failed', $ne: 'cancelled' }
             })
             .populate('userId', 'firstName lastName email')
-            .populate('items.product', 'name')
+            .populate('items.product', 'productName')
             .lean();
 
             const workbook = new ExcelJS.Workbook();
@@ -141,7 +141,7 @@ const reportController = {
                     date: new Date(order.createdAt).toLocaleDateString(),
                     customer: `${order.userId?.firstName || ''} ${order.userId?.lastName || ''}`,
                     items: order.items.map(item => 
-                        `${item.quantity}x ${item.product?.name || 'Unknown'}`
+                        `${item.quantity}x ${item.product?.productName || 'Unknown'} `
                     ).join('\n'),
                     status: order.items[0]?.order?.status || 'N/A',
                     paymentMethod: `${order.payment.method} (${order.payment.paymentStatus})`,
@@ -172,8 +172,8 @@ const reportController = {
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'items.order.status': { $ne: 'cancelled' },
-                'payment.paymentStatus': { $ne: 'pending' }
+                'items.order.status': { $ne: 'pending', $ne: 'cancelled' },
+                'payment.paymentStatus': { $ne: 'failed', $ne: 'cancelled' }
             })
             .populate('userId', 'firstName lastName email')
             .populate('items.product', 'name')
