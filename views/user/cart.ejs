@@ -296,13 +296,7 @@
 
       async function updateQuantity(button, productId, action) {
         const cartItem = button.closest('[id^="cart-item-"]');
-        const item = cartItems.find(i => i.product._id === productId);
-        
-        if (!checkProductAvailability(item)) {
-            return;
-        }
-
-        if (isUpdating) return;
+        if (!cartItem) return;
 
         const quantityDisplay = cartItem.querySelector('.quantity-display');
         const currentQuantity = parseInt(quantityDisplay.textContent);
@@ -316,15 +310,9 @@
             newQuantity = currentQuantity - 1;
         }
 
-        // Update display immediately for smooth UX
-        quantityDisplay.textContent = newQuantity;
-
-        // Disable both buttons during update
+        // Disable buttons during update
         const buttons = cartItem.querySelectorAll('.quantity-btn');
         buttons.forEach(btn => btn.disabled = true);
-
-        clearTimeout(updateTimeout);
-        isUpdating = true;
 
         try {
             const response = await fetch('/cart/update-quantity', {
@@ -340,15 +328,18 @@
 
             const data = await response.json();
 
-            if (response.ok) {
-                // Update subtotal for this item
+            if (data.success) {
+                // Update quantity display
+                quantityDisplay.textContent = newQuantity;
+
+                // Update subtotal
                 const subtotalElement = cartItem.querySelector(`#subtotal-${productId}`);
                 if (subtotalElement) {
                     subtotalElement.textContent = `₹${data.subtotal}`;
                 }
-                
+
                 // Update all total elements
-                const totalElements = document.querySelectorAll('[id$="total"], [id$="total-amount"]');
+                const totalElements = document.querySelectorAll('#total, #total-amount, #subtotal-amount');
                 totalElements.forEach(el => {
                     if (el.id === 'total') {
                         el.textContent = `Total: ₹${data.total}`;
@@ -356,7 +347,7 @@
                         el.textContent = `₹${data.total}`;
                     }
                 });
-                
+
                 // Update button states
                 const minusBtn = cartItem.querySelector('.quantity-btn:first-child');
                 const plusBtn = cartItem.querySelector('.quantity-btn:last-child');
@@ -366,35 +357,22 @@
 
                 // Success feedback
                 button.classList.add('bg-green-200');
-                setTimeout(() => {
-                    button.classList.remove('bg-green-200');
-                }, 300);
-
+                setTimeout(() => button.classList.remove('bg-green-200'), 300);
             } else {
-                // Revert quantity on error
-                quantityDisplay.textContent = currentQuantity;
                 throw new Error(data.message);
             }
         } catch (error) {
+            // Revert quantity display
+            quantityDisplay.textContent = currentQuantity;
+            
             // Error feedback
             button.classList.add('bg-red-200');
-            setTimeout(() => {
-                button.classList.remove('bg-red-200');
-            }, 300);
-
+            setTimeout(() => button.classList.remove('bg-red-200'), 300);
+            
             showAlert('error', error.message || 'Failed to update quantity');
         } finally {
             // Re-enable buttons
-            buttons.forEach(btn => {
-                btn.disabled = false;
-                if (action === 'increase' && newQuantity >= 3) {
-                    cartItem.querySelector('.quantity-btn:last-child').disabled = true;
-                }
-                if (action === 'decrease' && newQuantity <= 1) {
-                    cartItem.querySelector('.quantity-btn:first-child').disabled = true;
-                }
-            });
-            isUpdating = false;
+            buttons.forEach(btn => btn.disabled = false);
         }
       }
 
@@ -491,6 +469,30 @@
             } catch (error) {
                 showAlert('error', error.message || 'Failed to remove item');
             }
+        }
+      }
+
+      function updateCartTotals(total) {
+        // Update all total elements
+        const totalElements = document.querySelectorAll('#total, #total-amount, #subtotal-amount');
+        totalElements.forEach(el => {
+            if (el.id === 'total') {
+                el.textContent = `Total: ₹${total}`;
+            } else {
+                el.textContent = `₹${total}`;
+            }
+        });
+
+        // Update items count
+        const itemsCount = document.getElementById('items-count');
+        const cartItems = document.querySelectorAll('[id^="cart-item-"]');
+        if (itemsCount) {
+            itemsCount.textContent = `Subtotal (${cartItems.length} items)`;
+        }
+
+        // If cart is empty, reload page to show empty cart message
+        if (cartItems.length === 0) {
+            window.location.reload();
         }
       }
       

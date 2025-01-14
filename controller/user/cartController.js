@@ -235,15 +235,21 @@ const updateQuantity = async (req, res) => {
             return res.status(400).json({ message: 'Quantity must be at least 1' });
         }
 
-        const product = await productSchema.findById(productId);
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+        // Check product availability and stock
+        const product = await productSchema.findById(productId).populate({
+            path: 'categoriesId',
+            match: { isActive: true }
+        });
+
+        if (!product || !product.isActive || !product.categoriesId) {
+            return res.status(400).json({ message: 'Product is not available' });
         }
 
         if (product.stock < quantity) {
             return res.status(400).json({ message: 'Not enough stock available' });
         }
 
+        // Find and update cart
         const cart = await cartSchema.findOne({ userId });
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
@@ -269,6 +275,7 @@ const updateQuantity = async (req, res) => {
         const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
 
         res.status(200).json({ 
+            success: true,
             message: 'Quantity updated successfully',
             quantity: quantity,
             subtotal: quantity * cartItem.price,
@@ -277,7 +284,10 @@ const updateQuantity = async (req, res) => {
 
     } catch (error) {
         console.error('Error updating quantity:', error);
-        res.status(500).json({ message: 'Failed to update quantity' });
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to update quantity' 
+        });
     }
 };
 
