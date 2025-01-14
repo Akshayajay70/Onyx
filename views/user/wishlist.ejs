@@ -71,7 +71,7 @@
 
                                 <!-- Mobile Actions -->
                                 <div class="flex gap-2 mt-2">
-                                    <% if (item.productId && !item.productId.isActive) { %>
+                                    <% if (!item.productId.categoriesId || !item.productId.isActive) { %>
                                         <button disabled 
                                                 class="flex-1 bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs">
                                             Unavailable
@@ -97,10 +97,16 @@
 
                         <!-- Desktop Layout -->
                         <div class="hidden md:block">
-                            <% if (item.productId && item.productId.isActive) { %>
+                            <% if (item.productId && item.productId.categoriesId && item.productId.isActive) { %>
                                 <a href="/product/<%= item.productId._id %>" class="block flex-grow">
                             <% } else { %>
-                                <div onclick="showUnavailableMessage()" class="block flex-grow cursor-not-allowed">
+                                <div class="relative cursor-not-allowed">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                                        <span class="text-white text-xs px-2 py-0.5 bg-black/75 rounded-full">
+                                            Unavailable
+                                        </span>
+                                    </div>
+                                    <div class="opacity-50">
                             <% } %>
                                 <div class="relative aspect-[4/5] overflow-hidden">
                                     <img 
@@ -123,7 +129,7 @@
                                     </h3>
                                     <p class="text-sm text-gray-600 mt-1">₹<%= item.productId.price %></p>
                                 </div>
-                            <% if (item.productId && item.productId.isActive) { %>
+                            <% if (item.productId && item.productId.categoriesId && item.productId.isActive) { %>
                                 </a>
                             <% } else { %>
                                 </div>
@@ -131,7 +137,7 @@
                             
                             <div class="p-2 bg-white border-t mt-auto">
                                 <div class="flex items-center gap-1">
-                                    <% if (item.productId && !item.productId.isActive) { %>
+                                    <% if (!item.productId.categoriesId || !item.productId.isActive) { %>
                                         <button 
                                             class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded text-xs font-medium cursor-not-allowed flex-1"
                                             disabled
@@ -296,9 +302,6 @@
 
         async function addToCart(productId) {
             try {
-                event.preventDefault();
-                event.stopPropagation();
-
                 const response = await fetch('/cart/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -306,13 +309,14 @@
                 });
 
                 const data = await response.json();
-                
-                if (data.message && data.message.includes('not available')) {
-                    showToast('error', 'Product Unavailable', 'This product is currently not available');
-                    setTimeout(() => window.location.reload(), 3000);
+
+                if (response.status === 400 && data.message.includes('not available')) {
+                    showToast('error', 'Product Unavailable');
+                    // Reload page to update product status
+                    setTimeout(() => window.location.reload(), 1500);
                     return;
                 }
-                
+
                 if (data.message && data.message.includes('added to cart')) {
                     showToast('success', 'Success', data.message);
                 } else if (data.message && data.message.includes('Maximum limit')) {

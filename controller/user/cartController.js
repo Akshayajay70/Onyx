@@ -2,17 +2,23 @@ import cartSchema from '../../model/cartModel.js';
 import productSchema from '../../model/productModel.js';
 import Offer from '../../model/offerModel.js';
 import { calculateFinalPrice } from '../../utils/calculateOffer.js';
+import Category from '../../model/categoryModel.js';
 
 const getCart = async (req, res) => {
     try {
         const userId = req.session.user;
+        
+        // Get active categories
+        const activeCategories = await Category.find({ isActive: true }).distinct('_id');
+        
         const cart = await cartSchema.findOne({ userId }).populate({
             path: 'items.productId',
             populate: {
-                path: 'categoriesId'
+                path: 'categoriesId',
+                match: { isActive: true }
             }
         });
-        
+
         if (!cart) {
             return res.render('user/cart', { 
                 cartItems: [],
@@ -20,8 +26,22 @@ const getCart = async (req, res) => {
             });
         }
 
-        // Recalculate prices with current offers
-        const updatedItems = await Promise.all(cart.items.map(async item => {
+        // Filter out items with inactive categories or products
+        const validItems = cart.items.filter(item => 
+            item.productId && 
+            item.productId.categoriesId && 
+            item.productId.isActive &&
+            activeCategories.some(catId => catId.equals(item.productId.categoriesId._id))
+        );
+
+        // Update cart if invalid items were removed
+        if (validItems.length !== cart.items.length) {
+            cart.items = validItems;
+            await cart.save();
+        }
+
+        // Process remaining items with current offers
+        const updatedItems = await Promise.all(validItems.map(async item => {
             const product = item.productId;
             
             // Get active offers
@@ -66,7 +86,7 @@ const getCart = async (req, res) => {
             };
         }));
 
-        // Calculate total ensuring numbers
+        // Calculate total
         const total = updatedItems.reduce((sum, item) => {
             return sum + (parseFloat(item.subtotal) || 0);
         }, 0);
@@ -99,9 +119,13 @@ const addToCart = async (req, res) => {
         const { productId, quantity } = req.body;
         const userId = req.session.user;
 
-        // Check if product exists and is in stock
-        const product = await productSchema.findById(productId).populate('categoriesId');
-        if (!product || !product.isActive) {
+        // Check if product exists, is active, and has an active category
+        const product = await productSchema.findById(productId).populate({
+            path: 'categoriesId',
+            match: { isActive: true }
+        });
+
+        if (!product || !product.isActive || !product.categoriesId) {
             return res.status(400).json({
                 success: false,
                 message: 'Product is not available'

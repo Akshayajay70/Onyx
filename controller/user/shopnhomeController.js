@@ -1,15 +1,28 @@
 import Product from '../../model/productModel.js'
 import { calculateFinalPrice } from '../../utils/calculateOffer.js';
 import Offer from '../../model/offerModel.js';
+import Category from '../../model/categoryModel.js';
 
 
 const getHome = async (req, res) => {
     try {
-        // Fetch active products with their categories
-        const products = await Product.find({ isActive: true })
-            .populate('categoriesId')
-            .sort({ createdAt: -1 })
-            .limit(5);
+        // Get IDs of active categories
+        const activeCategories = await Category.find({ isActive: true }).distinct('_id');
+
+        // Fetch active products with active categories
+        const products = await Product.find({ 
+            isActive: true,
+            categoriesId: { $in: activeCategories }
+        })
+        .populate({
+            path: 'categoriesId',
+            match: { isActive: true }
+        })
+        .sort({ createdAt: -1 })
+        .limit(5);
+
+        // Filter out products where category wasn't populated (extra safety check)
+        const filteredProducts = products.filter(product => product.categoriesId);
 
         // Fetch all active offers
         const offers = await Offer.find({
@@ -19,7 +32,7 @@ const getHome = async (req, res) => {
         });
 
         // Process each product to include offer prices
-        const processedProducts = products.map(product => {
+        const processedProducts = filteredProducts.map(product => {
             const productOffer = offers.find(offer => 
                 offer.productIds && offer.productIds.some(id => id.equals(product._id))
             );
@@ -58,8 +71,23 @@ const getShop = async (req, res) => {
         const limit = 12;
         const skip = (page - 1) * limit;
 
-        // Build filter query
-        const filter = { isActive: true };
+        // Build filter query - Add isActive check for both product and category
+        const filter = { 
+            isActive: true,
+            // Add condition to check for active categories
+            $expr: {
+                $and: [
+                    { $eq: ["$isActive", true] },
+                    {
+                        $in: [
+                            "$categoriesId",
+                            // Subquery to get IDs of active categories
+                            await Category.find({ isActive: true }).distinct('_id')
+                        ]
+                    }
+                ]
+            }
+        };
 
         // Add search filter
         if (req.query.search) {
@@ -112,16 +140,22 @@ const getShop = async (req, res) => {
                 sortQuery = { createdAt: -1 };
         }
 
-        // Get total count for pagination
-        const totalProducts = await Product.countDocuments(filter);
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        // Fetch filtered products
+        // Modify the product query to include category active check
         const products = await Product.find(filter)
-            .populate('categoriesId')
+            .populate({
+                path: 'categoriesId',
+                match: { isActive: true } // Only populate active categories
+            })
             .sort(sortQuery)
             .skip(skip)
             .limit(limit);
+
+        // Filter out products where category wasn't populated (inactive categories)
+        const filteredProducts = products.filter(product => product.categoriesId);
+
+        // Update total count for pagination based on filtered products
+        const totalProducts = await Product.countDocuments(filter);
+        const totalPages = Math.ceil(totalProducts / limit);
 
         // Fetch active offers
         const offers = await Offer.find({
@@ -131,7 +165,7 @@ const getShop = async (req, res) => {
         });
 
         // Process products with offers
-        const processedProducts = products.map(product => {
+        const processedProducts = filteredProducts.map(product => {
             const productOffer = offers.find(offer => 
                 offer.productIds && offer.productIds.some(id => id.equals(product._id))
             );

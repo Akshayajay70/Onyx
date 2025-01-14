@@ -285,10 +285,25 @@
       let updateTimeout;
       let isUpdating = false;
 
+      function checkProductAvailability(item) {
+          if (!item.product.isActive || !item.product.categoriesId) {
+              showAlert('error', 'This product is no longer available');
+              removeFromCart(null, item.product._id);
+              return false;
+          }
+          return true;
+      }
+
       async function updateQuantity(button, productId, action) {
+        const cartItem = button.closest('[id^="cart-item-"]');
+        const item = cartItems.find(i => i.product._id === productId);
+        
+        if (!checkProductAvailability(item)) {
+            return;
+        }
+
         if (isUpdating) return;
 
-        const cartItem = button.closest('[id^="cart-item-"]');
         const quantityDisplay = cartItem.querySelector('.quantity-display');
         const currentQuantity = parseInt(quantityDisplay.textContent);
         
@@ -446,22 +461,36 @@
         const confirmed = await showAlert('confirm');
         
         if (confirmed) {
-          try {
-            const response = await fetch(`/cart/remove/${productId}`, {
-              method: 'DELETE'
-            });
+            try {
+                const response = await fetch(`/cart/remove/${productId}`, {
+                    method: 'DELETE'
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (response.ok) {
-              await showAlert('success', data.message);
-              window.location.reload();
-            } else {
-              throw new Error(data.message);
+                if (response.ok) {
+                    // Remove the item from the cart UI
+                    const cartItem = document.getElementById(`cart-item-${productId}`);
+                    if (cartItem) {
+                        cartItem.remove();
+                    }
+
+                    // Update totals
+                    updateCartTotals(data.total);
+                    
+                    // Show success message
+                    await showAlert('success', data.message);
+                    
+                    // Reload if cart is empty
+                    if (data.itemCount === 0) {
+                        window.location.reload();
+                    }
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                showAlert('error', error.message || 'Failed to remove item');
             }
-          } catch (error) {
-            showAlert('error', error.message || 'Failed to remove item');
-          }
         }
       }
       

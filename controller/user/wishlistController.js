@@ -6,12 +6,15 @@ const wishlistController = {
         try {
             const userId = req.session.user;
 
-            // Get wishlist with populated product details
+            // Get wishlist with populated product details and category
             const wishlist = await Wishlist.findOne({ userId }).populate({
                 path: 'items.productId',
-                select: 'productName price imageUrl stock isActive'
+                populate: {
+                    path: 'categoriesId'
+                }
             });
 
+            // Don't filter out inactive items, just pass them all to the view
             res.render('user/wishlist', {
                 wishlist: wishlist?.items || [],
                 user: req.session.user
