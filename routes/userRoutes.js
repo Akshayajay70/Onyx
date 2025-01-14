@@ -46,9 +46,9 @@ route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 
 route.get('/', userController.getHome)
 
-route.get('/home', userMiddlewares.checkSession, userController.getHome);
+route.get('/home', userController.getHome);
 
-route.get('/shop', userMiddlewares.checkSession, userController.getShop);
+route.get('/shop', userController.getShop);
 
 route.get('/auth/google/callback', authController.getGoogleCallback);
 
