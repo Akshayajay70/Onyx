@@ -34,8 +34,8 @@ const reportController = {
                         break;
                 }
             } else if (startDate && endDate) {
-                dateRange.start = new Date(startDate);
-                dateRange.end = new Date(endDate);
+                dateRange.start = new Date(new Date(startDate).setHours(0, 0, 0, 0));
+                dateRange.end = new Date(new Date(endDate).setHours(23, 59, 59, 999));
             }
 
             if (dateRange.start && dateRange.end) {
@@ -101,13 +101,17 @@ const reportController = {
     downloadExcel: async (req, res) => {
         try {
             const { startDate, endDate } = req.query;
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+
+            const startDay = new Date(startDate);
+            const endDay = new Date(endDate);
+
+            const start = new Date(startDay.setHours(23, 59, 59, 999));
+            const end = new Date(endDay.setHours(23, 59, 59, 999));
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'items.order.status': { $ne: 'pending', $ne: 'cancelled' },
-                'payment.paymentStatus': { $ne: 'failed', $ne: 'cancelled' }
+                'items.order.status': { $nin: ['pending', 'cancelled'] },
+                'payment.paymentStatus': { $nin: ['failed', 'cancelled'] }
             })
             .populate('userId', 'firstName lastName email')
             .populate('items.product', 'productName')
@@ -167,13 +171,16 @@ const reportController = {
     downloadPDF: async (req, res) => {
         try {
             const { startDate, endDate } = req.query;
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            const startDay = new Date(startDate);
+            const endDay = new Date(endDate);
+
+            const start = new Date(startDay.setHours(23, 59, 59, 999));
+            const end = new Date(endDay.setHours(23, 59, 59, 999));
 
             const orders = await Order.find({
                 createdAt: { $gte: start, $lte: end },
-                'items.order.status': { $ne: 'pending', $ne: 'cancelled' },
-                'payment.paymentStatus': { $ne: 'failed', $ne: 'cancelled' }
+                'items.order.status': { $nin: ['pending', 'cancelled'] },
+                'payment.paymentStatus': { $nin: ['failed', 'cancelled'] }
             })
             .populate('userId', 'firstName lastName email')
             .populate('items.product', 'name')
