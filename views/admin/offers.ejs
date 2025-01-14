@@ -467,12 +467,8 @@
                     type,
                     itemIds,
                     discount: validatedDiscount,
-                    startDate: new Date(document.getElementById('startDate').value).toLocaleString('en-US', {
-                        timeZone: 'Asia/Kolkata'
-                    }),
-                    endDate: new Date(document.getElementById('endDate').value).toLocaleString('en-US', {
-                        timeZone: 'Asia/Kolkata'
-                    })
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value
                 };
 
                 const url = offerId ? `/admin/offers/${offerId}` : '/admin/offers';
