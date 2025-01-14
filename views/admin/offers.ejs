@@ -84,12 +84,32 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="text-sm text-gray-200">
-                                                <%= new Date(offer.startDate).toLocaleDateString() %> - 
-                                                <%= new Date(offer.endDate).toLocaleDateString() %>
+                                                <%= new Date(offer.startDate).toLocaleString('en-IN', {
+                                                    timeZone: 'Asia/Kolkata',
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit'
+                                                }) %> - 
+                                                <%= new Date(offer.endDate).toLocaleString('en-IN', {
+                                                    timeZone: 'Asia/Kolkata',
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit'
+                                                }) %>
                                             </div>
                                             <div class="text-xs text-gray-400">
-                                                <%= new Date(offer.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %> - 
-                                                <%= new Date(offer.endDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                                                <%= new Date(offer.startDate).toLocaleString('en-IN', {
+                                                    timeZone: 'Asia/Kolkata',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                }) %> - 
+                                                <%= new Date(offer.endDate).toLocaleString('en-IN', {
+                                                    timeZone: 'Asia/Kolkata',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                }) %>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
@@ -447,8 +467,12 @@
                     type,
                     itemIds,
                     discount: validatedDiscount,
-                    startDate: document.getElementById('startDate').value,
-                    endDate: document.getElementById('endDate').value
+                    startDate: new Date(document.getElementById('startDate').value).toLocaleString('en-US', {
+                        timeZone: 'Asia/Kolkata'
+                    }),
+                    endDate: new Date(document.getElementById('endDate').value).toLocaleString('en-US', {
+                        timeZone: 'Asia/Kolkata'
+                    })
                 };
 
                 const url = offerId ? `/admin/offers/${offerId}` : '/admin/offers';
@@ -512,28 +536,24 @@
                 const type = offer.categoryId ? 'category' : 'product';
                 document.getElementById('offerType').value = type;
                 
-                // Format dates properly
+                // Format dates with IST timezone
                 const startDate = new Date(offer.startDate);
                 const endDate = new Date(offer.endDate);
                 
-                // Format dates with local timezone
-                document.getElementById('startDate').value = startDate.toLocaleString('sv-SE', { 
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                }).slice(0, 16).replace(' ', 'T');
+                // Convert to IST and format for datetime-local input
+                const formatToIST = (date) => {
+                    const istDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+                    return istDate.toLocaleString('sv-SE', { 
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).replace(' ', 'T');
+                };
 
-                document.getElementById('endDate').value = endDate.toLocaleString('sv-SE', { 
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                }).slice(0, 16).replace(' ', 'T');
+                document.getElementById('startDate').value = formatToIST(startDate);
+                document.getElementById('endDate').value = formatToIST(endDate);
                 
                 // Setup UI based on type
                 handleTypeChange();
