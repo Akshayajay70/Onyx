@@ -1,27 +1,4 @@
-import User from '../model/userModel.js';
-import { config } from 'dotenv';
-
-config()
-
-const getAdmin = (req, res) => {
-    res.render('admin/login');
-}
-
-const postAdmin = async (req, res) => {
-    const { email, password } = req.body;
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-        req.session.isAdmin = true; // Set admin session
-        res.redirect('/admin/dashboard'); // Redirect to dashboard route instead
-    } else {
-        res.render('admin/login');
-    }
-}
-
-const getLogout = (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/admin/login');
-    });
-}
+import User from '../../model/userModel.js';
 
 // Get the list of all users with pagination
 const getUserList = async (req, res) => {
@@ -106,4 +83,4 @@ const getToggle = async (req, res) => {
     }
 };
 
-export default { getAdmin, postAdmin, getLogout, getUserList, getToggle }
+export default { getUserList, getToggle }

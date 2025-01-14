@@ -1,4 +1,4 @@
-import Coupon from '../model/couponModel.js';
+import Coupon from '../../model/couponModel.js';
 
 const adminCouponController = {
     // Get all coupons

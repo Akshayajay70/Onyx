@@ -11,7 +11,11 @@
 <body class="mybg-green">
     <%- include('../partials/sidebar') %>
 
-    <div class="p-4 sm:ml-64">
+    <div class="p-2 sm:ml-64">
+        <header class="flex items-center justify-between mb-8 p-4 lg:p-8 border-b border-gray-700">
+            <button id="toggleSidebar" class="text-white lg:hidden"></button>
+            <h1 class="text-2xl font-semibold text-gray-200">Order Management</h1>
+        </header>
         <div class="p-4 mt-14">
             <!-- Orders Table -->
             <div class="bg-zinc-700 rounded-lg shadow-md overflow-hidden">

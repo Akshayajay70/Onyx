@@ -1,4 +1,4 @@
-import Category from '../model/categoryModel.js';
+import Category from '../../model/categoryModel.js';
 
 // GET: Render Categories Page
 const getCategories = async (req, res) => {

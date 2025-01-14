@@ -78,10 +78,6 @@ route.post('/checkout/place-order', userMiddlewares.checkSession, userCheckoutCo
 
 route.get('/orders', userMiddlewares.checkSession, userOrderController.getOrders);
 
-// route.post('/orders/:orderId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrder);
-
-// route.post('/orders/:orderId/return', userMiddlewares.checkSession, userOrderController.requestReturn);
-
 route.post('/orders/:orderId/retry-payment', userMiddlewares.checkSession, userOrderController.retryPayment);
 
 route.post('/orders/:orderId/verify-retry-payment', userMiddlewares.checkSession, userOrderController.verifyRetryPayment);
