@@ -36,6 +36,9 @@ app.use(passport.session());
 
 app.use('/', userRoute); 
 app.use('/admin', adminRoutes)
+app.use('*', (req, res) => {
+  res.status(404).render('partials/error');
+});
 
 connnectDb();
 
