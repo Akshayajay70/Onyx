@@ -27,8 +27,13 @@
     <a href="/profile" class="p-1.5 sm:p-2 text-slate-700 hover:text-black transition-colors">
       <i class="fa-regular fa-user text-lg sm:text-xl"></i>
     </a>
-    <a href="/cart" class="p-1.5 sm:p-2 text-slate-700 hover:text-black transition-colors">
+    <a href="/cart" class="p-1.5 sm:p-2 text-slate-700 hover:text-black transition-colors relative">
       <i class="fa-solid fa-cart-shopping text-lg sm:text-xl"></i>
+      <% if (locals.cartCount && cartCount > 0) { %>
+        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+          <%= cartCount > 9 ? '9+' : cartCount %>
+        </span>
+      <% } %>
     </a>
   </div>
 </div>

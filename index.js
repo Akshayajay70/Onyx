@@ -7,6 +7,7 @@ import adminRoutes from "./routes/adminRoute.js"
 import nocache from "nocache";
 import { config } from "dotenv";
 import './utils/googleAuth.js';
+import cartCount from './middlewares/cartCountMiddleware.js';
 
 
 config();  
@@ -33,6 +34,8 @@ app.use(session({
 // Initialize passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(cartCount);
 
 app.use('/', userRoute); 
 app.use('/admin', adminRoutes)
