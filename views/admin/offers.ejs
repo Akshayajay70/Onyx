@@ -533,11 +533,11 @@
                 document.getElementById('offerType').value = type;
                 
                 // Format dates with IST timezone
-                const start = new Date(offer.startDate);
-                const end = new Date(offer.endDate);
+                const startDate = new Date(offer.startDate);
+                const endDate = new Date(offer.endDate);
 
-                const startDate = setMinutes(start.getMinutes() * 330);
-                const endDate = setMinutes(end.getMinutes() * 330);
+                startDate.setMinutes(startDate.getMinutes() + 330);
+                endDate.setMinutes(endDate.getMinutes() + 330);
                 // Convert to IST and format for datetime-local input
                 const formatToIST = (date) => {
                     const istDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));

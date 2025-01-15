@@ -460,11 +460,11 @@
               document.getElementById('maximumDiscount').value = coupon.maximumDiscount || 0;
               
               // Format dates for datetime-local input
-              const start = new Date(coupon.startDate);
-              const end = new Date(coupon.expiryDate);
+              const startDate = new Date(coupon.startDate);
+              const endDate = new Date(coupon.expiryDate);
 
-              const startDate = setMinutes(start.getMinutes() * 330);
-              const endDate = setMinutes(end.getMinutes() * 330);
+              startDate.setMinutes(startDate.getMinutes() + 330);
+              endDate.setMinutes(endDate.getMinutes() + 330);
               
               document.getElementById('startDate').value = formatDateForInput(startDate);
               document.getElementById('expiryDate').value = formatDateForInput(endDate);
