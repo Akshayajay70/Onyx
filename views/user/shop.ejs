@@ -321,7 +321,7 @@
           // Populate color filter options
           function populateFilterOptions() {
               // Get unique colors
-              const colors = [...new Set(originalProducts.map(p => p.color))].sort();
+              const colors = [...new Set(originalProducts.map(p => p.color))].filter(Boolean).sort();
               
               // Clear existing options except the first one (All)
               while (colorFilter.options.length > 1) {
@@ -330,13 +330,11 @@
 
               // Add color options
               colors.forEach(color => {
-                  if (color) { // Only add if color is not null/empty
-                      const option = new Option(
-                          color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(), 
-                          color.toLowerCase()
-                      );
-                      colorFilter.add(option);
-                  }
+                  const option = new Option(
+                      color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(), 
+                      color
+                  );
+                  colorFilter.add(option);
               });
           }
 

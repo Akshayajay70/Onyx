@@ -103,8 +103,8 @@ const getShop = async (req, res) => {
         }
 
         // Add color filter
-        if (req.query.color) {
-            filter.color = req.query.color;
+        if (req.query.color && req.query.color !== '') {
+            filter.color = { $regex: new RegExp(`^${req.query.color}$`, 'i') };
         }
 
         // Add price range filter
