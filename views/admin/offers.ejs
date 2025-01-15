@@ -536,8 +536,6 @@
                 const startDate = new Date(offer.startDate);
                 const endDate = new Date(offer.endDate);
 
-                startDate.setMinutes(startDate.getMinutes() + 330);
-                endDate.setMinutes(endDate.getMinutes() + 330);
                 // Convert to IST and format for datetime-local input
                 const formatToIST = (date) => {
                     const istDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));

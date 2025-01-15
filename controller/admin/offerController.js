@@ -50,6 +50,10 @@ const offerController = {
             const end = new Date(endDate);
             const now = new Date();
 
+            start.setMinutes(start.getMinutes() - 330);
+            end.setMinutes(end.getMinutes() - 330);
+            now.setMinutes(now.getMinutes() - 330);
+
             if (start < now) {
                 return res.status(400).json({
                     success: false,
@@ -200,6 +204,10 @@ const offerController = {
             const start = new Date(startDate);
             const end = new Date(endDate);
             const now = new Date();
+
+            start.setMinutes(start.getMinutes() - 330);
+            end.setMinutes(end.getMinutes() - 330);
+            now.setMinutes(now.getMinutes() - 330);
 
             if (start < now) {
                 return res.status(400).json({

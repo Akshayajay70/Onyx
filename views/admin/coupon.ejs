@@ -463,8 +463,8 @@
               const startDate = new Date(coupon.startDate);
               const endDate = new Date(coupon.expiryDate);
 
-              startDate.setMinutes(startDate.getMinutes() + 330);
-              endDate.setMinutes(endDate.getMinutes() + 330);
+              startDate.setMinutes(startDate.getMinutes() - 330);
+              endDate.setMinutes(endDate.getMinutes() - 330);
               
               document.getElementById('startDate').value = formatDateForInput(startDate);
               document.getElementById('expiryDate').value = formatDateForInput(endDate);
